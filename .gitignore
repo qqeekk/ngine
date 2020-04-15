@@ -339,4 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
-Ngine.Backend.Python/
+src/Ngine.Backend.Resources/Properties/Recources.Designer.cs

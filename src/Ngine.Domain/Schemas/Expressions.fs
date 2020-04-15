@@ -2,4 +2,8 @@
 
 type QuotedFunction =
     | Sigmoid
+    | Tanh
     | ReLu
+    | ELu
+    | SeLu
+    | LeakyReLu

@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>Ngine.Backend</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="Utils\Guard.fs" />
+    <Compile Include="Utils\BijectiveMap.fs" />
+    <Compile Include="Utils\ResultExtensions.fs" />
+    <Compile Include="Schemas\Expressions.fs" />
+    <Compile Include="Schemas\Model.fs" />
+    <Compile Include="Schemas\Schema.fs" />
+    <Compile Include="Schemas\Conversion.fs" />
+    <Compile Include="Execution\Network.fs" />
+    <Compile Include="CodeGen\CodeGen.fs" />
+    <Compile Include="Services\Conversion.fsi" />
+    <Compile Include="Services\Conversion.fs" />
+    <Compile Include="Services\CodeGen.fsi" />
+    <Compile Include="Services\CodeGen.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.7.1" />
+  </ItemGroup>
+
+</Project>

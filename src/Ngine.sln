@@ -3,19 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29424.173
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ngine.Domain", "Ngine.Domain\Ngine.Domain.csproj", "{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ngine.Backend.Tests", "Ngine.Backend.Tests\Ngine.Backend.Tests.csproj", "{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ngine.CommandLine", "Ngine.CommandLine\Ngine.CommandLine.csproj", "{0B65DE82-0249-45B6-913B-9F3938A5D15F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{7CFC7C26-EDB7-4B82-948C-6CB52A26BE1B}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ngine.Domain.Schemas", "Ngine.Domain.Schemas\Ngine.Domain.Schemas.fsproj", "{4652837F-C04F-4CDB-82A6-9DA5FBFBEA64}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ngine.Domain", "Ngine.Domain\Ngine.Domain.fsproj", "{4652837F-C04F-4CDB-82A6-9DA5FBFBEA64}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ngine.Backend", "Ngine.Backend\Ngine.Backend.fsproj", "{0004C632-7B8C-4B8C-9466-22CA8A3DF4BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Internal", "Internal", "{149A0717-EF28-4A3F-9489-DA3D7EADCBE5}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ngine.Backend.Tests", "Ngine.Backend.Tests\Ngine.Backend.Tests.fsproj", "{AC183AEE-4E53-464E-8A03-2FB87E186DD7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ngine.Backend.Resources", "Ngine.Backend.Resources\Ngine.Backend.Resources.csproj", "{9C522A7E-98C5-491D-89E4-860B8C53FB0E}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Ngine.Backend.Python", "Ngine.Backend.Python\Ngine.Backend.Python.pyproj", "{ADF1B8C1-ECF8-4B91-AC50-1F21DFF0AC03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +25,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0B65DE82-0249-45B6-913B-9F3938A5D15F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0B65DE82-0249-45B6-913B-9F3938A5D15F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B65DE82-0249-45B6-913B-9F3938A5D15F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,15 +37,26 @@ Global
 		{0004C632-7B8C-4B8C-9466-22CA8A3DF4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0004C632-7B8C-4B8C-9466-22CA8A3DF4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0004C632-7B8C-4B8C-9466-22CA8A3DF4BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC183AEE-4E53-464E-8A03-2FB87E186DD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC183AEE-4E53-464E-8A03-2FB87E186DD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC183AEE-4E53-464E-8A03-2FB87E186DD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC183AEE-4E53-464E-8A03-2FB87E186DD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C522A7E-98C5-491D-89E4-860B8C53FB0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C522A7E-98C5-491D-89E4-860B8C53FB0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C522A7E-98C5-491D-89E4-860B8C53FB0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C522A7E-98C5-491D-89E4-860B8C53FB0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADF1B8C1-ECF8-4B91-AC50-1F21DFF0AC03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADF1B8C1-ECF8-4B91-AC50-1F21DFF0AC03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{AAF3CD91-CA35-4ABE-8DE2-51A479EB4ED0} = {7CFC7C26-EDB7-4B82-948C-6CB52A26BE1B}
-		{816FE3DE-126D-48AB-9BCD-5E333D0B9BC4} = {149A0717-EF28-4A3F-9489-DA3D7EADCBE5}
 		{4652837F-C04F-4CDB-82A6-9DA5FBFBEA64} = {7CFC7C26-EDB7-4B82-948C-6CB52A26BE1B}
 		{0004C632-7B8C-4B8C-9466-22CA8A3DF4BB} = {149A0717-EF28-4A3F-9489-DA3D7EADCBE5}
+		{AC183AEE-4E53-464E-8A03-2FB87E186DD7} = {149A0717-EF28-4A3F-9489-DA3D7EADCBE5}
+		{9C522A7E-98C5-491D-89E4-860B8C53FB0E} = {149A0717-EF28-4A3F-9489-DA3D7EADCBE5}
+		{ADF1B8C1-ECF8-4B91-AC50-1F21DFF0AC03} = {149A0717-EF28-4A3F-9489-DA3D7EADCBE5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {958695C1-83CB-4034-BEEC-182A00A5199A}

@@ -3,23 +3,37 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>preview</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Keras.NET" Version="3.7.4.1" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
+  <Target Name="BuildPython" BeforeTargets="CoreCompile">
+    <MsBuild Projects="..\Ngine.Backend.Python\Ngine.Backend.Python.pyproj" />
+  </Target>
+
   <ItemGroup>
+    <Compile Include="FFI\PythonHelper.fs" />
     <Compile Include="Converters\ActivatorConverter.fs" />
+    <Compile Include="Converters\KernelConverter.fs" />
+    <Compile Include="Converters\NetworkConverter.fs" />
     <Compile Include="KerasNetworkGenerator.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Ngine.Domain\Ngine.Domain.csproj" />
+    <EmbeddedResource Include="..\Ngine.Backend.Python\bin\output.zip" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.7.1" />
+    <PackageReference Include="FSharp.Text.RegexProvider" Version="2.1.0" />
+    <PackageReference Include="Keras.NET" Version="3.6.1.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ngine.Backend.Resources\Ngine.Backend.Resources.csproj" />
+    <ProjectReference Include="..\Ngine.Domain\Ngine.Domain.fsproj" />
+  </ItemGroup>
+  
 </Project>

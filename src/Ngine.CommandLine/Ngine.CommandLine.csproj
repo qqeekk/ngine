@@ -5,14 +5,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="InstallPyDeps">
-    <PropertyGroup>
-      <PythonPath Condition=" '$(PythonPath)' == '' ">C:\Python36\python.exe</PythonPath>
-      <PipCommand>pip install keras tensorflow</PipCommand>
-    </PropertyGroup>
-    <Exec Command="pip install virtualenv &amp;&amp; virtualenv venv -p $(PythonPath) &amp;&amp; venv\Scripts\activate &amp;&amp; $(PipCommand) &amp;&amp; deactivate" WorkingDirectory="$(OutDir)" />
-  </Target>
-
   <ItemGroup>
     <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
   </ItemGroup>
