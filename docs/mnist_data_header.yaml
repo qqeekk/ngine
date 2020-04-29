@@ -1,0 +1,9 @@
+files:
+    csv: C:\Users\Alexander\Downloads\mnist-in-csv\mnist_test.csv
+
+inputs:
+    -
+        - img:$csv[1:]
+outputs:
+    -
+        - cats:$csv[0]

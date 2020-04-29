@@ -2,8 +2,9 @@
 
 type QuotedFunction =
     | Sigmoid
+    | HardSigmoid
     | Tanh
     | ReLu
-    | ELu
+    | ELu of float32
+    | LeakyReLu of float32
     | SeLu
-    | LeakyReLu

@@ -1,0 +1,16 @@
+files:
+	csv: D:\projects\diploma\Ngine\docs\sample_data_header.csv
+	images: D:\projects\diploma\Ngine\docs\images
+
+inputs:
+	-
+		- contituous:$csv[0]
+		- cons:$csv[1]
+		- cons:$csv[2]
+		- categories:$csv[3] #zipcode
+	-
+	  - img:$images
+outputs:
+	-
+		- cons:$csv[4]
+	                 

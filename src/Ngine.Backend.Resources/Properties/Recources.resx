@@ -120,11 +120,32 @@
   <data name="ActivatorConverter_UndefinedFunctionMessage_1s" xml:space="preserve">
     <value>Cannot find predefined activator function of type '{0}'</value>
   </data>
+  <data name="Activators_elu" xml:space="preserve">
+    <value>elu</value>
+  </data>
+  <data name="Activators_hardSigmoid" xml:space="preserve">
+    <value>hard-sigmoid</value>
+  </data>
+  <data name="Activators_leakyRelu" xml:space="preserve">
+    <value>leaky-relu</value>
+  </data>
   <data name="Activators_relu" xml:space="preserve">
     <value>relu</value>
   </data>
+  <data name="Activators_selu" xml:space="preserve">
+    <value>selu</value>
+  </data>
   <data name="Activators_sigmoid" xml:space="preserve">
     <value>sigmoid</value>
+  </data>
+  <data name="Activators_tanh" xml:space="preserve">
+    <value>tanh</value>
+  </data>
+  <data name="Kernels_activation" xml:space="preserve">
+    <value>activation</value>
+  </data>
+  <data name="Kernels_concatenation" xml:space="preserve">
+    <value>concatenation</value>
   </data>
   <data name="Kernels_conv2D" xml:space="preserve">
     <value>conv2D</value>
@@ -134,5 +155,29 @@
   </data>
   <data name="Kernels_dense" xml:space="preserve">
     <value>dense</value>
+  </data>
+  <data name="Kernels_dropout" xml:space="preserve">
+    <value>dropout</value>
+  </data>
+  <data name="Kernels_flatten2D" xml:space="preserve">
+    <value>flatten2D</value>
+  </data>
+  <data name="Kernels_flatten3D" xml:space="preserve">
+    <value>flatten3D</value>
+  </data>
+  <data name="Kernels_pooling2D" xml:space="preserve">
+    <value>pooling2D</value>
+  </data>
+  <data name="Kernels_pooling3D" xml:space="preserve">
+    <value>pooling3D</value>
+  </data>
+  <data name="Kernels_sensor1D" xml:space="preserve">
+    <value>sensor1D</value>
+  </data>
+  <data name="Kernels_sensor2D" xml:space="preserve">
+    <value>sensor2D</value>
+  </data>
+  <data name="Kernels_sensor3D" xml:space="preserve">
+    <value>sensor3D</value>
   </data>
 </root>

@@ -22,7 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Source\Ngine.Backend.Python.py" />
+    <Compile Include="Source\__main__.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="requirements.txt" />
@@ -49,6 +49,6 @@
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
-    <ZipDirectory SourceDirectory="Source" DestinationFile="$(OutputPath)\output.zip" Overwrite="true"/>
+    <ZipDirectory SourceDirectory="Source" DestinationFile="$(OutputPath)\output.zip" Overwrite="true" />
   </Target>
 </Project>

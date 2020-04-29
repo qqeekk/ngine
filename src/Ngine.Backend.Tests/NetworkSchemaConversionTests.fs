@@ -3,12 +3,12 @@ namespace Ngine.Backend.Tests
 open System
 open Xunit
 open FsUnit.Xunit
-open Ngine.Backend.Converters
 open Ngine.Domain.Schemas
 open Ngine.Domain.Utils
 open Ngine.Domain.Schemas.Expressions
 open Ngine.Backend.Resources.Properties
 open NHamcrest.Core
+open Ngine.Backend.Converters
 
 type NetworkSchemaConversionTests() =
     do Recources.Culture <- System.Globalization.CultureInfo.CurrentCulture
@@ -17,12 +17,12 @@ type NetworkSchemaConversionTests() =
 
     [<Fact>]
     member _.``Predefined functions are parsed correctly`` () =
-        for schema in activatorConverter.QuotedFunctionNames do
+        for schema in activatorConverter.ActivationFunctionNames do
             let encodedResult =
-                activatorConverter.Decode(schema)
+                activatorConverter.Decode(schema.name)
                 |> Result.map (activatorConverter.Encode)
 
-            Assert.Equal(encodedResult, Ok (schema))
+            Assert.Equal(encodedResult, Ok (schema.name))
 
     [<Theory>]
     [<InlineData null>]
@@ -35,6 +35,6 @@ type NetworkSchemaConversionTests() =
 
         | data ->
             match activatorConverter.Decode data with
-            | Error [| { Position = (0u, _); Message = Message _ } |] -> true
+            | Error _-> true
             | _ -> false
             |> Assert.True

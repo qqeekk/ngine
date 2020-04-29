@@ -1,2 +1,5 @@
 tensorflow==2.0.0
 keras
+sklearn
+pandas
+opencv-python

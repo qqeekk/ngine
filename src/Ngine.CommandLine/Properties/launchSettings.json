@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Ngine.CommandLine": {
+      "commandName": "Project",
+      "commandLineArgs": "compile D:\\projects\\diploma\\Ngine\\docs\\network-definition.yaml"
+    }
+  }
+}

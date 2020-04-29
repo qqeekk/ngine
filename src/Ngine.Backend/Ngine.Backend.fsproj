@@ -18,17 +18,23 @@
 
   <ItemGroup>
     <Compile Include="FFI\PythonHelper.fs" />
+    <Compile Include="Converters\NetworkErrorPrettyPrinter.fs" />
+    <Compile Include="Converters\PrimitiveConverter.fs" />
+    <Compile Include="Converters\LossConverter.fs" />
     <Compile Include="Converters\ActivatorConverter.fs" />
+    <Compile Include="Converters\OptimizerConverter.fs" />
     <Compile Include="Converters\KernelConverter.fs" />
+    <Compile Include="Converters\AmbiguityConverter.fs" />
     <Compile Include="Converters\NetworkConverter.fs" />
+    <Compile Include="KerasNetwork.fs" />
     <Compile Include="KerasNetworkGenerator.fs" />
     <EmbeddedResource Include="..\Ngine.Backend.Python\bin\output.zip" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.7.1" />
-    <PackageReference Include="FSharp.Text.RegexProvider" Version="2.1.0" />
-    <PackageReference Include="Keras.NET" Version="3.6.1.11" />
+    <PackageReference Include="FSharp.Interop.Dynamic" Version="5.0.1.268" />
+    <PackageReference Include="Keras.NET" Version="3.6.4.1" />
   </ItemGroup>
 
   <ItemGroup>

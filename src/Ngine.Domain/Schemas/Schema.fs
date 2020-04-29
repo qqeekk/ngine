@@ -1,15 +1,10 @@
 ﻿namespace Ngine.Domain.Schemas
 
-open System
-
 [<RequireQualifiedAccess>]
 module Schema =
-    type LayerId = uint32 * uint32
-
     [<CLIMutable>]
     type Layer = {
-        LayerId: LayerId
-        PreviousLayerId: LayerId option
+        LayerId: LayerId * LayerId option
         Type: string
         Props: string
     }
@@ -19,6 +14,13 @@ module Schema =
         LayerId: LayerId
         Activation: string
         Loss: string
+        LossWeight: float32
+    }
+
+    [<CLIMutable>]
+    type Ambiguity = {
+        Name: string
+        Value: string
     }
 
     [<CLIMutable>]
@@ -26,4 +28,5 @@ module Schema =
         Layers : Layer []
         Heads: Head []
         Optimizer: string
+        Ambiguities: Ambiguity []
     }

@@ -1,0 +1,25 @@
+ambiguities:
+  -
+    values: [84:100:2]
+    mappings:
+      - 
+        name: 11-1
+        prop: units
+  - 
+    values: [3:5:1]
+    mappings:
+      - 
+        name: 8-1
+        prop: kernel[0]
+      - 
+        name: 8-1
+        prop: kernel[1]
+  -
+    values: [3,4,6]
+    mappings:
+      - 
+        name: 5-1
+        prop: kernel[0]
+      - 
+        name: 5-1
+        prop: kernel[1]

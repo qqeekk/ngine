@@ -1,56 +1,68 @@
-﻿using Keras.Layers;
-using Ngine.Backend;
-using Ngine.Backend.Converters;
+﻿using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using McMaster.Extensions.CommandLineUtils;
+using McMaster.Extensions.CommandLineUtils.Abstractions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Ngine.CommandLine.Infrastructure;
 using Ngine.CommandLine.Options;
-using Ngine.Domain.Execution;
-using Ngine.Domain.Schemas;
-using Ngine.Domain.Services.Conversion;
-using Python.Runtime;
 using System;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ngine.CommandLine
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private async static Task Main(string[] args)
         {
-            var settings = new KerasExecutionOptions
-            {
-                PythonPath = @"D:\projects\diploma\Ngine\src\Ngine.Backend.Python\env",
-                OutputDirectory = Path.Combine(Directory.GetCurrentDirectory() , "models"),
-            };
-            
-            Directory.CreateDirectory(settings.OutputDirectory);
+            var configuration = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json", false, true)
+               .Build();
 
-            var schema = new Schema.Network
+            var services = new ServiceCollection();
+            services.AddLogging(options =>
             {
-                Layers = new[]
+                options.AddConfiguration(configuration.GetSection("Logging"));
+                options.AddConsole();
+            });
+
+            services.AddOptions();
+            services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+
+            var autofacContainerBuilder = new ContainerBuilder();
+            autofacContainerBuilder.RegisterModule<NgineDependenciesModule>();
+            autofacContainerBuilder.Populate(services);
+
+            var autofacServiceProvider = new AutofacServiceProviderFactory()
+                .CreateServiceProvider(autofacContainerBuilder);
+
+            try
+            {
+                using var app = new CommandLineApplication<NgineApplication>();
+                app.Conventions
+                    .UseDefaultConventions()
+                    .UseConstructorInjection(autofacServiceProvider);
+
+                var tokenSource = new CancellationTokenSource();
+                Console.CancelKeyPress += (s, e) => tokenSource.Cancel();
+                await app.ExecuteAsync(args, tokenSource.Token);
+            }
+            catch (CommandParsingException ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                if (ex is UnrecognizedCommandParsingException uex && uex.NearestMatches.Any())
                 {
-                    new Schema.Layer
-                    {
-                        Neurons = "100",
-                        Activator = "sigmoid",
-                        Type = "dense",
-                    },
-                    new Schema.Layer
-                    {
-                        Neurons = "10",
-                        Activator = "relu",
-                        Type = "dense",
-
-                    }
+                    Console.WriteLine();
+                    Console.WriteLine("Did you mean this?");
+                    Console.WriteLine("    " + uex.NearestMatches.First());
                 }
-            };
-
-            var networkConverter = NetworkConverters.create(ActivatorConverter.instance, KernelConverter.instance);
-            var network = networkConverter.Decode(schema).ResultValue;
-            //new Keras.Shape
-            //new C()
-
-            var generator = new KerasNetworkGenerator(settings) as INetworkGenerator;
-            generator.GenerateFromSchema(network);
+            }
         }
     }
 }

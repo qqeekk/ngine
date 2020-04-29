@@ -1,5 +1,9 @@
 ﻿namespace Ngine.Domain.Utils
-module internal ResultExtensions =
+
+open System
+
+
+module ResultExtensions =
     let aggregate (results : seq<Result<'a, 'b>>) : Result<'a [], 'b []> =
         (Ok [], results)
         ||> Seq.fold (fun acc -> function
@@ -33,3 +37,16 @@ module internal ResultExtensions =
         | Error e1, Ok _, Error e2
         | Error e1, Error e2, Ok _ -> Error [e1; e2]
         | Error e1, Error e2, Error e3 -> Error [e1; e2; e3]
+
+    let zip4 ares bres cres dres =
+        let abZip = zip ares bres
+        let cdZip = zip cres dres
+
+        match zip abZip cdZip with
+        | Ok ((a, b), (c, d)) -> Ok (a,b,c,d)
+        | Error errors -> Error (List.concat errors)
+
+
+    let toOption = function
+    | Ok a -> Some a
+    | Error _ -> None
