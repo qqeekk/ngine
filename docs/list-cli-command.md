@@ -59,6 +59,7 @@ ____
 
 ____
 Переменные (шаблоны):
+
 >  `.\Ngine.CommandLine.exe list ambiguities`
 ```bash
 -> uint array|uint range: '[({{ list: uint array }}|{{ range: uint range }})]'

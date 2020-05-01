@@ -17,17 +17,22 @@
 Ниже представлены ссылки на документацию по вариантам использования консольного приложения `Ngine.CommandLine.exe`:
 
 - `.\Ngine.CommandLine.exe -?`
-    - просмотр списка допустимых команд
+    
+    просмотр списка допустимых команд
 
-- `.\Ngine.CommandLine.exe list -?`
-    - [(подробнее)](./docs/list-cli-command.md) просмотр встроенной документации по примитивам `ngine-schema`
+- `.\Ngine.CommandLine.exe list -?` [(подробнее)](./docs/list-cli-command.md) 
+  
+    просмотр встроенной документации по примитивам `ngine-schema`
 
-- `.\Ngine.CommandLine.exe compile -?`
-    - [(подробнее)](./docs/compile-cli-command.md) синтаксический и семантический разбор модели, статический анализ, сборка и конвертация в формат `.h5`, совместимый с `tensorflow/keras`
+- `.\Ngine.CommandLine.exe compile -?` [(подробнее)](./docs/compile-cli-command.md) 
+  
+    синтаксический и семантический разбор модели, статический анализ, сборка и конвертация в формат `.h5`, совместимый с `tensorflow/keras`
+  
+- `.\Ngine.CommandLine.exe train -?` [(подробнее)](./docs/train-cli-command.md) 
+    
+    обучение модели на тренировочных данных
 
-- `.\Ngine.CommandLine.exe train -?`
-    - [(подробнее)](./docs/train-cli-command.md) обучение модели на тренировочных данных
+- `.\Ngine.CommandLine.exe tune -?` (подробнее)
 
-- `.\Ngine.CommandLine.exe tune -?`
-    - (подробнее) полу-автоматическая настройка гиперпараметров сети 
+     полу-автоматическая настройка гиперпараметров сети 
 
