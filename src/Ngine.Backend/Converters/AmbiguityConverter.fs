@@ -122,3 +122,127 @@ module AmbiguityConverter =
             member _.Encode kvp = encode kvp
             member _.Decode amb = decode amb
             member _.ListPattern = encoder.pretty}
+
+    let keras (network:Network): Schema.AmbiguityMapProduct =
+        let mappingProps name =
+            let (|MaybeAmb|) prop = function
+            | RefName (Variable var) when name = var -> Some prop
+            | _ -> None
+        
+            function
+            | LayerProps.Activator _ -> []
+            | LayerProps.Dropout _ -> []
+            | LayerProps.PrevLayers _ -> []
+            | LayerProps.Flatten2D -> []
+            | LayerProps.Flatten3D -> []
+            | LayerProps.Sensor1D _ -> []
+            | LayerProps.Sensor2D _ -> []
+            | LayerProps.Sensor3D _ -> []
+            | LayerProps.Convolutional2D conv ->
+                let (MaybeAmb "filters" f) = conv.Filters
+                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y) = conv.Kernel
+                let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2) = conv.Strides
+                [ f; x; y; s1; s2 ] |> List.choose id
+            
+            | LayerProps.Pooling2D p ->
+                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y) = p.Kernel
+                let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2) = p.Strides
+                [ x; y; s1; s2 ] |> List.choose id
+            
+            | LayerProps.Convolutional3D conv ->
+                let (MaybeAmb "filters" f) = conv.Filters
+                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y, MaybeAmb "kernel[2]" z) = conv.Kernel
+                let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2, MaybeAmb "strides[2]" s3) = conv.Strides
+                [ f; x; y; z; s1; s2; s3 ] |> List.choose id
+
+            | LayerProps.Pooling3D p ->
+                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y, MaybeAmb "kernel[2]" z) = p.Kernel
+                let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2, MaybeAmb "strides[2]" s3) = p.Strides
+                [ x; y; z; s1; s2; s3 ] |> List.choose id
+
+            | LayerProps.Dense dense ->
+                let (MaybeAmb "units" u) = dense.Units
+                Option.toList u
+
+        let rec mappings name l : Schema.AmbiguityMapRecord list =
+            let mappingsNonHead3D = function
+            | Layer3D (prevId, prev) -> mappings name (D3 (prevId, prev))
+            | Sensor3D _ -> []
+
+            let mappingsNonHead2D = function
+            | Layer2D (prevId, prev) -> mappings name (D2 (prevId, prev))
+            | Sensor2D _ -> []
+
+            let mappingsNonHead1D = function
+            | Layer1D (prevId, prev) -> mappings name (D1 (prevId, prev))
+            | Sensor1D _ -> []
+
+
+            match l with
+            | D1 (lid, l) ->
+                match l with
+                | Flatten3D prev -> mappingsNonHead3D prev
+                | Flatten2D prev -> mappingsNonHead2D prev
+                | Dropout (_, prev) -> mappingsNonHead1D prev
+                | Activation1D (_, prev) -> mappingsNonHead1D prev
+                
+                | Dense (prop, prev) ->
+                    (mappingProps name (LayerProps.Dense prop)
+                    |> List.map (fun p -> { Name = lid; Prop = p }))
+                    @ mappingsNonHead1D prev
+                
+                | Concatenation1D prevs -> 
+                    prevs 
+                    |> Seq.collect (mappingsNonHead1D)
+                    |> Seq.toList
+
+            | D2 (lid, l) ->
+                match l with
+                | Activation2D (_, prev) -> mappingsNonHead2D prev
+                | Conv2D (prop, prev) ->
+                    (mappingProps name (LayerProps.Convolutional2D prop)
+                    |> List.map (fun p -> { Name = lid; Prop = p }))
+                    @ mappingsNonHead2D prev
+                
+                | Pooling2D (prop, prev) ->
+                    (mappingProps name (LayerProps.Pooling2D prop)
+                    |> List.map (fun p -> { Name = lid; Prop = p }))
+                    @ mappingsNonHead2D prev
+                
+                | Concatenation2D prevs -> 
+                    prevs 
+                    |> Seq.collect (mappingsNonHead2D)
+                    |> Seq.toList
+
+            | D3 (lid, l) ->
+                match l with
+                | Activation3D (_, prev) -> mappingsNonHead3D prev
+                | Conv3D (prop, prev) ->
+                    (mappingProps name (LayerProps.Convolutional3D prop)
+                    |> List.map (fun p -> { Name = lid; Prop = p }))
+                    @ mappingsNonHead3D prev
+                
+                | Pooling3D (prop, prev) ->
+                    (mappingProps name (LayerProps.Pooling3D prop)
+                    |> List.map (fun p -> { Name = lid; Prop = p }))
+                    @ mappingsNonHead3D prev
+                
+                | Concatenation3D prevs -> 
+                    prevs 
+                    |> Seq.collect (mappingsNonHead3D)
+                    |> Seq.toList
+
+        let mappings name : Schema.AmbiguityMapRecord[] =
+            network.Heads
+            |> Seq.collect (function
+                | Head.Activator (_, _, l, _) -> mappings name l
+                | Head.Softmax (_, _, lid, l) -> mappings name (Layer.D1 (lid, l)))
+            |> Seq.distinct
+            |> Seq.toArray
+
+        { Ambiguities =
+            network.Ambiguities
+            |> Seq.map<_, Schema.AmbiguityMapValue> (fun a ->
+                let a = encode a
+                { Mappings = mappings a.Name; Value = a.Value })
+            |> Seq.toArray }

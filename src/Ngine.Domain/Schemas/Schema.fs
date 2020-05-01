@@ -30,3 +30,20 @@ module Schema =
         Optimizer: string
         Ambiguities: Ambiguity []
     }
+
+    [<CLIMutable>]
+    type AmbiguityMapRecord = {
+        Name: LayerId
+        Prop: string
+    }
+        
+    [<CLIMutable>]
+    type AmbiguityMapValue = {
+        Value: string
+        Mappings: AmbiguityMapRecord[]
+    }
+        
+    [<CLIMutable>]
+    type AmbiguityMapProduct = {
+        Ambiguities: AmbiguityMapValue[]
+    }

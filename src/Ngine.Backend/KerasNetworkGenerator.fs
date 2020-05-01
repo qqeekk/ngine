@@ -37,7 +37,8 @@ type KerasNetworkGenerator(settings: KerasExecutionOptions) =
         do printfn "Start conversion using keras.NET..."
         
         // Generate model than save immediately
-        NetworkConverter.keras definition |> saveToFile
+        let model, ambiguities = NetworkConverter.keras definition
+        saveToFile model, ambiguities
 
     let instantiate filePath =
         new KerasNetwork(settings, filePath) :> INetwork

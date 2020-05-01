@@ -47,4 +47,4 @@ module internal NetworkConverter =
         args.["weighted_metrics"] <- null
         args.["target_tensors"] <- null
         do model.InvokeMethod("compile", args) |> ignore
-        model
+        model, AmbiguityConverter.keras network

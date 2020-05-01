@@ -26,7 +26,13 @@ namespace Ngine.CommandLine.Infrastructure
                 .WithNamingConvention(HyphenatedNamingConvention.Instance)
                 .Build();
 
+            var serializer = new SerializerBuilder()
+                .WithTypeConverter(new LayerIdYamlConverter())
+                .WithNamingConvention(HyphenatedNamingConvention.Instance)
+                .Build();
+
             builder.RegisterInstance(deserializer);
+            builder.RegisterInstance(serializer);
             builder.RegisterInstance(LossConverter.instance);
             builder.RegisterInstance(ActivatorConverter.instance);
             builder.RegisterInstance(OptimizerConverter.instance);

@@ -69,14 +69,13 @@ def process_multi_df_cols(type, start, end):
         return lambda _, df, train, test: convert_df_cols_to_continuous(train, test, get_index_range(df))
     
     else:
-        def unsqueeze_images(shape, df, dataset):
+        def unsqueeze_images(shape, df, train, test):
             indices = get_index_range(df)
 
             print("[DEBUG] columns {} of {} images".format(indices, shape))
-            return [v.reshape(*shape) for v in dataset[indices].values]
+            return [v.reshape(*shape) for v in train[indices].values], [v.reshape(*shape) for v in test[indices].values]
 
-        return lambda shape, df, train, test: \
-            (unsqueeze_images(shape, df, train), unsqueeze_images(shape, df, test))
+        return lambda shape, df, train, test: unsqueeze_images(shape, df, train, test)
 
 
 def process_image(shape, image):
@@ -131,7 +130,7 @@ def parse_prop(input_or_head, id, prop, aliases):
         else:
             process_multi_col(mappings, is_file, obj["type"], obj["start"], obj["last"])
 
-        print(obj)
+        # print(obj)
     else:
         raise Exception("Input {} does not match the pattern {}".format(prop, prop_regex))
 
@@ -156,9 +155,6 @@ def train(args):
     print("==== summary ====")
     m.summary()
 
-    print("==== inputs ====", [i.shape[1:] for i in m.inputs])
-    print("==== outputs ====", [i.shape[1:] for i in m.outputs])
-
     try:
         mappings = yaml.full_load(args.mappings)
         aliases = traverse_file_aliases(mappings['files'])
@@ -171,8 +167,8 @@ def train(args):
             for prop in output:
                 parse_prop(False, output_id, prop, aliases)
 
-        print("==== mappings ====")
-        print("[DEBUG]", mappings_by_file_name)
+        #print("==== mappings ====")
+        #print("[DEBUG]", mappings_by_file_name)
 
         # create file-dataset mappings
         datasets_by_file_name = dict()
@@ -245,7 +241,7 @@ def train(args):
 
 
 def main(args):
-    print("python worker started...")
+    # print("python worker started...")
     top_level = argparse.ArgumentParser(add_help=True)
     subparsers = top_level.add_subparsers()
 

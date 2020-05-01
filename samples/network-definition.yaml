@@ -1,5 +1,3 @@
-#name: LeNet 5
-
 layers:
   -
     layer-id: 1-1
@@ -32,7 +30,7 @@ layers:
   -
     layer-id: 8-1/7-1
     type: conv2D
-    props: ?(8-1-kernel_size):[5x5] # ref $.ambiguities
+    props: ?(8-1-filters_amount):[5x5]
   -
     layer-id: 9-1/8-1
     type: activation
@@ -43,7 +41,7 @@ layers:
   -
     layer-id: 11-1/10-1
     type: dense
-    props: ?(11-1-units) # any units number from 64 to 84 with step 2
+    props: ?(11-1-units)
   -
     layer-id: 12-1/11-1
     type: activation
@@ -62,12 +60,9 @@ heads:
 
 optimizer: sgd(0.01), momentum=0.5
 
-# metrics:
-#   - accuracy
-
 ambiguities:
   - 
-    name: 8-1-kernel_size
+    name: 8-1-filters_amount
     value: '[3:5:1]' #5
   - 
     name: 5-1-kernel_size

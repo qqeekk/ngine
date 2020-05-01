@@ -355,24 +355,24 @@ module private PoolingEncoder =
             |> encode m3
 
 module private ConcatenationEncoder =
-    let private m = {| csv = CommaSeparatedValuesEncoder.encoder LayerIdEncoder.encoder |}
+    let private m = {| layers = CommaSeparatedValuesEncoder.encoder LayerIdEncoder.encoder |}
 
     let private stringify (p:Printer) =
-        p.[nameof m.csv]
+        p.[nameof m.layers]
 
     let private regex =
         (seq {
-            nameof m.csv, m.csv.regex }, None)
+            nameof m.layers, m.layers.regex }, None)
         ||> eval (stringify >> regComplete)
 
     let private pretty =
         seq {
-            nameof m.csv, m.csv.pretty }
-        |> pretty Recources.Kernels_dense regex (stringify >> Regex.Unescape)
+            nameof m.layers, m.layers.pretty }
+        |> pretty Recources.Kernels_concatenation regex (stringify >> Regex.Unescape)
 
     let private decode =
         tryDecodeByRegex regex <| fun groups ->
-            m.csv.decode groups 0u (nameof m.csv)
+            m.layers.decode groups 0u (nameof m.layers)
             |> function
             | Ok ids -> Ok (ids |> Option.map (fun ids -> LayerProps.PrevLayers ids))
             | Error errors -> Error (ValuesOutOfRange (Seq.concat errors |> Seq.toArray))
@@ -380,7 +380,7 @@ module private ConcatenationEncoder =
 
     let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
     let encode (ids: LayerId []) =
-        (seq { nameof m.csv, fun _ -> m.csv.encode ids }, None)
+        (seq { nameof m.layers, fun _ -> m.layers.encode ids }, None)
         ||> eval (stringify >> Regex.Unescape)
 
 module private DropoutEncoder =

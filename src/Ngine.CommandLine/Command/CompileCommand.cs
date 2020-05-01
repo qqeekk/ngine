@@ -1,4 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Options;
+using Ngine.Backend;
 using Ngine.Backend.Converters;
 using Ngine.Domain.Execution;
 using Ngine.Domain.Schemas;
@@ -20,14 +22,17 @@ namespace Ngine.CommandLine.Command
     internal class CompileCommand
     {
         private readonly IDeserializer deserializer;
+        private readonly ISerializer serializer;
         private readonly INetworkConverter converter;
         private readonly INetworkGenerator generator;
 
         public CompileCommand(IDeserializer deserializer,
-                             INetworkConverter converter,
-                             INetworkGenerator generator)
+                              ISerializer serializer,
+                              INetworkConverter converter,
+                              INetworkGenerator generator)
         {
             this.deserializer = deserializer;
+            this.serializer = serializer;
             this.converter = converter;
             this.generator = generator;
         }
@@ -68,8 +73,17 @@ namespace Ngine.CommandLine.Command
 
                     if (!CompileOnly)
                     {
-                        var model = generator.SaveModel(result);
+                        var (model, ambiguities) = generator.SaveModel(result);
                         Console.WriteLine("Model saved to file {0}", model);
+                        
+                        if (ambiguities.Ambiguities.Length > 0)
+                        {
+                            var ambiguitiesYaml = serializer.Serialize(ambiguities);
+                            var ambiguitiesPath = Path.ChangeExtension(model, "ambiguities.yaml");
+                            File.WriteAllText(ambiguitiesPath, ambiguitiesYaml);
+
+                            Console.WriteLine("Ambiguities ({0}) saved to file {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
+                        }
                     }
                 }
                 else
