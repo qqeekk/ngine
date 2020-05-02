@@ -140,23 +140,23 @@ module AmbiguityConverter =
             | LayerProps.Sensor3D _ -> []
             | LayerProps.Convolutional2D conv ->
                 let (MaybeAmb "filters" f) = conv.Filters
-                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y) = conv.Kernel
+                let (MaybeAmb "kernel_size[0]" x, MaybeAmb "kernel_size[1]" y) = conv.Kernel
                 let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2) = conv.Strides
                 [ f; x; y; s1; s2 ] |> List.choose id
             
             | LayerProps.Pooling2D p ->
-                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y) = p.Kernel
+                let (MaybeAmb "kernel_size[0]" x, MaybeAmb "kernel_size[1]" y) = p.Kernel
                 let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2) = p.Strides
                 [ x; y; s1; s2 ] |> List.choose id
             
             | LayerProps.Convolutional3D conv ->
                 let (MaybeAmb "filters" f) = conv.Filters
-                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y, MaybeAmb "kernel[2]" z) = conv.Kernel
+                let (MaybeAmb "kernel_size[0]" x, MaybeAmb "kernel_size[1]" y, MaybeAmb "kernel_size[2]" z) = conv.Kernel
                 let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2, MaybeAmb "strides[2]" s3) = conv.Strides
                 [ f; x; y; z; s1; s2; s3 ] |> List.choose id
 
             | LayerProps.Pooling3D p ->
-                let (MaybeAmb "kernel[0]" x, MaybeAmb "kernel[1]" y, MaybeAmb "kernel[2]" z) = p.Kernel
+                let (MaybeAmb "kernel_size[0]" x, MaybeAmb "kernel_size[1]" y, MaybeAmb "kernel_size[2]" z) = p.Kernel
                 let (MaybeAmb "strides[0]" s1, MaybeAmb "strides[1]" s2, MaybeAmb "strides[2]" s3) = p.Strides
                 [ x; y; z; s1; s2; s3 ] |> List.choose id
 

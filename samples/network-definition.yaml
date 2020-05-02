@@ -63,7 +63,7 @@ optimizer: sgd(0.01), momentum=0.5
 ambiguities:
   - 
     name: 8-1-filters_amount
-    value: '[3:5:1]' #5
+    value: '[120:200:20]' #120
   - 
     name: 5-1-kernel_size
     value: '[3,5,6]' #5

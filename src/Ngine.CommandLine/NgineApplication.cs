@@ -7,6 +7,7 @@ namespace Ngine.CommandLine
     [Subcommand(typeof(TrainCommand))]
     [Subcommand(typeof(ListCommand))]
     [Subcommand(typeof(CompileCommand))]
+    [Subcommand(typeof(TuneCommand))]
     internal class NgineApplication
     {
         /// <summary>

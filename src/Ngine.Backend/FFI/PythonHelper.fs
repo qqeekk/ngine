@@ -50,7 +50,7 @@ module PythonHelper =
             
             let error = new StringBuilder()
             p.OutputDataReceived.Add(fun a -> printfn "%s" a.Data)
-            p.ErrorDataReceived.Add(fun a -> error.Append(a.Data) |> ignore)
+            p.ErrorDataReceived.Add(fun a -> error.AppendLine(a.Data) |> ignore)
         
             let _ = p.Start()
             p.BeginOutputReadLine()

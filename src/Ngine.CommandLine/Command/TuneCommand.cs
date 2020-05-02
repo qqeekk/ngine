@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Ngine.CommandLine.Command
 {
-    [Command("train")]
-    class TrainCommand
+    [Command("tune")]
+    public class TuneCommand
     {
         private readonly INetworkGenerator generator;
 
-        public TrainCommand(INetworkGenerator generator)
+        public TuneCommand(INetworkGenerator generator)
         {
             this.generator = generator;
         }
@@ -23,17 +23,22 @@ namespace Ngine.CommandLine.Command
         private string ModelPath { get; }
 
         [FileExists]
-        [Argument(1, "-m|--mappings")]
+        [Argument(1, "-a|--ambiguities")]
+        [FileExtensions(Extensions = "yaml")]
+        private string AmbiguitiesPath { get; }
+
+        [FileExists]
+        [Argument(2, "-m|--mappings")]
         [FileExtensions(Extensions = "yaml")]
         private string MappingsPath { get; }
 
-        [Argument(2, "-e|--epochs")]
+        [Argument(3, "-e|--epochs")]
         private uint Epochs { get; }
 
-        [Argument(3, "-b|--batch")]
+        [Argument(4, "-b|--batch")]
         private uint Batch { get; }
 
-        [Argument(4, "-vs|--validation-split")]
+        [Argument(5, "-vs|--validation-split")]
         private double ValidationSplit { get; }
 
         /// <summary>
@@ -42,7 +47,7 @@ namespace Ngine.CommandLine.Command
         public async Task OnExecuteAsync(CancellationToken cancellationToken)
         {
             var network = generator.Instantiate(Path.GetFullPath(ModelPath));
-            await network.Train(Path.GetFullPath(MappingsPath), Batch, Epochs, ValidationSplit, cancellationToken);
+            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Batch, Epochs, ValidationSplit, cancellationToken);
         }
     }
 }

@@ -7,13 +7,22 @@ import argparse
 import yaml, re
 import sys, os
 from itertools import *
-import keras
+from tensorflow import keras
+from kerastuner.tuners import RandomSearch
+from kerastuner.engine.hypermodel import HyperModel
+from kerastuner.engine.hyperparameters import HyperParameters
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
+
+def replace_tuple_value(tp, index, value):
+    ls = list(tp)
+    ls[index] = value
+    return tuple(ls)
+
 
 # d | d:d |: | d: | :d
 prop_regex = r"^(?P<type>(lin|cats|cons|img)):(\$(?P<ref>\w+)(\[(?P<start>\d+)?(?P<range>:(?P<last>\d+)?)?\])?)$"
@@ -135,6 +144,34 @@ def parse_prop(input_or_head, id, prop, aliases):
         raise Exception("Input {} does not match the pattern {}".format(prop, prop_regex))
 
 
+def parse_ambiguity(value, hp, name):
+    basic_list = re.match(r'\[(?P<list>\d+(,\d+)*)\]', value)
+    
+    if basic_list is not None:
+        obj = basic_list.groupdict()
+        # print(','.split(obj['list']))
+        values = [int(v) for v in obj['list'].split(',')]
+        
+        hp.Choice(name, values)
+        return
+
+    basic_range = re.match(r'\[(?P<start>\d+):(?P<end>\d+):(?P<step>\d+)\]', value)
+    if basic_range is not None:
+        obj = basic_range.groupdict()
+        hp.Int(name, int(obj['start']), int(obj['end']), step = int(obj['step']))
+        return
+
+    raise Exception('No rules were matched. Invalid ambiguity value: {}'.format(value))
+
+
+def parse_ambiguity_mapping(prop):
+    prop_match = re.match(r'(?P<prop>\w+)(\[(?P<index>\d+)\])?', prop)
+
+    if prop_match is not None:
+        obj = prop_match.groupdict()
+        return obj['prop'], int(obj['index']) if obj['index'] is not None else None
+
+
 def traverse_file_aliases(files):
     file_aliases = dict()
     for a in files:
@@ -149,6 +186,70 @@ def traverse_file_aliases(files):
     return file_aliases
 
 
+def prepare_data(m, mappings, validation_split):
+    aliases = traverse_file_aliases(mappings['files'])
+        
+    for input_id, input in enumerate(mappings['inputs']):
+        for prop in input:
+            parse_prop(True, input_id, prop, aliases)
+
+    for output_id, output in enumerate(mappings['outputs']):
+        for prop in output:
+            parse_prop(False, output_id, prop, aliases)
+
+    #print("==== mappings ====")
+    #print("[DEBUG]", mappings_by_file_name)
+
+    # create file-dataset mappings
+    datasets_by_file_name = dict()
+    for file_name in mappings_by_file_name:
+        datasets_by_file_name[file_name] = pd.read_csv(file_name, sep=",", header=None, skiprows=1, dtype=object)
+
+    # split all datasets to train and test ones
+    splits = train_test_split(*datasets_by_file_name.values(), test_size = validation_split)
+
+    # traverse splits and file-mappings to collect input-wise and output-wise datasets
+    train_test_splits_by_input_id = dict()
+    train_test_splits_by_output_id = dict()
+
+    for file_name, (trainX, testX) in zip(datasets_by_file_name.keys(), pairwise(splits)):
+
+        mappings_by_input_id = mappings_by_file_name[file_name][True]
+        for input_id in mappings_by_input_id:
+            input_shape = m.inputs[input_id].shape[1:]
+            print("[INFO] input {} shape is {}".format(input_id, input_shape))
+            
+            for mapping in mappings_by_input_id[input_id]:
+                (trainXi, testXi) = mapping(input_shape, datasets_by_file_name[file_name], trainX, testX)
+
+                (train_aggr, test_aggr) = train_test_splits_by_input_id[input_id] \
+                    if input_id in train_test_splits_by_input_id else (None, None)
+                    
+                train_test_splits_by_input_id[input_id] = (
+                    trainXi if train_aggr is None else np.hstack([train_aggr, trainXi]),
+                    testXi if test_aggr is None else np.hstack([test_aggr, testXi]))
+
+        mappings_by_output_id = mappings_by_file_name[file_name][False]
+        for output_id in mappings_by_output_id:
+            output_shape = m.outputs[output_id].shape[1:]
+            print("[INFO] output {} shape is {}".format(output_id, output_shape))
+            
+            for mapping in mappings_by_output_id[output_id]:
+                (trainXo, testXo) = mapping(output_shape, datasets_by_file_name[file_name], trainX, testX)
+
+                (train_aggr, test_aggr) = train_test_splits_by_output_id[output] \
+                    if output_id in train_test_splits_by_output_id else (None, None)
+                    
+                train_test_splits_by_output_id[output_id] = (
+                    trainXo if train_aggr is None else np.hstack([train_aggr, trainXo]),
+                    testXo if test_aggr is None else np.hstack([test_aggr, testXo]))
+
+    return train_test_splits_by_input_id, train_test_splits_by_output_id
+
+
+def get_layer_predecessors(layer):
+    return [prev.inbound_layers[0] for prev in layer._inbound_nodes]
+
 def train(args):
     m = keras.models.load_model(args.model.name)
     
@@ -157,62 +258,7 @@ def train(args):
 
     try:
         mappings = yaml.full_load(args.mappings)
-        aliases = traverse_file_aliases(mappings['files'])
-        
-        for input_id, input in enumerate(mappings['inputs']):
-            for prop in input:
-                parse_prop(True, input_id, prop, aliases)
-
-        for output_id, output in enumerate(mappings['outputs']):
-            for prop in output:
-                parse_prop(False, output_id, prop, aliases)
-
-        #print("==== mappings ====")
-        #print("[DEBUG]", mappings_by_file_name)
-
-        # create file-dataset mappings
-        datasets_by_file_name = dict()
-        for file_name in mappings_by_file_name:
-            datasets_by_file_name[file_name] = pd.read_csv(file_name, sep=",", header=None, skiprows=1, dtype=object)
-
-        # split all datasets to train and test ones
-        splits = train_test_split(*datasets_by_file_name.values(), test_size = args.validation_split)
-
-        # traverse splits and file-mappings to collect input-wise and output-wise datasets
-        train_test_splits_by_input_id = dict()
-        train_test_splits_by_output_id = dict()
-
-        for file_name, (trainX, testX) in zip(datasets_by_file_name.keys(), pairwise(splits)):
-
-            mappings_by_input_id = mappings_by_file_name[file_name][True]
-            for input_id in mappings_by_input_id:
-                input_shape = m.inputs[input_id].shape[1:]
-                print("[INFO] input {} shape is {}".format(input_id, input_shape))
-                
-                for mapping in mappings_by_input_id[input_id]:
-                    (trainXi, testXi) = mapping(input_shape, datasets_by_file_name[file_name], trainX, testX)
-
-                    (train_aggr, test_aggr) = train_test_splits_by_input_id[input_id] \
-                        if input_id in train_test_splits_by_input_id else (None, None)
-                        
-                    train_test_splits_by_input_id[input_id] = (
-                        trainXi if train_aggr is None else np.hstack([train_aggr, trainXi]),
-                        testXi if test_aggr is None else np.hstack([test_aggr, testXi]))
-
-            mappings_by_output_id = mappings_by_file_name[file_name][False]
-            for output_id in mappings_by_output_id:
-                output_shape = m.outputs[output_id].shape[1:]
-                print("[INFO] output {} shape is {}".format(output_id, output_shape))
-                
-                for mapping in mappings_by_output_id[output_id]:
-                    (trainXo, testXo) = mapping(output_shape, datasets_by_file_name[file_name], trainX, testX)
-
-                    (train_aggr, test_aggr) = train_test_splits_by_output_id[output] \
-                        if output_id in train_test_splits_by_output_id else (None, None)
-                        
-                    train_test_splits_by_output_id[output_id] = (
-                        trainXo if train_aggr is None else np.hstack([train_aggr, trainXo]),
-                        testXo if test_aggr is None else np.hstack([test_aggr, testXo]))
+        train_test_splits_by_input_id, train_test_splits_by_output_id = prepare_data(m, mappings, args.validation_split)
 
         # train model on defined inputs/outputs
         print("[INFO] training model...")
@@ -240,6 +286,102 @@ def train(args):
         raise ex
 
 
+def tune(args):
+    m = keras.models.load_model(args.model.name)
+    
+    print("==== summary ====")
+    m.summary()
+
+    try:
+        mappings = yaml.full_load(args.mappings)
+        train_test_splits_by_input_id, train_test_splits_by_output_id = prepare_data(m, mappings, args.validation_split)
+
+        ambiguities = yaml.full_load(args.ambiguities)
+        
+        # save ambiguities
+        hp = HyperParameters()
+        amb_mappings_dict = dict()
+        for i, ambiguity in enumerate(ambiguities['ambiguities']):
+            parse_ambiguity(ambiguity['value'], hp, str(i))
+
+            for mapping in ambiguity['mappings']:
+                prop, index = parse_ambiguity_mapping(mapping['prop'])
+
+                if (mapping['name'], prop) not in amb_mappings_dict:
+                    amb_mappings_dict[(mapping['name'], prop)] = []
+                
+                amb_mappings_dict[(mapping['name'], prop)].append((index, str(i)))
+
+
+        # build model
+        def build_model(params):
+
+            # update layer configurations
+            layer_map = dict()
+            for l in m.layers:
+                new_config = l.get_config()
+
+                for config_key in new_config:
+                    if (l.name, config_key) in amb_mappings_dict:
+                        
+                        for (index, mapping_key) in amb_mappings_dict[(l.name, config_key)]:
+                            if index is not None:
+                                new_config[config_key] = replace_tuple_value(new_config[config_key], index, params.get(mapping_key))
+                            else:
+                                new_config[config_key] = params.get(mapping_key)
+                    pass
+
+                config = {'config': new_config, 'class_name': l.__class__.__name__}
+                layer_map[l.name] = keras.layers.deserialize(config)
+ 
+            
+            configured_layers = dict() # name -> layer with inputs
+            def process_output(layer):
+                if layer.name in configured_layers:
+                    return configured_layers[layer.name]
+
+                if isinstance(layer, keras.layers.InputLayer):
+                    configured_layers[layer.name] = layer.input
+                    return configured_layers[layer.name]
+
+                prev = [process_output(prev) for prev in get_layer_predecessors(layer)][0]
+
+                configured_layers[layer.name] = layer_map[layer.name](prev)
+                return configured_layers[layer.name]
+
+            new_outputs = [process_output([l for l in m.layers if l.name == layer.name.split('/')[0]][0]) for layer in m.outputs]
+            
+            new_model = keras.models.Model(m.inputs, new_outputs)
+            new_model.compile(optimizer=m.optimizer, loss=m.loss, loss_weights=m.loss_weights, metrics=['accuracy'])
+            new_model.summary()
+
+            return new_model 
+
+        t = RandomSearch(
+            build_model,
+            hyperparameters=hp,
+            max_trials=5,
+            objective='val_accuracy')
+
+        t.search(
+            x = [trainXi for (trainXi, _) in train_test_splits_by_input_id.values()],
+            y = [trainXo for (trainXo, _) in train_test_splits_by_output_id.values()],
+            validation_data=(
+                [testXi for (_, testXi) in train_test_splits_by_input_id.values()],
+                [testXo for (_, testXo) in train_test_splits_by_output_id.values()]),
+            epochs = args.epochs)
+        
+        print("[INFO]", t.get_best_hyperparameters())
+
+    except yaml.YAMLError as ex:
+        print("Error in mappings file:", ex)
+
+    except Exception as ex:
+        print("[Error]", ex.__class__.__name__, ex)
+        raise ex
+
+
+
 def main(args):
     # print("python worker started...")
     top_level = argparse.ArgumentParser(add_help=True)
@@ -253,6 +395,16 @@ def main(args):
     parser_train.add_argument('batches', type=int)
     parser_train.add_argument('validation_split', type=float)
     parser_train.set_defaults(func=train)
+
+    
+    parser_train = subparsers.add_parser('tune')
+    parser_train.add_argument('model', type=argparse.FileType('r'))
+    parser_train.add_argument('ambiguities', type=argparse.FileType('r'))
+    parser_train.add_argument('mappings', type=argparse.FileType('r'))
+    parser_train.add_argument('epochs', type=int)
+    parser_train.add_argument('batches', type=int)
+    parser_train.add_argument('validation_split', type=float)
+    parser_train.set_defaults(func=tune)
 
     args = top_level.parse_args(args[1:])
     args.func(args)
