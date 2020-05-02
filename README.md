@@ -32,7 +32,7 @@
     
     обучение модели на тренировочных данных
 
-- `.\Ngine.CommandLine.exe tune -?` (подробнее)
+- `.\Ngine.CommandLine.exe tune -?` [(подробнее)](./docs/tune-cli-command.md) 
 
      полу-автоматическая настройка гиперпараметров сети 
 
