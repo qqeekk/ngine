@@ -36,6 +36,7 @@ module PythonHelper =
             PythonEngine.PythonPath <- PythonEngine.PythonPath
                 + String.Format(";{0};{0}\\Lib;{0}\\Lib\\site-packages", envPath);
 
+            Keras.Setup.UseTfKeras()
             PythonEngine.Initialize()
 
     let execute (token:CancellationToken) args =

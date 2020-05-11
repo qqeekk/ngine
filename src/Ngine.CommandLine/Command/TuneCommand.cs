@@ -35,8 +35,9 @@ namespace Ngine.CommandLine.Command
         [Argument(3, "-e|--epochs")]
         private uint Epochs { get; }
 
-        [Argument(4, "-b|--batch")]
-        private uint Batch { get; }
+
+        [Argument(4, "-t|--trials")]
+        private uint Trials { get; }
 
         [Argument(5, "-vs|--validation-split")]
         private double ValidationSplit { get; }
@@ -47,7 +48,7 @@ namespace Ngine.CommandLine.Command
         public async Task OnExecuteAsync(CancellationToken cancellationToken)
         {
             var network = generator.Instantiate(Path.GetFullPath(ModelPath));
-            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Batch, Epochs, ValidationSplit, cancellationToken);
+            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Trials, Epochs, ValidationSplit, cancellationToken);
         }
     }
 }

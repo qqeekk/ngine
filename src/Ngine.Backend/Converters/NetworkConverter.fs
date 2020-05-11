@@ -41,7 +41,7 @@ module internal NetworkConverter =
         let args = new Dictionary<string, obj>()
         args.["optimizer"] <- StringOrInstance.op_Implicit optimizer
         args.["loss"] <- losses
-        args.["metrics"] <- null
+        args.["metrics"] <- [|"accuracy"|]
         args.["loss_weights"] <- weights
         args.["sample_weight_mode"] <- null
         args.["weighted_metrics"] <- null

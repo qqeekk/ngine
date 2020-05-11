@@ -505,7 +505,7 @@ module public KernelConverter =
         | Same -> "same"
 
     let private renameLayer name (layer:BaseLayer) =
-        layer.ToPython()?name <- (LayerIdEncoder.encoder.encode name).ToPython()
+        layer.ToPython()?_name <- (LayerIdEncoder.encoder.encode name).ToPython()
         layer
 
     let private append (input:BaseLayer) (layer:BaseLayer) =
