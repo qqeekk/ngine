@@ -20,8 +20,3 @@ type KerasNetwork(settings: KerasExecutionOptions, modelPath: string) =
         member _.Train mappings batch epochs validationSplit token = 
             PythonHelper.execute token <| sprintf "train \"%s\" \"%s\" %d %d %f" 
                 modelPath mappings (int batch) (int epochs) validationSplit
-        
-        member _.Predict mappings weights token =
-            PythonHelper.execute token <| sprintf "predict \"%s\" \"%s\" \"%s\"" 
-                modelPath mappings weights
-                

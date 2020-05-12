@@ -48,7 +48,7 @@ namespace Ngine.CommandLine.Command
         public async Task OnExecuteAsync(CancellationToken cancellationToken)
         {
             var network = generator.Instantiate(Path.GetFullPath(ModelPath));
-            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Trials, Epochs, ValidationSplit, cancellationToken);
+            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Epochs, Trials, ValidationSplit, cancellationToken);
         }
     }
 }

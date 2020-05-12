@@ -20,11 +20,8 @@
     <Compile Include="Schemas\Schema.fs" />
     <Compile Include="Schemas\Conversion.fs" />
     <Compile Include="Execution\Network.fs" />
-    <Compile Include="CodeGen\CodeGen.fs" />
     <Compile Include="Services\Conversion.fsi" />
     <Compile Include="Services\Conversion.fs" />
-    <Compile Include="Services\CodeGen.fsi" />
-    <Compile Include="Services\CodeGen.fs" />
   </ItemGroup>
 
   <ItemGroup>

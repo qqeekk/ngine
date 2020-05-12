@@ -4,7 +4,6 @@ open System.Collections.Generic
 
 [<AutoOpen>]
 module Errors =
-    type InvalidActivatorSyntaxMessage = Message of string
     type PatternPropertyName = string
     
     type Pretty = {
@@ -13,14 +12,8 @@ module Errors =
         defn: string option
         deps: Pretty list }
 
-    type InvalidActivatorSyntaxInfo = {
-        Position : uint32 * uint32
-        Message : InvalidActivatorSyntaxMessage
-    }
-
     type PatternMissmatchInfo = {
         Pattern: Pretty
-        // PropertyNames: PatternPropertyName[]
     }
 
     type ValueOutOfRangeInfo = {
@@ -31,7 +24,6 @@ module Errors =
     type PropsConversionError =
         | ValuesOutOfRange of ValueOutOfRangeInfo []
         | PropsPatternMissmatch of PatternMissmatchInfo
-        //| InvalidActivatorSyntax of InvalidActivatorSyntaxInfo[]
 
     type LayerConversionError =
         | UnknownType of string
@@ -131,8 +123,10 @@ type INetworkConverter =
     abstract member Encode: Network -> Schema.Network
     abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError[]>
 
+type Ambiguity = KeyValuePair<AmbiguityVariableName, Values<uint32>> 
+
 [<Interface>]
 type IAmbiguityConverter =
-    abstract member Encode: KeyValuePair<AmbiguityVariableName, Values<uint32>> -> Schema.Ambiguity
-    abstract member Decode: Schema.Ambiguity -> Result<KeyValuePair<AmbiguityVariableName, Values<uint32>>, PropsConversionError[]>
+    abstract member Encode: Ambiguity -> Schema.Ambiguity
+    abstract member Decode: Schema.Ambiguity -> Result<Ambiguity, PropsConversionError[]>
     abstract member ListPattern: Pretty with get
