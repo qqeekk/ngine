@@ -18,8 +18,8 @@
 
   <ItemGroup>
     <Compile Include="FFI\PythonHelper.fs" />
-    <Compile Include="Converters\NetworkErrorPrettyPrinter.fs" />
     <Compile Include="Converters\PrimitiveConverter.fs" />
+    <Compile Include="Converters\NetworkErrorPrettyPrinter.fs" />
     <Compile Include="Converters\LossConverter.fs" />
     <Compile Include="Converters\ActivatorConverter.fs" />
     <Compile Include="Converters\OptimizerConverter.fs" />

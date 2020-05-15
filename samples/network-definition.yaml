@@ -30,7 +30,7 @@ layers:
   -
     layer-id: 8-1/7-1
     type: conv2D
-    props: ?(8-1-filters_amount):[5x5]
+    props: ?(8-1-filters_amount):[15x15]
   -
     layer-id: 9-1/8-1
     type: activation
