@@ -130,7 +130,9 @@ module AmbiguityConverter =
             | _ -> None
         
             function
-            | LayerProps.Activator _ -> []
+            | LayerProps.Activator1D _ -> []
+            | LayerProps.Activator2D _ -> []
+            | LayerProps.Activator3D _ -> []
             | LayerProps.Dropout _ -> []
             | LayerProps.PrevLayers _ -> []
             | LayerProps.Flatten2D -> []
@@ -196,6 +198,8 @@ module AmbiguityConverter =
                     |> Seq.collect (mappingsNonHead1D)
                     |> Seq.toList
 
+                | Empty1D -> failwith "Cannot convert network to keras: network not consistent."
+
             | D2 (lid, l) ->
                 match l with
                 | Activation2D (_, prev) -> mappingsNonHead2D prev
@@ -214,6 +218,8 @@ module AmbiguityConverter =
                     |> Seq.collect (mappingsNonHead2D)
                     |> Seq.toList
 
+                | Empty2D -> failwith "Cannot convert network to keras: network not consistent."
+
             | D3 (lid, l) ->
                 match l with
                 | Activation3D (_, prev) -> mappingsNonHead3D prev
@@ -231,6 +237,8 @@ module AmbiguityConverter =
                     prevs 
                     |> Seq.collect (mappingsNonHead3D)
                     |> Seq.toList
+
+                | Empty3D -> failwith "Cannot convert network to keras: network not consistent."
 
         let mappings name : Schema.AmbiguityMapRecord[] =
             network.Heads

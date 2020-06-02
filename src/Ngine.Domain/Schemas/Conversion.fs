@@ -13,24 +13,25 @@ module Errors =
         deps: Pretty list }
 
     type PatternMissmatchInfo = {
-        Pattern: Pretty
-    }
+        Pattern: Pretty }
 
     type ValueOutOfRangeInfo = {
         Property: PatternPropertyName
-        IndicatedValue: string
-    }
+        IndicatedValue: string }
 
     type PropsConversionError =
         | ValuesOutOfRange of ValueOutOfRangeInfo []
         | PropsPatternMissmatch of PatternMissmatchInfo
 
-    type LayerConversionError =
+    type InconsistentLayerConversionError =
         | UnknownType of string
         | InvalidAmbiguity of AmbiguityVariableName
-        | ExpectedLayerId
         | MissingLayerId of LayerId
         | PropsConversionError of PropsConversionError
+
+    type LayerConversionError =
+        | Inconsistent of InconsistentLayerConversionError
+        | ExpectedLayerId
         | PrevLayerPropsEmpty
 
     type LayerCompatibilityError =
@@ -39,26 +40,28 @@ module Errors =
 
     type LayerCompatibilityErrorInfo = {
         Layer2: Schema.Layer
-        Error: LayerCompatibilityError
-    }
+        Error: LayerCompatibilityError }
 
-    type LayerError =
+    type LayerError<'TError> =
         | LayerCompatibilityError of LayerCompatibilityErrorInfo
-        | LayerError of LayerConversionError[]
-        | AggregateLayerError of (Schema.Layer * LayerError)[]
+        | LayerError of 'TError[]
+        | AggregateLayerError of (Schema.Layer * LayerError<'TError>)[]
 
     type LossError =
         | UnknownType
 
     type HeadError =
-        | LayerError of Schema.Layer option * LayerError
+        | LayerError of Schema.Layer option * LayerError<LayerConversionError>
         | LossError of LossError
         | HeadFunctionError of PropsConversionError
 
-    type NetworkConversionError =
-        | LayerError of Schema.Layer * LayerError
-        | OptimizerError of PropsConversionError
+    type LayerSequenceError<'TError> =
+        | LayerError of Schema.Layer * LayerError<'TError>
         | AmbiguityError of Schema.Ambiguity * PropsConversionError[]
+
+    type NetworkConversionError =
+        | LayerSequenceError of LayerSequenceError<LayerConversionError>
+        | OptimizerError of PropsConversionError
         | HeadError of Schema.Head * HeadError[]
 
 type Sensor =
@@ -77,7 +80,9 @@ type LayerProps =
     | Pooling3D of Pooling3D
     | PrevLayers of LayerId []
     | Dropout of float32
-    | Activator of Activator
+    | Activator1D of Activator
+    | Activator2D of Activator
+    | Activator3D of Activator
     | Flatten3D
     | Flatten2D
 

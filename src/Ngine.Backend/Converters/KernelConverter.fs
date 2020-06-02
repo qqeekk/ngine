@@ -1,10 +1,10 @@
 ﻿namespace Ngine.Backend.Converters
+open System
 open Ngine.Domain.Utils
 open Ngine.Domain.Schemas
 open Ngine.Domain.Schemas.Errors
 open Ngine.Backend.Resources.Properties
 open Keras
-open System
 open System.Text.RegularExpressions
 open System.Collections.Generic
 open Keras.Layers
@@ -429,19 +429,26 @@ module private FlattenEncoder =
 module private ActivationEncoder =
     let encoder (activationEncoder: IActivatorConverter) = 
         let typeNames = activationEncoder.ActivationFunctionNames |> Array.map (fun a -> a.name)
-        let propName = Recources.Kernels_activation
-
-        { pretty = {
-            name = propName
-            regex = "(other)"
-            defn = Some <| prettyPrint (sprintf "(%s)" (String.Join('|', typeNames))) propName
-            deps = activationEncoder.ActivationFunctionNames |> Array.toList }
-          decode = LayerPropsDecoder(fun func ->
-            activationEncoder.Decode func
-            |> Result.map LayerProps.Activator) }
+        
+        let createEncoder propName mapping = {
+            pretty = {
+                name = propName
+                regex = "(other)"
+                defn = Some <| prettyPrint (sprintf "(%s)" (String.Join('|', typeNames))) propName
+                deps = activationEncoder.ActivationFunctionNames |> Array.toList }
+            decode = LayerPropsDecoder(fun func ->
+                activationEncoder.Decode func
+                |> Result.map mapping) }
+        
+        {|
+            encoder1D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator1D
+            encoder2D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator2D
+            encoder3D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator3D |}
 
 module public KernelConverter =
     let create (activationEncoder: IActivatorConverter) =
+        let activatorEncoders = ActivationEncoder.encoder activationEncoder
+        
         let mappings = [|
             ConvEncoder.D3.encoder
             ConvEncoder.D2.encoder
@@ -455,7 +462,9 @@ module public KernelConverter =
             SensorEncoder.D1.encoder
             DropoutEncoder.encoder
             ConcatenationEncoder.encoder
-            ActivationEncoder.encoder activationEncoder
+            activatorEncoders.encoder1D
+            activatorEncoders.encoder2D
+            activatorEncoders.encoder3D
         |]
 
         let decode (NotNull "layer type" layerType) : LayerPropsDecoder option =
@@ -465,7 +474,9 @@ module public KernelConverter =
                 else None)
 
         let encode = function
-            | LayerProps.Activator a -> activationEncoder.Encode a
+            | LayerProps.Activator1D a
+            | LayerProps.Activator2D a
+            | LayerProps.Activator3D a -> activationEncoder.Encode a
             | LayerProps.PrevLayers ids -> ConcatenationEncoder.encode ids
             | LayerProps.Convolutional2D conv -> ConvEncoder.D2.encode conv
             | LayerProps.Convolutional3D conv -> ConvEncoder.D3.encode conv
@@ -479,7 +490,9 @@ module public KernelConverter =
             | LayerProps.Sensor1D s -> SensorEncoder.D1.encode s
 
         let encodeLayerType = function
-            | LayerProps.Activator _ -> (ActivationEncoder.encoder activationEncoder).pretty.name
+            | LayerProps.Activator1D _ -> (ActivationEncoder.encoder activationEncoder).encoder1D.pretty.name
+            | LayerProps.Activator2D _ -> (ActivationEncoder.encoder activationEncoder).encoder2D.pretty.name
+            | LayerProps.Activator3D _ -> (ActivationEncoder.encoder activationEncoder).encoder3D.pretty.name
             | LayerProps.PrevLayers _ -> ConcatenationEncoder.encoder.pretty.name
             | LayerProps.Convolutional2D _ -> ConvEncoder.D2.encoder.pretty.name
             | LayerProps.Convolutional3D _ -> ConvEncoder.D3.encoder.pretty.name

@@ -19,7 +19,7 @@ module NetworkErrorPrettyPrinter =
         let uniqueLayerErrors =
             errors
             |> Seq.collect (function
-            | LayerError (l, e) ->
+            | LayerSequenceError (LayerError (l, e)) ->
                 match e with
                 | LayerError.LayerError e -> [l, LayerError.LayerError e]
                 | LayerCompatibilityError e -> [l, LayerCompatibilityError e]
@@ -42,22 +42,22 @@ module NetworkErrorPrettyPrinter =
                 
             | LayerError.LayerError es -> 
                 es |> Seq.map (function
-                    | LayerConversionError.UnknownType ty ->
+                    | LayerConversionError.Inconsistent (InconsistentLayerConversionError.UnknownType ty) ->
                         String.Format("Unknown type for layer {0} - {1}", LayerIdEncoder.encoder.encode id, ty), []
                     
-                    | LayerConversionError.InvalidAmbiguity (Variable var) ->
+                    | LayerConversionError.Inconsistent (InconsistentLayerConversionError.InvalidAmbiguity (Variable var)) ->
                         String.Format("Invalid variable reference: {0}", var), []
 
-                    | LayerConversionError.ExpectedLayerId ->
+                    | ExpectedLayerId ->
                         String.Format("Layer {0} not connected with any layer", LayerIdEncoder.encoder.encode id), []
                     
-                    | LayerConversionError.MissingLayerId lid ->
+                    | LayerConversionError.Inconsistent (InconsistentLayerConversionError.MissingLayerId lid) ->
                         String.Format("Layer {0} not found", LayerIdEncoder.encoder.encode lid), []
                     
                     | LayerConversionError.PrevLayerPropsEmpty ->
                         String.Format("Layer {0} props not filled with concatenated layer ids not found", LayerIdEncoder.encoder.encode id), []
                     
-                    | LayerConversionError.PropsConversionError pe ->
+                    | LayerConversionError.Inconsistent (InconsistentLayerConversionError.PropsConversionError pe) ->
                         String.Format("Error while converting props for layer {0}", LayerIdEncoder.encoder.encode id),
                         [Node (prettifyPropsConversionError pe)]
                 )
@@ -70,10 +70,10 @@ module NetworkErrorPrettyPrinter =
 
         errors
         |> Seq.collect (function
-        | AmbiguityError (amb, es) ->
+        | LayerSequenceError (AmbiguityError (amb, es)) ->
             seq { String.Format("Error converting ambiguity {0} - {1}", amb.Name, amb.Value), es |> Seq.map (prettifyPropsConversionError >> Node) |> Seq.toList }
             
-        | LayerError (l, e) -> prettifyLayerError (l,e)
+        | LayerSequenceError (LayerError (l, e)) -> prettifyLayerError (l,e)
         | HeadError (h, es) ->
             es |> Seq.collect (function
             | HeadError.LayerError (Some l, e) -> 

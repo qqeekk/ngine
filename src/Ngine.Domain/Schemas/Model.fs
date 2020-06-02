@@ -110,6 +110,7 @@ type Layer3D =
     | Conv3D of Convolutional3D * NonHeadLayer3D
     | Pooling3D of Pooling3D * NonHeadLayer3D
     | Activation3D of Activator * NonHeadLayer3D
+    | Empty3D
 
 and NonHeadLayer3D =
     | Layer3D of LayerId * Layer3D
@@ -121,6 +122,7 @@ type Layer2D =
     | Conv2D of Convolutional2D * NonHeadLayer2D
     | Pooling2D of Pooling2D * NonHeadLayer2D
     | Activation2D of Activator * NonHeadLayer2D
+    | Empty2D
 
 and NonHeadLayer2D =
     | Layer2D of LayerId * Layer2D
@@ -134,6 +136,7 @@ type Layer1D =
     | Dropout of float32 * NonHeadLayer1D
     | Dense of Dense * NonHeadLayer1D
     | Activation1D of Activator * NonHeadLayer1D
+    | Empty1D
 
 and NonHeadLayer1D =
     | Layer1D of LayerId * Layer1D
