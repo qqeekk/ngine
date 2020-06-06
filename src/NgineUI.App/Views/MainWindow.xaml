@@ -1,0 +1,49 @@
+﻿<Window x:Class="NgineUI.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NgineUI.App"
+        xmlns:control="clr-namespace:NgineUI.App.Views.Control"
+        xmlns:network="clr-namespace:NgineUI.App.Views.Network"
+        mc:Ignorable="d"
+        Title="Ngine" Height="450" Width="800">
+    <Grid>
+        <DockPanel>
+            <control:Header Grid.ColumnSpan="2" DockPanel.Dock="Top"></control:Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="10"/>
+                    <ColumnDefinition Width="Auto"/> <!--grid splitter-->
+                    <ColumnDefinition Width="2*" MinWidth="10"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="6*" MinHeight="10"/>
+                    <RowDefinition Height="Auto"/> <!--grid splitter-->
+                    <RowDefinition Height="2*" MinHeight="10"/>
+                </Grid.RowDefinitions>
+
+                <GridSplitter Grid.Row="1" Grid.Column="2" ShowsPreview="False" Height="6" 
+                              BorderThickness="0 2" BorderBrush="Gray"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+
+                <GridSplitter Grid.RowSpan="3" Grid.Column="1" ShowsPreview="False" Width="6"
+                              BorderThickness="2 0" BorderBrush="Gray" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+
+                <Grid Grid.RowSpan="3" Background="White"></Grid>
+                <Grid Grid.Column="2" Background="White"></Grid>
+
+                <Grid Grid.Row="2" Grid.Column="2">
+                    <TabControl>
+                        <TabItem Header="Терминал">
+                            <control:ReadOnlyTerminal></control:ReadOnlyTerminal>
+                        </TabItem>
+                        <TabItem Header="Неопределенности">
+                            <network:Ambiguities></network:Ambiguities>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

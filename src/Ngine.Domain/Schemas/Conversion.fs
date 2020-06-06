@@ -127,6 +127,11 @@ type IOptimizerConverter =
 type INetworkConverter =
     abstract member Encode: Network -> Schema.Network
     abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError[]>
+    abstract member EncodeLayers: layers: Choice<Layer, Sensor>[] -> Schema.Layer[]
+    abstract member DecodeLayers:
+        layers: seq<Schema.Layer> 
+        -> ambiguities: seq<Schema.Ambiguity>
+        -> Result<Choice<Layer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]>
 
 type Ambiguity = KeyValuePair<AmbiguityVariableName, Values<uint32>> 
 

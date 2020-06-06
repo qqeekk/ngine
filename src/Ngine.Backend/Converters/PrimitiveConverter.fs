@@ -230,18 +230,18 @@ module private CommaSeparatedValuesEncoder =
         first: PrimitiveEncoder<'a, 'b>
         others: PrimitiveEncoder<'a, 'b> }
 
-    let private stringify m multiple (printer:Printer) =
+    let private stringify m multiple optional (printer:Printer) =
         let first = printer.[nameof m.first]
         let others = printer.[nameof m.others]
 
-        first + multiple (sprintf ",%s" others)
+        optional first + multiple (sprintf ",%s" others)
 
     let private regex m prefix =
         let pat = 
             (seq {
                 nameof m.first, m.first.regex
                 nameof m.others, m.others.regex }, prefix)
-            ||> eval (stringify m regMultiple)
+            ||> eval (stringify m regMultiple regOptional)
 
         regNamed pat (prefix |> Option.map (fun p -> combineGroupName p "list") |> Option.defaultValue "list")
 
@@ -249,14 +249,11 @@ module private CommaSeparatedValuesEncoder =
         seq {
             nameof m.first, m.first.pretty
             nameof m.others, m.others.pretty }
-        |> pretty (m.first.pretty.name + " array") (regex m None) (stringify m regMultiple >> Regex.Unescape)
+        |> pretty (m.first.pretty.name + " array") (regex m None) (stringify m regMultiple regOptional >> Regex.Unescape)
 
     let private encode m (ids: 'a []) =
         ids |> Seq.map (m.first.encode) |> String.concat ","
         
-        //(seq { nameof m.first, fun _ -> m.first.encode ids.[0] }, None)
-        //||> eval (stringify m id (ids.[1..] |> Array.map m.first.encode |> Some) >> Regex.Unescape)
-
     let private decode m (groups : GroupCollection) _ namePrefix =
         let elements = groups.[combineGroupName namePrefix "list"]
         let testRegex = m.first.regex "x"
@@ -643,73 +640,3 @@ module private PaddingEncoder =
             regex = regPadding
             defn = Some regPadding
             deps = [] }}
-
-
-//module private ListEncoder =
-//    type private M<'a> = {
-//        list: PrimitiveEncoder<'a [], ValueOutOfRangeInfo []>
-//        range: PrimitiveEncoder<Range<'a>, ValueOutOfRangeInfo []>
-//    }
-
-//    let private stringify m listOptional rangeOptional (printer:Printer) =
-//        let list = if listOptional then printer.[nameof m.list] else ""
-//        let range = if rangeOptional then printer.[nameof m.range] else ""
-        
-//        match listOptional, rangeOptional with
-//        | true, true -> sprintf "(%s|%s)" list range
-//        | true, false -> list
-//        | false, true -> range
-//        | false, false -> ""
-//        |> sprintf "\[%s\]"
-
-//    let private regex m = 
-//        seq { 
-//            nameof m.list, m.list.regex 
-//            nameof m.range, m.range.regex 
-//        }
-//        |> eval (stringify m true true)
-
-//    let private pretty m =
-//        seq {
-//            nameof m.list, (m.list).pretty
-//            nameof m.range, (m.range).pretty
-//        }
-//        |> pretty (sprintf "%s|%s" m.list.pretty.name m.range.pretty.name) (regex m None) (stringify m true true >> Regex.Unescape)
-
-//    let private encode m = function
-//        | List l ->
-//            (seq {
-//                nameof m.list, fun _ -> (m.list).encode l
-//                nameof m.range, fun _ -> ""
-//            }, None) ||> eval (stringify m true false)
-//        | Range r ->
-//            (seq {
-//                nameof m.list, fun _ -> ""
-//                nameof m.range, fun _ -> (m.range).encode r
-//            }, None) ||> eval (stringify m false true)
-
-//    let private decode m (groups : GroupCollection) num namePrefix =
-//        let list =
-//            combineGroupName namePrefix (nameof m.list)
-//            |> m.list.decode groups num
-    
-//        let range =
-//            combineGroupName namePrefix (nameof m.range)
-//            |> m.range.decode groups num
-
-//        ResultExtensions.zip list range
-//        |> Result.map (function
-//        | Some list, None -> Some (Values.List list)
-//        | None, Some r -> Some (Values.Range r)
-//        | _ -> None)
-//        |> Result.mapError (Array.concat)
-
-//    let encoder internalEncoder = 
-//        let m = {
-//            list = CommaSeparatedValuesEncoder.encoder internalEncoder
-//            range = RangeValuesEncoder.encoder internalEncoder }
-
-//        { regex = Some >> regex m
-//          pretty = pretty m
-//          encode = encode m
-//          decode = decode m }

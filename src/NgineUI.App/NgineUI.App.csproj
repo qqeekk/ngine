@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Icons\Run_16x.png" />
+    <None Remove="Assets\Icons\Stop_16x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Icons\Run_16x.png" />
+    <Resource Include="Assets\Icons\Stop_16x.png" />
+  </ItemGroup>
+
+</Project>
