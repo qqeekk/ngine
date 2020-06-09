@@ -104,48 +104,43 @@ type Dense = {
     Units: Ambiguous<uint32>
 }
 
+type HeadLayer<'T> =
+    | HeadLayer of LayerId * 'T
+
+type NonHeadLayer<'TLayer, 'TSensor> =
+    | Layer of HeadLayer<'TLayer>
+    | Sensor of LayerId * 'TSensor
+
 [<ReferenceEquality>]
 type Layer3D =
-    | Concatenation3D of NonHeadLayer3D[]
-    | Conv3D of Convolutional3D * NonHeadLayer3D
-    | Pooling3D of Pooling3D * NonHeadLayer3D
-    | Activation3D of Activator * NonHeadLayer3D
+    | Concatenation3D of NonHeadLayer<Layer3D, Sensor3D>[]
+    | Conv3D of Convolutional3D * NonHeadLayer<Layer3D, Sensor3D>
+    | Pooling3D of Pooling3D * NonHeadLayer<Layer3D, Sensor3D>
+    | Activation3D of Activator * NonHeadLayer<Layer3D, Sensor3D>
     | Empty3D
-
-and NonHeadLayer3D =
-    | Layer3D of LayerId * Layer3D
-    | Sensor3D of LayerId * Sensor3D
 
 [<ReferenceEquality>]
 type Layer2D =
-    | Concatenation2D of NonHeadLayer2D[]
-    | Conv2D of Convolutional2D * NonHeadLayer2D
-    | Pooling2D of Pooling2D * NonHeadLayer2D
-    | Activation2D of Activator * NonHeadLayer2D
+    | Concatenation2D of NonHeadLayer<Layer2D, Sensor2D>[]
+    | Conv2D of Convolutional2D * NonHeadLayer<Layer2D, Sensor2D>
+    | Pooling2D of Pooling2D * NonHeadLayer<Layer2D, Sensor2D>
+    | Activation2D of Activator * NonHeadLayer<Layer2D, Sensor2D>
     | Empty2D
-
-and NonHeadLayer2D =
-    | Layer2D of LayerId * Layer2D
-    | Sensor2D of LayerId * Sensor2D
 
 [<ReferenceEquality>]
 type Layer1D =
-    | Flatten3D of NonHeadLayer3D
-    | Flatten2D of NonHeadLayer2D
-    | Concatenation1D of NonHeadLayer1D[]
-    | Dropout of float32 * NonHeadLayer1D
-    | Dense of Dense * NonHeadLayer1D
-    | Activation1D of Activator * NonHeadLayer1D
+    | Flatten3D of NonHeadLayer<Layer3D, Sensor3D>
+    | Flatten2D of NonHeadLayer<Layer2D, Sensor2D>
+    | Concatenation1D of NonHeadLayer<Layer1D, Sensor1D>[]
+    | Dropout of float32 * NonHeadLayer<Layer1D, Sensor1D>
+    | Dense of Dense * NonHeadLayer<Layer1D, Sensor1D>
+    | Activation1D of Activator * NonHeadLayer<Layer1D, Sensor1D>
     | Empty1D
 
-and NonHeadLayer1D =
-    | Layer1D of LayerId * Layer1D
-    | Sensor1D of LayerId * Sensor1D
-
-type Layer =
-    | D3 of LayerId * Layer3D
-    | D2 of LayerId * Layer2D
-    | D1 of LayerId * Layer1D
+type HeadLayer =
+    | D3 of HeadLayer<Layer3D>
+    | D2 of HeadLayer<Layer2D>
+    | D1 of HeadLayer<Layer1D>
 
 type Loss =
     | MSE
@@ -153,8 +148,8 @@ type Loss =
     | CE
 
 type Head =
-    | Softmax of float32 * Loss * LayerId * Layer1D // Classification
-    | Activator of float32 * Loss * Layer * Activator // Activator conversion
+    | Softmax of float32 * Loss * HeadLayer<Layer1D> // Classification
+    | Activator of float32 * Loss * HeadLayer * Activator // Activator conversion
 
 type SGD = {
     momentum: float32

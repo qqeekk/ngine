@@ -15,12 +15,12 @@ open System.Dynamic
 open FSharp.Interop.Dynamic
 
 [<ReferenceEquality>]
-type private Encoder = {
+type Encoder = {
     pretty: Pretty
     decode: LayerPropsDecoder
 }
 
-module private DenseEncoder =
+module DenseEncoder =
     let private m = {| units = AmbiguousEncoder.encoder IntegerEncoder.encoder |}
 
     let private stringify (p:Printer) =
@@ -49,7 +49,7 @@ module private DenseEncoder =
         (seq { nameof m.units, fun _ -> m.units.encode dense.Units }, None)
         ||> eval (stringify >> Regex.Unescape)
 
-module private ConvEncoder =
+module ConvEncoder =
     type private M<'a> = {
         filters: PrimitiveEncoder<Ambiguous<uint32>, ValueOutOfRangeInfo list>
         kernel : PrimitiveEncoder<'a, ValueOutOfRangeInfo list>
@@ -146,7 +146,7 @@ module private ConvEncoder =
                 nameof m3.padding, fun _ -> m3.padding.encode conv.Padding }
             |> encode m3
 
-module private SensorEncoder =
+module SensorEncoder =
     type private M<'a> = {
         channels: PrimitiveEncoder<uint32, ValueOutOfRangeInfo>
         inputs : PrimitiveEncoder<'a, ValueOutOfRangeInfo list> }
@@ -271,7 +271,7 @@ module private SensorEncoder =
 
         let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
 
-module private PoolingEncoder =
+module PoolingEncoder =
     type private M<'a> = {
         pooling: PrimitiveEncoder<PoolingType, ValueOutOfRangeInfo>
         strides: PrimitiveEncoder<'a, ValueOutOfRangeInfo list>
@@ -354,7 +354,7 @@ module private PoolingEncoder =
                 nameof m3.kernel, fun _ -> m3.kernel.encode pooling.Kernel }
             |> encode m3
 
-module private ConcatenationEncoder =
+module ConcatenationEncoder =
     let private m = {| layers = CommaSeparatedValuesEncoder.encoder LayerIdEncoder.encoder |}
 
     let private stringify (p:Printer) =
@@ -383,7 +383,7 @@ module private ConcatenationEncoder =
         (seq { nameof m.layers, fun _ -> m.layers.encode ids }, None)
         ||> eval (stringify >> Regex.Unescape)
 
-module private DropoutEncoder =
+module DropoutEncoder =
     let private m = {| rate = FloatEncoder.encoder |}
 
     let private stringify (p:Printer) =
@@ -413,7 +413,7 @@ module private DropoutEncoder =
 
     let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
 
-module private FlattenEncoder =
+module FlattenEncoder =
     let encoder2D = {
         pretty = { name = Recources.Kernels_flatten2D; regex = ""; defn = Some "(empty)"; deps = []}
         decode = LayerPropsDecoder(fun _ -> Ok LayerProps.Flatten2D)
@@ -426,7 +426,7 @@ module private FlattenEncoder =
 
     let encoded = ""
 
-module private ActivationEncoder =
+module ActivationEncoder =
     let encoder (activationEncoder: IActivatorConverter) = 
         let typeNames = activationEncoder.ActivationFunctionNames |> Array.map (fun a -> a.name)
         
@@ -441,11 +441,11 @@ module private ActivationEncoder =
                 |> Result.map mapping) }
         
         {|
-            encoder1D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator1D
-            encoder2D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator2D
-            encoder3D = createEncoder Ngine.Backend.Resources.Properties.Recources.Kernels_activation LayerProps.Activator3D |}
+            encoder1D = createEncoder "activation1D" LayerProps.Activator1D
+            encoder2D = createEncoder "activation2D" LayerProps.Activator2D
+            encoder3D = createEncoder "activation3D" LayerProps.Activator3D |}
 
-module public KernelConverter =
+module KernelConverter =
     let create (activationEncoder: IActivatorConverter) =
         let activatorEncoders = ActivationEncoder.encoder activationEncoder
         
@@ -529,7 +529,7 @@ module public KernelConverter =
             match layer with
             | Choice1Of2 layer ->
                 match layer with
-                | D2 (layerId, Layer2D.Conv2D (conv2d, prev)) ->
+                | D2 (HeadLayer (layerId, Layer2D.Conv2D (conv2d, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
 
                     new Layers.Conv2D(
@@ -539,7 +539,7 @@ module public KernelConverter =
                         padding = kerasPadding conv2d.Padding)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (layerId, Layer3D.Conv3D (conv3d, prev)) ->
+                | D3 (HeadLayer (layerId, Layer3D.Conv3D (conv3d, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
                     
                     new Layers.Conv3D(
@@ -550,81 +550,81 @@ module public KernelConverter =
                     |> renameLayer layerId |> append prev, inputs
 
 
-                | D1 (layerId, Layer1D.Dense (d, prev)) ->
+                | D1 (HeadLayer (layerId, Layer1D.Dense (d, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert1D prev) tryGetLayer inputs ambiguities
 
                     new Layers.Dense(int (Ambiguous.value ambiguities d.Units))
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (layerId, Layer3D.Activation3D (a, prev)) ->
+                | D3 (HeadLayer (layerId, Layer3D.Activation3D (a, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
                     ActivatorConverter.keras a
                     |> renameLayer layerId |> append prev, inputs
 
-                | D2 (layerId, Layer2D.Activation2D (a, prev)) ->
+                | D2 (HeadLayer (layerId, Layer2D.Activation2D (a, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
                     ActivatorConverter.keras a
                     |> renameLayer layerId |> append prev, inputs
 
-                | D1 (layerId, Layer1D.Activation1D (a, prev)) ->
+                | D1 (HeadLayer (layerId, Layer1D.Activation1D (a, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert1D prev) tryGetLayer inputs ambiguities
                     ActivatorConverter.keras a
                     |> renameLayer layerId |> append prev, inputs
 
-                | D1 (layerId, Layer1D.Dropout (p, prev)) ->
+                | D1 (HeadLayer (layerId, Layer1D.Dropout (p, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert1D prev) tryGetLayer inputs ambiguities
                     new Layers.Dropout(float p)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D1 (layerId, Layer1D.Flatten3D prev) ->
+                | D1 (HeadLayer (layerId, Layer1D.Flatten3D prev)) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
                     new Layers.Flatten()
                     |> renameLayer layerId |> append prev, inputs
 
-                | D1 (layerId, Layer1D.Flatten2D prev) ->
+                | D1 (HeadLayer (layerId, Layer1D.Flatten2D prev)) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
                     new Layers.Flatten()
                     |> renameLayer layerId |> append prev, inputs
 
-                | D2 (layerId, Layer2D.Pooling2D ({ PoolingType = Max; Kernel = k }, prev)) ->
+                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Max; Kernel = k }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
 
                     new Layers.MaxPooling2D(Vector2D.map (Ambiguous.value ambiguities >> int) k)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D2 (layerId, Layer2D.Pooling2D ({ PoolingType = Avg; Kernel = k }, prev)) ->
+                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Avg; Kernel = k }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
 
                     new Layers.AveragePooling2D(Vector2D.map (Ambiguous.value ambiguities >> int) k)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (layerId, Layer3D.Pooling3D ({ PoolingType = Max; Kernel = k }, prev)) ->
+                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Max; Kernel = k }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
 
                     new Layers.MaxPooling3D(Vector3D.map (Ambiguous.value ambiguities >> int) k)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (layerId, Layer3D.Pooling3D ({ PoolingType = Avg; Kernel = k }, prev)) ->
+                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Avg; Kernel = k }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
 
                     new Layers.AveragePooling3D(Vector3D.map (Ambiguous.value ambiguities >> int) k)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (layerId, Layer3D.Concatenation3D prevs) ->
+                | D3 (HeadLayer (layerId, Layer3D.Concatenation3D prevs)) ->
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities)
 
                     new Layers.Concatenate(layers)
                     |> renameLayer layerId, inputs
 
-                | D2 (layerId, Layer2D.Concatenation2D prevs) ->
+                | D2 (HeadLayer (layerId, Layer2D.Concatenation2D prevs)) ->
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities)
 
                     new Layers.Concatenate(layers)
                     |> renameLayer layerId, inputs
 
-                | D1 (layerId, Layer1D.Concatenation1D prevs) ->
+                | D1 (HeadLayer (layerId, Layer1D.Concatenation1D prevs)) ->
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert1D prev) tryGetLayer inputs ambiguities)
 

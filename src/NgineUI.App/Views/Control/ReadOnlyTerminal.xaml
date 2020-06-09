@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <RichTextBox IsReadOnly="True" Cursor="Arrow" Background="LightGray"></RichTextBox>
+        <RichTextBox Cursor="Arrow" Background="LightGray"></RichTextBox>
     </Grid>
 </UserControl>

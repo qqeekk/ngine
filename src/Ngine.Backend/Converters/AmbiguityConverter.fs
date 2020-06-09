@@ -168,20 +168,20 @@ module AmbiguityConverter =
 
         let rec mappings name l : Schema.AmbiguityMapRecord list =
             let mappingsNonHead3D = function
-            | Layer3D (prevId, prev) -> mappings name (D3 (prevId, prev))
-            | Sensor3D _ -> []
+            | Layer prev -> mappings name (D3 prev)
+            | Sensor _ -> []
 
             let mappingsNonHead2D = function
-            | Layer2D (prevId, prev) -> mappings name (D2 (prevId, prev))
-            | Sensor2D _ -> []
+            | Layer prev -> mappings name (D2 prev)
+            | Sensor _ -> []
 
             let mappingsNonHead1D = function
-            | Layer1D (prevId, prev) -> mappings name (D1 (prevId, prev))
-            | Sensor1D _ -> []
+            | Layer prev -> mappings name (D1 prev)
+            | Sensor _ -> []
 
 
             match l with
-            | D1 (lid, l) ->
+            | D1 (HeadLayer (lid, l)) ->
                 match l with
                 | Flatten3D prev -> mappingsNonHead3D prev
                 | Flatten2D prev -> mappingsNonHead2D prev
@@ -200,7 +200,7 @@ module AmbiguityConverter =
 
                 | Empty1D -> failwith "Cannot convert network to keras: network not consistent."
 
-            | D2 (lid, l) ->
+            | D2 (HeadLayer (lid, l)) ->
                 match l with
                 | Activation2D (_, prev) -> mappingsNonHead2D prev
                 | Conv2D (prop, prev) ->
@@ -220,7 +220,7 @@ module AmbiguityConverter =
 
                 | Empty2D -> failwith "Cannot convert network to keras: network not consistent."
 
-            | D3 (lid, l) ->
+            | D3 (HeadLayer (lid, l)) ->
                 match l with
                 | Activation3D (_, prev) -> mappingsNonHead3D prev
                 | Conv3D (prop, prev) ->
@@ -244,7 +244,7 @@ module AmbiguityConverter =
             network.Heads
             |> Seq.collect (function
                 | Head.Activator (_, _, l, _) -> mappings name l
-                | Head.Softmax (_, _, lid, l) -> mappings name (Layer.D1 (lid, l)))
+                | Head.Softmax (_, _, l) -> mappings name (D1 l))
             |> Seq.distinct
             |> Seq.toArray
 

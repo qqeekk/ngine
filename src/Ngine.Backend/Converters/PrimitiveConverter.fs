@@ -564,30 +564,34 @@ module LayerConnectionEncoder =
         decode = decode }
 
 
-module private PoolingTypeEncoder =
+module PoolingTypeEncoder =
     [<Literal>]
     let MaxPoolingType = "max"
     
     [<Literal>]
     let AvgPoolingType = "avg"
-    
-    let regPool = sprintf "(%s|%s)" AvgPoolingType MaxPoolingType
 
-    let private tryParsePoolingType name (num : Capture) =
-        match num.Value with
-        | MaxPoolingType -> Ok Max
-        | AvgPoolingType -> Ok Avg
-        | _ -> Error { 
-            Property = name
-            IndicatedValue = num.Value }
+    let values = [| MaxPoolingType; AvgPoolingType |]
 
-    let encode = function
+    let tryParsePoolingType = function
+    | MaxPoolingType -> Some Max
+    | AvgPoolingType -> Some Avg
+    | _ -> None
+
+    let private regPool = "(" + String.Join("|", values) + ")"
+
+    let private encode = function
     | Avg -> AvgPoolingType
     | Max -> MaxPoolingType
 
-    let decode (groups : GroupCollection) num name =
+    let private decode (groups : GroupCollection) num name =
         tryGetCapture groups num name
-        |> Option.map (tryParsePoolingType name)
+        |> Option.map (fun num ->
+            match tryParsePoolingType num.Value with
+            | Some ty -> Ok ty
+            | _ -> Error {
+                Property = name
+                IndicatedValue = num.Value })
         |> function
         | Some result -> Result.map Some result
         | None -> Ok None
@@ -603,30 +607,34 @@ module private PoolingTypeEncoder =
             deps = [] }}
 
 
-module private PaddingEncoder =
+module PaddingEncoder =
     [<Literal>]
     let ZeroPadding = "zero"
     
     [<Literal>]
     let SamePadding = "same"
+
+    let values = [| ZeroPadding; SamePadding |]
     
-    let regPadding = sprintf "(%s|%s)" SamePadding ZeroPadding
+    let private regPadding = "(" + String.Join("|", values) + ")"
 
-    let private tryParsePadding name (num : Capture) =
-        match num.Value with
-        | ZeroPadding -> Ok Zero
-        | SamePadding -> Ok Same
-        | _ -> Error { 
-            Property = name
-            IndicatedValue = num.Value }
+    let tryParsePadding = function
+    | ZeroPadding -> Some Zero
+    | SamePadding -> Some Same
+    | _ -> None
 
-    let encode = function
+    let private encode = function
         | Same -> SamePadding
         | Zero -> ZeroPadding
 
-    let decode (groups : GroupCollection) num name =
+    let private decode (groups : GroupCollection) num name =
         tryGetCapture groups num name
-        |> Option.map (tryParsePadding name)
+        |> Option.map (fun num ->
+            match tryParsePadding num.Value with
+            | Some ty -> Ok ty
+            | _ -> Error {
+                Property = name
+                IndicatedValue = num.Value })
         |> function
         | Some result -> Result.map Some result
         | None -> Ok None

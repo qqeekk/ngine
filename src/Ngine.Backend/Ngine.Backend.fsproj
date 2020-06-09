@@ -12,9 +12,9 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <Target Name="BuildPython" BeforeTargets="CoreCompile">
+  <!--Target Name="BuildPython" BeforeTargets="CoreCompile">
     <MsBuild Projects="..\Ngine.Backend.Python\Ngine.Backend.Python.pyproj" />
-  </Target>
+  </Target-->
 
   <ItemGroup>
     <Compile Include="FFI\PythonHelper.fs" />
@@ -41,5 +41,5 @@
     <ProjectReference Include="..\Ngine.Backend.Resources\Ngine.Backend.Resources.csproj" />
     <ProjectReference Include="..\Ngine.Domain\Ngine.Domain.fsproj" />
   </ItemGroup>
-  
+
 </Project>

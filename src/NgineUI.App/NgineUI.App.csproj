@@ -20,4 +20,16 @@
     <Resource Include="Assets\Icons\Stop_16x.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\Network\Editors\AmbiguousUIntVector3DEditor.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\Network\Editors\AmbiguousUIntVector3DEditor.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
 </Project>

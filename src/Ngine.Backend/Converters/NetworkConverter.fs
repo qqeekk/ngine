@@ -10,7 +10,7 @@ module internal NetworkConverter =
     open Ngine.Domain.Schemas
 
     let internal keras network =
-        let map: Dictionary<Choice<Layer, Sensor>, Keras.Layers.BaseLayer> = Dictionary()
+        let map: Dictionary<Choice<HeadLayer, Sensor>, Keras.Layers.BaseLayer> = Dictionary()
 
         let tryGetLayerSchema layer inputs (create: unit -> BaseLayer * BaseLayer list) : (BaseLayer * BaseLayer list) =
             match map.TryGetValue layer with
@@ -27,8 +27,8 @@ module internal NetworkConverter =
                 let loss = LossConverter.keras loss
                 (p, loss, activation.Set [| layer |]), inputs
 
-            | Head.Softmax (p, loss, layerId, layer) ->
-                let layer, inputs = KernelConverter.keras (Choice1Of2 <| D1 (layerId, layer)) tryGetLayerSchema inputs (network.Ambiguities)
+            | Head.Softmax (p, loss, layer) ->
+                let layer, inputs = KernelConverter.keras (Choice1Of2 <| D1 layer) tryGetLayerSchema inputs (network.Ambiguities)
                 let activation = ActivatorConverter.kerasHeadActivation (HeadFunction.Softmax)
                 let loss = LossConverter.keras loss
                 

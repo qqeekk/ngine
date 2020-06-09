@@ -7,25 +7,28 @@ open System
 module public NetworkConverters =
 
     let convert3D = function
-        | Layer3D (id, layer) -> Choice1Of2 (D3 (id, layer))
-        | NonHeadLayer3D.Sensor3D (id, sensor) -> Choice2Of2 (Sensor.Sensor3D (id, sensor))
+        | Layer l -> Choice1Of2 (D3 l)
+        | NonHeadLayer.Sensor (id, sensor) -> Choice2Of2 (Sensor.Sensor3D (id, sensor))
 
     let convert2D = function
-        | Layer2D (id, layer) -> Choice1Of2 (D2 (id, layer))
-        | NonHeadLayer2D.Sensor2D (id, sensor) -> Choice2Of2 (Sensor.Sensor2D (id, sensor))
+        | Layer l -> Choice1Of2 (D2 l)
+        | NonHeadLayer.Sensor (id, sensor) -> Choice2Of2 (Sensor.Sensor2D (id, sensor))
 
     let convert1D = function
-        | Layer1D (id, layer) -> Choice1Of2 (D1 (id, layer))
-        | NonHeadLayer1D.Sensor1D (id, sensor) -> Choice2Of2 (Sensor.Sensor1D (id, sensor))
+        | Layer l -> Choice1Of2 (D1 l)
+        | NonHeadLayer.Sensor (id, sensor) -> Choice2Of2 (Sensor.Sensor1D (id, sensor))
 
+    let getLayerId = function
+        | Layer (HeadLayer (id, _))
+        | NonHeadLayer.Sensor (id, _) -> id
 
     let create (NotNull "props converter" propsConverter : ILayerPropsConverter)
                (NotNull "loss converter" lossConverter : ILossConverter)
                (NotNull "optimizer converter" optimizerConverter : IOptimizerConverter)
                (NotNull "ambiguity converter" ambiguityConverter : IAmbiguityConverter) =
 
-        let encodeLayers (layers: Choice<Layer, Sensor>[]) = 
-            let map: Dictionary<Choice<Layer, Sensor>, Schema.Layer option> = Dictionary()
+        let encodeLayers (layers: Choice<HeadLayer, Sensor>[]) = 
+            let map: Dictionary<Choice<HeadLayer, Sensor>, Schema.Layer option> = Dictionary()
             
             let tryGetLayerSchema layer (create: unit -> _) : _ =
                 match map.TryGetValue layer with
@@ -46,7 +49,7 @@ module public NetworkConverters =
             
                 createSchema (layerId, None) (PrevLayers prevLayers)
             
-            let rec encode (NotNull "layer" layer: Choice<Layer, Sensor>) : Schema.Layer option =
+            let rec encode (NotNull "layer" layer: Choice<HeadLayer, Sensor>) : Schema.Layer option =
                 let encodeLayer prev props layerId =
                     let prevId = encode prev |> Option.map (fun { LayerId = (prevId, _) } -> prevId)
                     createSchema (layerId, prevId) props
@@ -67,51 +70,51 @@ module public NetworkConverters =
                     match layer with
                     | Choice1Of2 layer ->
                         match layer with
-                        | D3 (layerId, Concatenation3D layers) ->
+                        | D3 (HeadLayer (layerId, Concatenation3D layers)) ->
                             concatenate (processConcatenatedLayers3D) layerId layers |> Some
             
-                        | D3 (layerId, Layer3D.Conv3D (conv, prev)) ->
+                        | D3 (HeadLayer (layerId, Layer3D.Conv3D (conv, prev))) ->
                             convert3D prev (LayerProps.Convolutional3D conv) layerId |> Some
             
-                        | D3 (layerId, Layer3D.Pooling3D (poling, prev)) ->
+                        | D3 (HeadLayer (layerId, Layer3D.Pooling3D (poling, prev))) ->
                             convert3D prev (LayerProps.Pooling3D poling) layerId |> Some
             
-                        | D3 (layerId, Layer3D.Activation3D (activator, prev)) ->
+                        | D3 (HeadLayer (layerId, Layer3D.Activation3D (activator, prev))) ->
                             convert3D prev (LayerProps.Activator3D activator) layerId |> Some
             
-                        | D2 (layerId, Concatenation2D layers) ->
+                        | D2 (HeadLayer (layerId, Concatenation2D layers)) ->
                             concatenate (processConcatenatedLayers2D) layerId layers |> Some
             
-                        | D2 (layerId, Layer2D.Conv2D (conv, prev)) ->
+                        | D2 (HeadLayer (layerId, Layer2D.Conv2D (conv, prev))) ->
                             convert2D prev (LayerProps.Convolutional2D conv) layerId |> Some
             
-                        | D2 (layerId, Layer2D.Pooling2D (poling, prev)) ->
+                        | D2 (HeadLayer (layerId, Layer2D.Pooling2D (poling, prev))) ->
                             convert2D prev (LayerProps.Pooling2D poling) layerId |> Some
             
-                        | D2 (layerId, Layer2D.Activation2D (activator, prev)) ->
+                        | D2 (HeadLayer (layerId, Layer2D.Activation2D (activator, prev))) ->
                             convert2D prev (LayerProps.Activator2D activator) layerId |> Some
             
-                        | D1 (layerId, Layer1D.Flatten3D layer) ->
+                        | D1 (HeadLayer (layerId, Layer1D.Flatten3D layer)) ->
                             convert3D layer (LayerProps.Flatten3D) layerId |> Some
             
-                        | D1 (layerId, Layer1D.Flatten2D layer) ->
+                        | D1 (HeadLayer (layerId, Layer1D.Flatten2D layer)) ->
                             convert2D layer (LayerProps.Flatten2D) layerId |> Some
             
-                        | D1 (layerId, Layer1D.Dense (dense, layer)) ->
+                        | D1 (HeadLayer (layerId, Layer1D.Dense (dense, layer))) ->
                             convert1D layer (LayerProps.Dense dense) layerId |> Some
             
-                        | D1 (layerId, Layer1D.Activation1D (activator, layer)) ->
+                        | D1 (HeadLayer (layerId, Layer1D.Activation1D (activator, layer))) ->
                             convert1D layer (LayerProps.Activator1D activator) layerId |> Some
             
-                        | D1 (layerId, Layer1D.Dropout (probability, prev)) ->
+                        | D1 (HeadLayer (layerId, Layer1D.Dropout (probability, prev))) ->
                             convert1D prev (LayerProps.Dropout probability) layerId |> Some
             
-                        | D1 (layerId, Concatenation1D layers) ->
+                        | D1 (HeadLayer (layerId, Concatenation1D layers)) ->
                             concatenate (processConcatenatedLayers1D) layerId layers |> Some
                         
-                        | D3 (_, Empty3D)
-                        | D2 (_, Empty2D)
-                        | D1 (_, Empty1D) -> None
+                        | D3 (HeadLayer (_, Empty3D))
+                        | D2 (HeadLayer (_, Empty2D))
+                        | D1 (HeadLayer (_, Empty1D)) -> None
 
                     | Choice2Of2 sensor ->
                         match sensor with
@@ -133,19 +136,21 @@ module public NetworkConverters =
                 entity.Heads
                 |> Array.map (Choice1Of2 << function
                     | Head.Activator (_, _, layer, _) -> layer
-                    | Head.Softmax (_, _, layerId, layer) -> D1 (layerId, layer))
+                    | Head.Softmax (_, _, layer) -> D1 layer)
                 |> encodeLayers
 
             let heads : Schema.Head[]=
                 entity.Heads
                 |> Array.map (function
-                    | Head.Activator (lossWeight, loss, (D1 (layerId, _) | D2 (layerId, _) | D3 (layerId, _)), activator) -> {
+                    | Head.Activator (lossWeight, loss, D1 (HeadLayer (layerId, _)), activator)
+                    | Head.Activator (lossWeight, loss, D2 (HeadLayer (layerId, _)), activator)
+                    | Head.Activator (lossWeight, loss, D3 (HeadLayer (layerId, _)), activator) -> {
                         LayerId = layerId
                         Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Activator activator)
                         Loss = lossConverter.EncodeLoss loss
                         LossWeight = lossWeight }
 
-                    | Head.Softmax (lossWeight, loss, layerId, _) -> {
+                    | Head.Softmax (lossWeight, loss, (HeadLayer (layerId, _))) -> {
                         LayerId = layerId
                         Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Softmax)
                         Loss = lossConverter.EncodeLoss loss
@@ -160,7 +165,7 @@ module public NetworkConverters =
 
         let decodeLayers (layers: seq<Schema.Layer>)
                          (ambiguities: seq<Schema.Ambiguity>)
-                         : Result<Choice<Layer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]> =
+                         : Result<Choice<HeadLayer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]> =
             let ambiguities' =
                 ambiguities
                 |> Seq.map (fun amb ->
@@ -193,7 +198,7 @@ module public NetworkConverters =
             match ResultExtensions.zip ambiguities' idmapPopulatingResult with
             | Error errors -> Error (Array.concat errors)
             | Ok (ambiguities, _) ->
-                let map: Dictionary<Schema.Layer, Result<Choice<Layer, Sensor>, Schema.Layer * LayerError<InconsistentLayerConversionError>>> = Dictionary()
+                let map: Dictionary<Schema.Layer, Result<Choice<HeadLayer, Sensor>, Schema.Layer * LayerError<InconsistentLayerConversionError>>> = Dictionary()
                 let tryGetLayerSchema layer (create: unit -> Result<_, _>) =
                     match map.TryGetValue layer with
                     | true, res -> res
@@ -212,30 +217,30 @@ module public NetworkConverters =
                     | Ambiguous.Fixed _ -> Ok ()
 
                 let processLayer3D = function
-                    | Some (Choice1Of2 (D3 (layerId, layer))) -> Some (Layer3D (layerId, layer))
-                    | Some (Choice2Of2 (Sensor.Sensor3D (layerId, sensor))) -> Some <| NonHeadLayer3D.Sensor3D (layerId, sensor)
-                    | None -> Some <| Layer3D ((0u, 0u), Empty3D)
+                    | Some (Choice1Of2 (D3 layer)) -> Some (Layer layer)
+                    | Some (Choice2Of2 (Sensor.Sensor3D (layerId, sensor))) -> Some <| NonHeadLayer.Sensor (layerId, sensor)
+                    | None -> Some <| Layer (HeadLayer ((0u, 0u), Empty3D))
                     | _ -> None
 
                 let processLayer2D = function
-                    | Some (Choice1Of2 (D2 (layerId, layer))) -> Some <| Layer2D (layerId, layer)
-                    | Some (Choice2Of2 (Sensor.Sensor2D (layerId, sensor))) -> Some <| NonHeadLayer2D.Sensor2D (layerId, sensor)
-                    | None -> Some <| Layer2D ((0u, 0u), Empty2D)
+                    | Some (Choice1Of2 (D2 layer)) -> Some (Layer layer)
+                    | Some (Choice2Of2 (Sensor.Sensor2D (layerId, sensor))) -> Some <| NonHeadLayer.Sensor (layerId, sensor)
+                    | None -> Some <| Layer (HeadLayer ((0u, 0u), Empty2D))
                     | _ -> None
 
                 let processLayer1D = function
-                    | Some (Choice1Of2 (D1 (layerId, layer))) -> Some <| Layer1D (layerId, layer)
-                    | Some (Choice2Of2 (Sensor.Sensor1D (layerId, sensor))) -> Some <| NonHeadLayer1D.Sensor1D (layerId, sensor)
-                    | None -> Some <| Layer1D ((0u, 0u), Empty1D)
+                    | Some (Choice1Of2 (D1 layer)) -> Some (Layer layer)
+                    | Some (Choice2Of2 (Sensor.Sensor1D (layerId, sensor))) -> Some <| NonHeadLayer.Sensor (layerId, sensor)
+                    | None -> Some <| Layer (HeadLayer ((0u, 0u), Empty1D))
                     | _ -> None
 
-                let rec decodeLayer (NotNull "layer schema" schema : Schema.Layer) : Result<Choice<Layer,Sensor>,_*_> =
+                let rec decodeLayer (NotNull "layer schema" schema : Schema.Layer) : Result<Choice<HeadLayer,Sensor>,_*_> =
                     let createCompatibilityError layer2 compaitibilityError =
                         schema, LayerCompatibilityError {
                             Layer2 = layer2
                             Error = compaitibilityError }
 
-                    let decode (processLayer: Choice<Layer, Sensor> option -> _) = function
+                    let decode (processLayer: Choice<HeadLayer, Sensor> option -> _) = function
                     | Some prevLayerSchema ->
                         decodeLayer prevLayerSchema
                         |> Result.bind (fun layer ->
@@ -270,13 +275,16 @@ module public NetworkConverters =
 
                         match ResultExtensions.zip prevLayerResult propsResult with
                         | Ok (prev, LayerProps.Activator1D activator) ->
-                            prev |> decode (processLayer1D >> Option.map (fun l -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Activation1D (activator, l))))
+                            prev |> decode (processLayer1D >> Option.map (fun l ->
+                                Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Activation1D (activator, l)))))
 
                         | Ok (prev, LayerProps.Activator2D activator) ->
-                            prev |> decode (processLayer2D >> Option.map (fun l -> Choice1Of2 <| D2 (fst schema.LayerId, Layer2D.Activation2D (activator, l))))
+                            prev |> decode (processLayer2D >> Option.map (fun l ->
+                                Choice1Of2 <| D2 (HeadLayer (fst schema.LayerId, Layer2D.Activation2D (activator, l)))))
 
                         | Ok (prev, LayerProps.Activator3D activator) ->
-                            prev |> decode (processLayer3D >> Option.map (fun l -> Choice1Of2 <| D3 (fst schema.LayerId, Layer3D.Activation3D (activator, l))))
+                            prev |> decode (processLayer3D >> Option.map (fun l ->
+                                Choice1Of2 <| D3 (HeadLayer (fst schema.LayerId, Layer3D.Activation3D (activator, l)))))
 
                         | Ok (prev, LayerProps.Pooling3D pooling) ->
                             let RefChecked x, RefChecked y, RefChecked z = pooling.Kernel
@@ -285,7 +293,8 @@ module public NetworkConverters =
                             ResultExtensions.aggregate [x; y; z; s1; s2; s3]
                             |> Result.mapError(fun es ->  (schema, LayerError.LayerError es))
                             |> Result.bind (fun _ ->
-                                prev |> decode (processLayer3D >> Option.map (fun l -> Choice1Of2 <| D3 (fst schema.LayerId, Layer3D.Pooling3D (pooling, l)))))
+                                prev |> decode (processLayer3D >> Option.map (fun l ->
+                                    Choice1Of2 <| D3 (HeadLayer (fst schema.LayerId, Layer3D.Pooling3D (pooling, l))))))
 
                         | Ok (prev, LayerProps.Convolutional3D conv) ->
                             let (RefChecked f) = conv.Filters
@@ -294,10 +303,12 @@ module public NetworkConverters =
 
                             ResultExtensions.aggregate [f; x; y; z; s1; s2; s3]
                             |> Result.mapError(fun es -> (schema, LayerError.LayerError es))
-                            |> Result.bind (fun _ -> prev |> decode (processLayer3D >> Option.map (fun l -> Choice1Of2 <| D3 (fst schema.LayerId, Layer3D.Conv3D (conv, l)))))
+                            |> Result.bind (fun _ -> prev |> decode (processLayer3D >> Option.map (fun l -> 
+                                Choice1Of2 <| D3 (HeadLayer (fst schema.LayerId, Layer3D.Conv3D (conv, l))))))
 
                         | Ok (prev, LayerProps.Flatten3D) ->
-                            prev |> decode (processLayer3D >> Option.map (fun l -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Flatten3D l)))
+                            prev |> decode (processLayer3D >> Option.map (fun l ->
+                                Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Flatten3D l))))
 
                         | Ok (prev, LayerProps.Pooling2D pooling) ->
                             let RefChecked x, RefChecked y = pooling.Kernel
@@ -305,7 +316,8 @@ module public NetworkConverters =
 
                             ResultExtensions.aggregate [x; y; s1; s2]
                             |> Result.mapError(fun es -> (schema, LayerError.LayerError es))
-                            |> Result.bind (fun _ -> prev |> decode (processLayer2D >> Option.map (fun l -> Choice1Of2 <| D2 (fst schema.LayerId, Layer2D.Pooling2D (pooling, l)))))
+                            |> Result.bind (fun _ -> prev |> decode (processLayer2D >> Option.map (fun l ->
+                                Choice1Of2 <| D2 (HeadLayer (fst schema.LayerId, Layer2D.Pooling2D (pooling, l))))))
 
                         | Ok (prev, LayerProps.Convolutional2D conv) ->
                             let (RefChecked f) = conv.Filters
@@ -314,18 +326,22 @@ module public NetworkConverters =
 
                             ResultExtensions.aggregate [f; x; y; s1; s2]
                             |> Result.mapError(fun es -> (schema, LayerError.LayerError es))
-                            |> Result.bind (fun _ -> prev |> decode (processLayer2D >> Option.map (fun l -> Choice1Of2 <| D2 (fst schema.LayerId, Layer2D.Conv2D (conv, l)))))
+                            |> Result.bind (fun _ -> prev |> decode (processLayer2D >> Option.map (fun l ->
+                                Choice1Of2 <| D2 (HeadLayer (fst schema.LayerId, Layer2D.Conv2D (conv, l))))))
 
                         | Ok (prev, LayerProps.Flatten2D) ->
-                            prev |> decode (processLayer2D >> Option.map (fun l -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Flatten2D l)))
+                            prev |> decode (processLayer2D >> Option.map (fun l ->
+                                Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Flatten2D l))))
 
                         | Ok (prev, LayerProps.Dense props) ->
                             ``|RefChecked|`` props.Units
                             |> Result.mapError(fun es ->  (schema, LayerError.LayerError [| es |]))
-                            |> Result.bind (fun _ -> prev |> decode (processLayer1D >> Option.map (fun l -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Dense(props, l)))))
+                            |> Result.bind (fun _ -> prev |> decode (processLayer1D >> Option.map (fun l ->
+                                Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Dense(props, l))))))
 
                         | Ok (prev, LayerProps.Dropout prob) ->
-                            prev |> decode (processLayer1D >> Option.map (fun l -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Dropout(prob, l))))
+                            prev |> decode (processLayer1D >> Option.map (fun l ->
+                                Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Dropout(prob, l)))))
 
                         | Ok (_, LayerProps.PrevLayers ids) ->
                             match ids |> Seq.map (findLayer) |> List.ofSeq with
@@ -342,43 +358,47 @@ module public NetworkConverters =
                                 | Some sample ->
                                     match sample with
                                     | Choice1Of2 (D3 _) | Choice2Of2 (Sensor.Sensor3D _) ->
-                                        decodeConcatenation processLayer3D (fun layers -> Choice1Of2 <| D3 (fst schema.LayerId, Layer3D.Concatenation3D layers)) layers
+                                        decodeConcatenation processLayer3D (fun layers ->
+                                            Choice1Of2 <| D3 (HeadLayer (fst schema.LayerId, Layer3D.Concatenation3D layers))) layers
 
                                     | Choice1Of2 (D2 _) | Choice2Of2 (Sensor.Sensor2D _) ->
-                                        decodeConcatenation processLayer2D (fun layers -> Choice1Of2 <| D2 (fst schema.LayerId, Layer2D.Concatenation2D layers)) layers
+                                        decodeConcatenation processLayer2D (fun layers ->
+                                            Choice1Of2 <| D2 (HeadLayer (fst schema.LayerId, Layer2D.Concatenation2D layers))) layers
 
                                     | Choice1Of2 (D1 _) | Choice2Of2 (Sensor.Sensor1D _) ->
-                                        decodeConcatenation processLayer1D (fun layers -> Choice1Of2 <| D1 (fst schema.LayerId, Layer1D.Concatenation1D layers)) layers
+                                        decodeConcatenation processLayer1D (fun layers ->
+                                            Choice1Of2 <| D1 (HeadLayer (fst schema.LayerId, Layer1D.Concatenation1D layers))) layers
                                 | None ->
                                     // should return aggregate error
-                                    decodeConcatenation processLayer3D (fun layers -> Choice1Of2 <| D3 (fst schema.LayerId, Layer3D.Concatenation3D layers)) layers
+                                    decodeConcatenation processLayer3D (fun layers ->
+                                        Choice1Of2 <| D3 (HeadLayer (fst schema.LayerId, Layer3D.Concatenation3D layers))) layers
 
                         | Ok (_, LayerProps.Sensor3D sensor) -> Ok <| Choice2Of2 (Sensor.Sensor3D (fst schema.LayerId, sensor))
                         | Ok (_, LayerProps.Sensor2D sensor) -> Ok <| Choice2Of2 (Sensor.Sensor2D (fst schema.LayerId, sensor))
                         | Ok (_, LayerProps.Sensor1D sensor) -> Ok <| Choice2Of2 (Sensor.Sensor1D (fst schema.LayerId, sensor))
                         | Error errors -> Error (schema, LayerError.LayerError (List.toArray errors))
 
-                let rec containsEntry (searchSpace: Choice<Layer, Sensor> seq) (entry: Choice<Layer, Sensor>) : bool =
-                    let rec isSubset (entry: Choice<Layer, Sensor>) (super: Choice<Layer, Sensor>) : bool =
+                let rec containsEntry (searchSpace: Choice<HeadLayer, Sensor> seq) (entry: Choice<HeadLayer, Sensor>) : bool =
+                    let rec isSubset (entry: Choice<HeadLayer, Sensor>) (super: Choice<HeadLayer, Sensor>) : bool =
                         if super = entry then true else
                         match super with
-                        | Choice1Of2 (D1 (_, Layer1D.Activation1D(_, prev)))
-                        | Choice1Of2 (D1 (_, Layer1D.Dropout(_, prev)))
-                        | Choice1Of2 (D1 (_, Layer1D.Dense(_, prev))) -> isSubset entry (convert1D prev)
-                        | Choice1Of2 (D1 (_, Layer1D.Flatten2D prev))
-                        | Choice1Of2 (D2 (_, Layer2D.Conv2D (_, prev)))
-                        | Choice1Of2 (D2 (_, Layer2D.Pooling2D (_, prev)))
-                        | Choice1Of2 (D2 (_, Layer2D.Activation2D (_, prev))) -> isSubset entry (convert2D prev)
-                        | Choice1Of2 (D1 (_, Layer1D.Flatten3D prev))
-                        | Choice1Of2 (D3 (_, Layer3D.Conv3D (_, prev)))
-                        | Choice1Of2 (D3 (_, Layer3D.Pooling3D (_, prev)))
-                        | Choice1Of2 (D3 (_, Layer3D.Activation3D (_, prev))) -> isSubset entry (convert3D prev)
-                        | Choice1Of2 (D1 (_, Layer1D.Concatenation1D prevs)) -> containsEntry (Seq.map convert1D prevs) entry
-                        | Choice1Of2 (D2 (_, Layer2D.Concatenation2D prevs)) -> containsEntry (Seq.map convert2D prevs) entry
-                        | Choice1Of2 (D3 (_, Layer3D.Concatenation3D prevs)) -> containsEntry (Seq.map convert3D prevs) entry
-                        | Choice1Of2 (D1 (_, Layer1D.Empty1D))
-                        | Choice1Of2 (D2 (_, Layer2D.Empty2D))
-                        | Choice1Of2 (D3 (_, Layer3D.Empty3D))
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Activation1D(_, prev))))
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Dropout(_, prev))))
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Dense(_, prev)))) -> isSubset entry (convert1D prev)
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Flatten2D prev)))
+                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Conv2D (_, prev))))
+                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Pooling2D (_, prev))))
+                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Activation2D (_, prev)))) -> isSubset entry (convert2D prev)
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Flatten3D prev)))
+                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Conv3D (_, prev))))
+                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Pooling3D (_, prev))))
+                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Activation3D (_, prev)))) -> isSubset entry (convert3D prev)
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Concatenation1D prevs))) -> containsEntry (Seq.map convert1D prevs) entry
+                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Concatenation2D prevs))) -> containsEntry (Seq.map convert2D prevs) entry
+                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Concatenation3D prevs))) -> containsEntry (Seq.map convert3D prevs) entry
+                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
+                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
+                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D)))
                         | Choice2Of2 _ -> false
 
                     Seq.exists (isSubset entry) searchSpace
@@ -405,45 +425,47 @@ module public NetworkConverters =
                 schema.Layers |> Seq.find (fun l -> fst l.LayerId = id)
 
             let rec isLayerConsistent pid = function
-            | Choice1Of2 (D1 (lid, Layer1D.Activation1D(_, prev)))
-            | Choice1Of2 (D1 (lid, Layer1D.Dropout(_, prev)))
-            | Choice1Of2 (D1 (lid, Layer1D.Dense(_, prev))) -> isLayerConsistent lid (convert1D prev)
-            | Choice1Of2 (D1 (lid, Layer1D.Flatten2D prev))
-            | Choice1Of2 (D2 (lid, Layer2D.Conv2D (_, prev)))
-            | Choice1Of2 (D2 (lid, Layer2D.Pooling2D (_, prev)))
-            | Choice1Of2 (D2 (lid, Layer2D.Activation2D (_, prev))) -> isLayerConsistent lid (convert2D prev)
-            | Choice1Of2 (D1 (lid, Layer1D.Flatten3D prev))
-            | Choice1Of2 (D3 (lid, Layer3D.Conv3D (_, prev)))
-            | Choice1Of2 (D3 (lid, Layer3D.Pooling3D (_, prev)))
-            | Choice1Of2 (D3 (lid, Layer3D.Activation3D (_, prev))) -> isLayerConsistent lid (convert3D prev)
-            | Choice1Of2 (D1 (lid, Layer1D.Concatenation1D ([||] | [|_|])))
-            | Choice1Of2 (D2 (lid, Layer2D.Concatenation2D ([||] | [|_|])))
-            | Choice1Of2 (D3 (lid, Layer3D.Concatenation3D ([||] | [|_|]))) -> Error [| LayerError (findLayer lid, LayerError.LayerError [| PrevLayerPropsEmpty |]) |]
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Activation1D(_, prev))))
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(_, prev))))
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dense(_, prev)))) -> isLayerConsistent lid (convert1D prev)
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten2D prev)))
+            | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Conv2D (_, prev))))
+            | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Pooling2D (_, prev))))
+            | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Activation2D (_, prev)))) -> isLayerConsistent lid (convert2D prev)
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten3D prev)))
+            | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Conv3D (_, prev))))
+            | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Pooling3D (_, prev))))
+            | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Activation3D (_, prev)))) -> isLayerConsistent lid (convert3D prev)
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Concatenation1D ([||] | [|_|]))))
+            | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Concatenation2D ([||] | [|_|]))))
+            | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Concatenation3D ([||] | [|_|])))) ->
+                Error [| LayerError (findLayer lid, LayerError.LayerError [| PrevLayerPropsEmpty |]) |]
 
-            | Choice1Of2 (D1 (lid, Layer1D.Concatenation1D prevs)) ->
+            | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Concatenation1D prevs))) ->
                 prevs
                 |> Seq.map (convert1D >> isLayerConsistent lid)
                 |> ResultExtensions.aggregate
                 |> Result.map (ignore)
                 |> Result.mapError (Array.concat)
 
-            | Choice1Of2 (D2 (lid, Layer2D.Concatenation2D prevs)) ->
+            | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Concatenation2D prevs))) ->
                 prevs
                 |> Seq.map (convert2D >> isLayerConsistent lid)
                 |> ResultExtensions.aggregate
                 |> Result.map (ignore)
                 |> Result.mapError (Array.concat)
 
-            | Choice1Of2 (D3 (lid, Layer3D.Concatenation3D prevs)) ->
+            | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Concatenation3D prevs))) ->
                 prevs
                 |> Seq.map (convert3D >> isLayerConsistent lid)
                 |> ResultExtensions.aggregate
                 |> Result.map (ignore)
                 |> Result.mapError (Array.concat)
 
-            | Choice1Of2 (D1 (_, Layer1D.Empty1D))
-            | Choice1Of2 (D2 (_, Layer2D.Empty2D))
-            | Choice1Of2 (D3 (_, Layer3D.Empty3D)) -> Error [| LayerError (findLayer pid, LayerError.LayerError [| ExpectedLayerId |]) |]
+            | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
+            | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
+            | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D))) ->
+                Error [| LayerError (findLayer pid, LayerError.LayerError [| ExpectedLayerId |]) |]
             | Choice2Of2 _ -> Ok ()
 
             let rec ilce2lce = function
@@ -480,16 +502,16 @@ module public NetworkConverters =
                     let layerResult =
                         layers
                         |> Seq.tryPick (function
-                            | Choice1Of2 (D1 (lid, _) | D2 (lid, _) | D3 (lid, _))
+                            | Choice1Of2 (D1 (HeadLayer (lid, _)) | D2 (HeadLayer (lid, _)) | D3 (HeadLayer (lid, _)))
                             | Choice2Of2 (Sensor.Sensor1D (lid, _) | Sensor.Sensor2D (lid, _) | Sensor.Sensor3D (lid, _))
                                 as l when lid = headSchema.LayerId -> Some (Ok l)
                             | _ -> None)
                         |> Option.defaultValue (Error <| HeadError.LayerError (None, LayerError.LayerError [| Inconsistent (MissingLayerId headSchema.LayerId) |]))
 
                     match ResultExtensions.zip layerResult headActivationResult with
-                    | Ok (Choice1Of2 (D1 (layerId, layer)), Softmax) ->
+                    | Ok (Choice1Of2 (D1 layer), Softmax) ->
                         lossResult
-                        |> Result.map (fun loss -> Head.Softmax (headSchema.LossWeight, loss, layerId, layer))
+                        |> Result.map (fun loss -> Head.Softmax (headSchema.LossWeight, loss, layer))
                         |> Result.mapError (Array.singleton)
 
                     | Ok (Choice1Of2 layer, Activator activator) ->

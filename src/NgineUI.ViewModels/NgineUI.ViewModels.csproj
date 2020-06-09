@@ -1,15 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NodeNetwork" Version="4.2.0" />
+    <PackageReference Include="NodeNetworkToolkit" Version="4.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
+    <Folder Include="AppServices\Abstract\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ngine.Infrastructure\Ngine.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

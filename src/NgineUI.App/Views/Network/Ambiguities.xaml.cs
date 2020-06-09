@@ -1,5 +1,8 @@
-﻿using System;
+﻿using NgineUI.ViewModels.Network;
+using ReactiveUI;
+using System;
 using System.Collections.Generic;
+using System.Reactive.Disposables;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,11 +19,33 @@ namespace NgineUI.App.Views.Network
     /// <summary>
     /// Interaction logic for AmbiguitiesView.xaml
     /// </summary>
-    public partial class Ambiguities : UserControl
+    public partial class Ambiguities : IViewFor<AmbiguitiesViewModel>
     {
+        #region ViewModel
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel),
+            typeof(AmbiguitiesViewModel), typeof(Ambiguities), new PropertyMetadata(null));
+
+        public AmbiguitiesViewModel ViewModel
+        {
+            get => (AmbiguitiesViewModel)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
+
+        object IViewFor.ViewModel
+        {
+            get => ViewModel;
+            set => ViewModel = (AmbiguitiesViewModel)value;
+        }
+        #endregion
+
         public Ambiguities()
         {
             InitializeComponent();
+
+            this.WhenActivated(d =>
+            {
+                this.OneWayBind(ViewModel, vm => vm.Items, v => v.lvAmbiguities.ItemsSource).DisposeWith(d);
+            });
         }
     }
 }

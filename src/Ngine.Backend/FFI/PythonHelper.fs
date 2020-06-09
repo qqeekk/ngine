@@ -13,8 +13,6 @@ module PythonHelper =
     open Python.Runtime
     open System
 
-    let private lock = obj()
-
     let private unzipScripts target =
         //if not (File.Exists target) then
             let assembly = Assembly.GetExecutingAssembly()
