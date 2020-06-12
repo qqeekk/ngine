@@ -6,10 +6,12 @@ using NgineUI.ViewModels.Network.Nodes;
 using NodeNetwork.Toolkit.NodeList;
 using NodeNetwork.ViewModels;
 using ReactiveUI;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using static Ngine.Domain.Schemas.Schema;
+using static NodeNetwork.Toolkit.NodeList.NodeListViewModel;
 
 namespace NgineUI.ViewModels
 {
@@ -44,7 +46,7 @@ namespace NgineUI.ViewModels
         }
 
         public NetworkViewModel Network { get; } = new NetworkViewModel();
-        public NodeListViewModel NodeList { get; } = new NodeListViewModel();
+        public NodeListViewModel NodeList { get; }
         public AmbiguitiesViewModel Ambiguities { get; }
 
         public MainViewModel()
@@ -62,6 +64,19 @@ namespace NgineUI.ViewModels
             Ambiguities = new AmbiguitiesViewModel
             {
                 Items = ambiguities
+            };
+
+            NodeList = new NodeListViewModel
+            {
+                Title = "Добавить слой",
+                EmptySearchText = "Поиск...",
+                EmptyLabel = "Нет результатов, удовлетворяющих условиям поиска.",
+                StringifyDisplayMode = mode => mode switch
+                {
+                    DisplayMode.List => "список",
+                    DisplayMode.Tiles => "миниатюры",
+                    _ => throw new Exception()
+                }
             };
 
             NodeList.AddNodeType(() => new Activation1DViewModel(activatorConverter, idTracker, !InvertIfTrue(ref activation1DViewModelIsFirstLoaded)));

@@ -21,13 +21,21 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Ngine.Backend.Python", "Ngi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{CB3932DF-FD92-401F-A89E-3C89366EEA16}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NgineUI.ViewModels", "NgineUI.ViewModels\NgineUI.ViewModels.csproj", "{0B77FD9C-8078-41DD-96AF-1745EC7AC34F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NgineUI.ViewModels", "NgineUI.ViewModels\NgineUI.ViewModels.csproj", "{0B77FD9C-8078-41DD-96AF-1745EC7AC34F}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NgineUI.ViewModels.Functional", "NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj", "{E71FDB41-A75C-4DB5-A881-9D407CDA18E9}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "NgineUI.ViewModels.Functional", "NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj", "{E71FDB41-A75C-4DB5-A881-9D407CDA18E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NgineUI.App", "NgineUI.App\NgineUI.App.csproj", "{7A0141E0-52B8-4A38-994D-7B2D3B41E94E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NgineUI.App", "NgineUI.App\NgineUI.App.csproj", "{7A0141E0-52B8-4A38-994D-7B2D3B41E94E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ngine.Infrastructure", "Ngine.Infrastructure\Ngine.Infrastructure.csproj", "{E8D09810-1603-4142-AC4C-88700EC1A389}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ngine.Infrastructure", "Ngine.Infrastructure\Ngine.Infrastructure.csproj", "{E8D09810-1603-4142-AC4C-88700EC1A389}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{042D9792-4F81-4DC9-B641-BDBB56E167D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NodeNetwork", "NodeNetwork", "{F601CF11-463F-4EDB-8804-9B7EFC4B750F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NodeNetwork", "..\deps\NodeNetwork\NodeNetwork\NodeNetwork.csproj", "{9D3990EA-5CC2-45B5-AEEC-9F56E2223670}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NodeNetworkToolkit", "..\deps\NodeNetwork\NodeNetworkToolkit\NodeNetworkToolkit.csproj", "{B946D7AF-4BF5-424F-B372-060DCD37FBA3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +81,14 @@ Global
 		{E8D09810-1603-4142-AC4C-88700EC1A389}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8D09810-1603-4142-AC4C-88700EC1A389}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E8D09810-1603-4142-AC4C-88700EC1A389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D3990EA-5CC2-45B5-AEEC-9F56E2223670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D3990EA-5CC2-45B5-AEEC-9F56E2223670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D3990EA-5CC2-45B5-AEEC-9F56E2223670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D3990EA-5CC2-45B5-AEEC-9F56E2223670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B946D7AF-4BF5-424F-B372-060DCD37FBA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B946D7AF-4BF5-424F-B372-060DCD37FBA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B946D7AF-4BF5-424F-B372-060DCD37FBA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B946D7AF-4BF5-424F-B372-060DCD37FBA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,6 +102,9 @@ Global
 		{0B77FD9C-8078-41DD-96AF-1745EC7AC34F} = {CB3932DF-FD92-401F-A89E-3C89366EEA16}
 		{E71FDB41-A75C-4DB5-A881-9D407CDA18E9} = {CB3932DF-FD92-401F-A89E-3C89366EEA16}
 		{E8D09810-1603-4142-AC4C-88700EC1A389} = {CB3932DF-FD92-401F-A89E-3C89366EEA16}
+		{F601CF11-463F-4EDB-8804-9B7EFC4B750F} = {042D9792-4F81-4DC9-B641-BDBB56E167D2}
+		{9D3990EA-5CC2-45B5-AEEC-9F56E2223670} = {F601CF11-463F-4EDB-8804-9B7EFC4B750F}
+		{B946D7AF-4BF5-424F-B372-060DCD37FBA3} = {F601CF11-463F-4EDB-8804-9B7EFC4B750F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {958695C1-83CB-4034-BEEC-182A00A5199A}
