@@ -1,0 +1,3 @@
+[submodule "deps/NodeNetwork"]
+	path = deps/NodeNetwork
+	url = https://github.com/qqeekk/NodeNetwork.git
