@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Icons\InformationSymbol_16x.png" />
     <None Remove="Assets\Icons\Run_16x.png" />
     <None Remove="Assets\Icons\Stop_16x.png" />
   </ItemGroup>
@@ -16,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\Icons\InformationSymbol_16x.png" />
     <Resource Include="Assets\Icons\Run_16x.png" />
     <Resource Include="Assets\Icons\Stop_16x.png" />
   </ItemGroup>

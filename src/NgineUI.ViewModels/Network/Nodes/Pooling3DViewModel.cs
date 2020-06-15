@@ -18,12 +18,12 @@ namespace NgineUI.ViewModels.Network.Nodes
 
     public class Pooling3DViewModel : PoolingViewModelBase<Ambiguous3DTuple, Layer3D, Sensor3D>
     {
-        public Pooling3DViewModel(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, bool setId)
+        public Pooling3DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
             : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, "Pooling3D", setId)
         {
         }
 
-        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(ObservableCollection<Ambiguity> ambiguities)
+        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(ObservableCollection<string> ambiguities)
             => new AmbiguousUIntVector3DEditorViewModel(ambiguities);
 
         protected override Layer3D EvaluateOutput(Ambiguous3DTuple kernel, Ambiguous3DTuple strides, PoolingType pooling)

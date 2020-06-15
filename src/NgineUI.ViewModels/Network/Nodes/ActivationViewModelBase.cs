@@ -1,8 +1,10 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
+using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Schemas.Expressions;
 using Ngine.Domain.Services.Conversion;
+using Ngine.Domain.Utils;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
@@ -25,11 +27,18 @@ namespace NgineUI.ViewModels.Network.Nodes
             PortType port,
             string name, bool setId) : base(idTracker, NodeType.Layer, name, setId)
         {
-            var functionNames = Array.ConvertAll(activatorConverter.ActivationFunctionNames, p => p.name);
+            var defaultActivator = Ngine.Domain.Schemas.Activator.NewQuotedFunction(QuotedFunction.ReLu);
+            var activationEditor = new LookupEditorViewModel<Ngine.Domain.Schemas.Activator>(
+                    v => ResultExtensions.toOption(activatorConverter.Decode(v)),
+                    activatorConverter.Encode(defaultActivator))
+            {
+                LookupValues = Array.ConvertAll(activatorConverter.ActivationFunctionNames, p => p.defn.Value)
+            };
+
             ActivationEditor = new ValueNodeInputViewModel<string>
             {
                 Name = "Activation",
-                Editor = new ComboEditorViewModel(functionNames),
+                Editor = activationEditor,
             };
             ActivationEditor.Port.IsVisible = false;
             this.Inputs.Add(ActivationEditor); ;
@@ -46,7 +55,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             {
                 Value = Observable.CombineLatest(
                     this.WhenValueChanged(vm => vm.Id),
-                    ActivationEditor.ValueChanged.Select(v => activatorConverter.Decode(v).ResultValue.Item),
+                    ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(defaultActivator, activationEditor.SelectedValue)),
                     (id, activation) => HeadLayer<TLayer>.NewHeadLayer(id, EvaluateOutput(activation)))
             };
 
@@ -59,6 +68,6 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
-        protected abstract TLayer EvaluateOutput(QuotedFunction function);
+        protected abstract TLayer EvaluateOutput(Ngine.Domain.Schemas.Activator function);
     }
 }

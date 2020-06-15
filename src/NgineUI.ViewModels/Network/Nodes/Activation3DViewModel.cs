@@ -1,6 +1,4 @@
 ﻿using Ngine.Domain.Schemas;
-using Ngine.Domain.Schemas.Expressions;
-using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 using System;
@@ -14,10 +12,9 @@ namespace NgineUI.ViewModels.Network.Nodes
         {
         }
 
-        protected override Layer3D EvaluateOutput(QuotedFunction function)
+        protected override Layer3D EvaluateOutput(Ngine.Domain.Schemas.Activator function)
         {
-            return Layer3D.NewActivation3D(
-                Ngine.Domain.Schemas.Activator.NewQuotedFunction(function),
+            return Layer3D.NewActivation3D(function,
                 Previous.Value ?? NonHeadLayer<Layer3D, Sensor3D>.NewLayer(HeadLayer<Layer3D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer3D.Empty3D)));
         }
     }

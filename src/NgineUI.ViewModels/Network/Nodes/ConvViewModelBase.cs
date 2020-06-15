@@ -1,5 +1,6 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
+using Microsoft.FSharp.Core;
 using Ngine.Backend.Converters;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
@@ -16,7 +17,7 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public abstract class ConvViewModelBase<TVector, TLayer, TSensor> : NgineNodeViewModel
     {
-        public ValueNodeInputViewModel<AmbiguousUIntViewModel> FiltersEditor { get; }
+        public ValueNodeInputViewModel<string> FiltersEditor { get; }
         public ValueNodeInputViewModel<string> PaddingEditor { get; }
         public ValueNodeInputViewModel<TVector> KernelEditor { get; }
         public ValueNodeInputViewModel<TVector> StridesEditor { get; }
@@ -24,13 +25,14 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
-        public ConvViewModelBase(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, NodeType type, PortType port, string name, bool setId)
+        public ConvViewModelBase(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, NodeType type, PortType port, string name, bool setId)
             : base(idTracker, type, name, setId)
         {
-            FiltersEditor = new ValueNodeInputViewModel<AmbiguousUIntViewModel>
+            var filtersEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
+            FiltersEditor = new ValueNodeInputViewModel<string>
             {
                 Name = "Filters",
-                Editor = new AmbiguousUIntEditorViewModel(ambiguities),
+                Editor = filtersEditor,
             };
             FiltersEditor.Port.IsVisible = false;
             this.Inputs.Add(FiltersEditor);
@@ -75,7 +77,8 @@ namespace NgineUI.ViewModels.Network.Nodes
                     KernelEditor.ValueChanged,
                     StridesEditor.ValueChanged,
                     PaddingEditor.ValueChanged.Select(p => PaddingEncoder.tryParsePadding(p).Value),
-                    (id, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(id, EvaluateOutput(f, k, s, p)))
+                    (id, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(id,
+                        EvaluateOutput(OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, filtersEditor.SelectedValue), k, s, p)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)
@@ -87,7 +90,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
-        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<Ambiguity> ambiguities);
+        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
         protected abstract TLayer EvaluateOutput(AmbiguousUIntViewModel filters, TVector kernel, TVector strides, Padding padding);
     }
 }

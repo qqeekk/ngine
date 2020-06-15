@@ -1,32 +1,34 @@
 ﻿using NgineUI.ViewModels.Network.Editors;
+using NodeNetwork.Toolkit.ValueNode;
 using ReactiveUI;
+using System.Globalization;
 using System.Windows;
 
 namespace NgineUI.App.Views.Network.Editors
 {
     /// <summary>
-    /// Interaction logic for IntegerEditor.xaml
+    /// Interaction logic for FloatEditor.xaml
     /// </summary>
-    public partial class UIntEditor : IViewFor<UIntEditorViewModel>
+    public partial class FloatEditor : IViewFor<FloatEditorViewModel>
     {
         #region ViewModel
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel),
-            typeof(UIntEditorViewModel), typeof(UIntEditor), new PropertyMetadata(null));
+            typeof(FloatEditorViewModel), typeof(FloatEditor), new PropertyMetadata(null));
 
-        public UIntEditorViewModel ViewModel
+        public FloatEditorViewModel ViewModel
         {
-            get => (UIntEditorViewModel)GetValue(ViewModelProperty);
+            get => (FloatEditorViewModel)GetValue(ViewModelProperty);
             set => SetValue(ViewModelProperty, value);
         }
 
         object IViewFor.ViewModel
         {
             get => ViewModel;
-            set => ViewModel = (UIntEditorViewModel)value;
+            set => ViewModel = (FloatEditorViewModel)value;
         }
         #endregion
 
-        public UIntEditor()
+        public FloatEditor()
         {
             InitializeComponent();
 
@@ -39,23 +41,30 @@ namespace NgineUI.App.Views.Network.Editors
             ));
         }
 
-        private string ViewModelToViewConverterFunc(uint value)
+        private string ViewModelToViewConverterFunc(float value)
         {
-            return value.ToString();
+            if (string.IsNullOrWhiteSpace(editor.Text))
+            {
+                return value.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return editor.Text;
         }
 
-        private uint ViewToViewModelConverterFunc(string value)
+        private float ViewToViewModelConverterFunc(string value)
         {
-            if (uint.TryParse(value, out var returnValue))
+            if (float.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var returnValue)
+                && returnValue >= 0
+                && returnValue <= 1)
             {
                 ExitErrorState(editor);
+                return returnValue;
             }
             else
             {
                 EnterErrorState(editor, "Недопустимое значение");
+                return 0f;
             }
-
-            return returnValue;
         }
     }
 }

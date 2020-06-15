@@ -17,12 +17,12 @@ namespace NgineUI.ViewModels.Network.Nodes
     using Ambiguous2DTuple = Tuple<Ambiguous<uint>, Ambiguous<uint>>;
     public class Pooling2DViewModel : PoolingViewModelBase<Ambiguous2DTuple, Layer2D, Sensor2D>
     {
-        public Pooling2DViewModel(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, bool setId)
+        public Pooling2DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
             : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer2D, "Pooling2D", setId)
         {
         }
 
-        protected override ValueEditorViewModel<Ambiguous2DTuple> CreateVectorEditor(ObservableCollection<Ambiguity> ambiguities)
+        protected override ValueEditorViewModel<Ambiguous2DTuple> CreateVectorEditor(ObservableCollection<string> ambiguities)
             => new AmbiguousUIntVector2DEditorViewModel(ambiguities);
 
         protected override Layer2D EvaluateOutput(Ambiguous2DTuple kernel, Ambiguous2DTuple strides, PoolingType pooling)

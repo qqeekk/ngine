@@ -13,9 +13,9 @@
         </Grid.RowDefinitions>
 
         <Label Content="X:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White"/>
-        <local:UIntEditor x:Name="xEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0"/>
+        <local:UIntEditor x:Name="xEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0" MinWidth="50"/>
 
         <Label Grid.Row="1" Content="Y:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White"/>
-        <local:UIntEditor Grid.Row="1" x:Name="yEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0"/>
+        <local:UIntEditor Grid.Row="1" x:Name="yEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0" MinWidth="50"/>
     </Grid>
 </UserControl>

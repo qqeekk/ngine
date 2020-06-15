@@ -14,15 +14,19 @@ namespace NgineUI.ViewModels.Network.Nodes
 
     public class Conv3DViewModel : ConvViewModelBase<Ambiguous3DTuple, Layer3D, Sensor3D>
     {
-        public Conv3DViewModel(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, bool setId)
+        public Conv3DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
             : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, "Conv3D", setId)
         {
         }
 
-        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(ObservableCollection<Ambiguity> ambiguities)
+        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(ObservableCollection<string> ambiguities)
             => new AmbiguousUIntVector3DEditorViewModel(ambiguities);
 
-        protected override Layer3D EvaluateOutput(AmbiguousUIntViewModel filters, Ambiguous3DTuple kernel, Ambiguous3DTuple strides, Padding padding)
+        protected override Layer3D EvaluateOutput(
+            AmbiguousUIntViewModel filters,
+            Ambiguous3DTuple kernel,
+            Ambiguous3DTuple strides,
+            Padding padding)
         {
             return Layer3D.NewConv3D(
                 new Convolutional3D(filters, kernel, strides, padding),

@@ -1,66 +1,45 @@
-﻿using DynamicData;
+﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using Ngine.Domain.Schemas.Expressions;
+using Ngine.Domain.Utils;
 using Ngine.Infrastructure.AppServices;
-using NgineUI.ViewModels.Network.Connections;
-using NgineUI.ViewModels.Network.Editors;
-using NodeNetwork.Toolkit.ValueNode;
 using System;
-using System.Reactive.Linq;
+using System.Collections.Generic;
+using static Ngine.Domain.Schemas.Head;
+using Activator = Ngine.Domain.Schemas.Activator;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public class Head1DViewModel : NgineNodeViewModel
+    public class Head1DViewModel : HeadViewModelBase<Layer1D, HeadFunction>
     {
-        public ValueNodeInputViewModel<string> ActivationEditor { get; }
-        public ValueNodeInputViewModel<string> LossEditor { get; }
-        public ValueNodeInputViewModel<HeadLayer<Layer1D>> Previous { get; }
-        public ValueNodeOutputViewModel<Head> Output { get; }
-
         public Head1DViewModel(
             IActivatorConverter activatorConverter,
-            ILossConverter lossConverter) : base(null, NodeType.Head, "Head1D", false)
+            ILossConverter lossConverter) : base(activatorConverter, lossConverter, "Head1D")
         {
-            var functionNames = Array.ConvertAll(activatorConverter.HeadFunctionNames, p => p.name);
-            ActivationEditor = new ValueNodeInputViewModel<string>
+        }
+
+        protected override HeadFunction DefaultActivator { get; } = HeadFunction.NewActivator(Activator.NewQuotedFunction(QuotedFunction.ReLu));
+
+        protected override Head EvaluateValue(HeadLayer<Layer1D> prev, HeadFunction activator, Loss loss, float lossWeight)
+        {
+            prev ??= HeadLayer<Layer1D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer1D.Empty1D);
+
+            if (activator.IsSoftmax)
             {
-                Name = "Activation",
-                Editor = new ComboEditorViewModel(functionNames),
-            };
-            ActivationEditor.Port.IsVisible = false;
-            this.Inputs.Add(ActivationEditor); ;
+                return Head.NewSoftmax(lossWeight, loss, prev);
+            }
 
-            var lossNames = Array.ConvertAll(lossConverter.LossFunctionNames, p => p.name);
-            LossEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Loss",
-                Editor = new ComboEditorViewModel(lossNames),
-            };
-            LossEditor.Port.IsVisible = false;
-            this.Inputs.Add(LossEditor); ;
+            return Head.NewActivator(lossWeight, loss, HeadLayer.NewD1(prev), (activator as HeadFunction.Activator).Item);
+        }
 
-            Previous = new NgineInputViewModel<HeadLayer<Layer1D>>(PortType.Head);
-            this.Inputs.Add(Previous);
+        protected override IEnumerable<string> GetLookupValues(IActivatorConverter converter)
+        {
+            return Array.ConvertAll(converter.HeadFunctionNames, p => p.defn.Value);
+        }
 
-            Output = new NgineOutputViewModel<Head>(PortType.Head)
-            {
-                Value = Observable.CombineLatest(
-                    Previous.ValueChanged,
-                    ActivationEditor.ValueChanged.Select(v => activatorConverter.DecodeHeadActivation(v).ResultValue),
-                    LossEditor.ValueChanged.Select(v => lossConverter.DecodeLoss(v).ResultValue),
-                    (prev, activation, loss) =>
-                    {
-                        prev ??= HeadLayer<Layer1D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer1D.Empty1D);
-
-                        if (activation.IsSoftmax)
-                        {
-                            return Head.NewSoftmax(1, loss, prev);
-                        }
-
-                        return Head.NewActivator(1, loss, HeadLayer.NewD1(prev), (activation as HeadFunction.Activator).Item);
-                    })
-            };
-            Output.Port.IsVisible = false;
-            this.Outputs.Add(Output);
+        protected override FSharpOption<HeadFunction> ParseActivator(IActivatorConverter converter, string value)
+        {
+            return ResultExtensions.toOption(converter.DecodeHeadActivation(value));
         }
     }
 }

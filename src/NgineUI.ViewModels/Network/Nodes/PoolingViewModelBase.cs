@@ -23,7 +23,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
-        public PoolingViewModelBase(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, NodeType type, PortType port, string name, bool setId)
+        public PoolingViewModelBase(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, NodeType type, PortType port, string name, bool setId)
             : base(idTracker, type, name, setId)
         {
             KernelEditor = new ValueNodeInputViewModel<TVector>
@@ -77,7 +77,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
-        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<Ambiguity> ambiguities);
+        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
         protected abstract TLayer EvaluateOutput(TVector kernel, TVector strides, PoolingType pooling);
     }
 }

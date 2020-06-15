@@ -1,5 +1,6 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
+using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
@@ -17,18 +18,19 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public class DenseViewModel : NgineNodeViewModel
     {
-        public ValueNodeInputViewModel<AmbiguousUIntViewModel> UnitsEditor { get; }
+        public ValueNodeInputViewModel<string> UnitsEditor { get; }
         public ValueNodeInputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Previous { get; }
         public ValueNodeOutputViewModel<HeadLayer<Layer1D>> HeadOutput { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Output { get; }
 
-        public DenseViewModel(LayerIdTracker idTracker, ObservableCollection<Ambiguity> ambiguities, bool setId)
+        public DenseViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
             : base(idTracker, NodeType.Layer, "Dense", setId)
         {
-            UnitsEditor = new ValueNodeInputViewModel<AmbiguousUIntViewModel>
+            var unitsEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
+            UnitsEditor = new ValueNodeInputViewModel<string>
             {
                 Name = "Units",
-                Editor = new AmbiguousUIntEditorViewModel(ambiguities),
+                Editor = unitsEditor,
             };
             UnitsEditor.Port.IsVisible = false;
             this.Inputs.Add(UnitsEditor);
@@ -45,7 +47,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             {
                 Value = Observable.CombineLatest(
                     this.WhenValueChanged(vm => vm.Id),
-                    UnitsEditor.ValueChanged,
+                    UnitsEditor.ValueChanged.Select(_ => OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, unitsEditor.SelectedValue)),
                     (id, units) => HeadLayer<Layer1D>.NewHeadLayer(id,
                         Layer1D.NewDense(
                             new Dense(units),

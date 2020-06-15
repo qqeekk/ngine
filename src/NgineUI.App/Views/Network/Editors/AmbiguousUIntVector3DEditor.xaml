@@ -14,12 +14,12 @@
         </Grid.RowDefinitions>
 
         <Label Content="X:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White"/>
-        <local:AmbiguousUIntEditor x:Name="xEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0"/>
+        <local:LookupVaueEditor x:Name="xEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0" MinWidth="50"/>
 
         <Label Grid.Row="1" Content="Y:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White"/>
-        <local:AmbiguousUIntEditor Grid.Row="1" x:Name="yEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0"/>
+        <local:LookupVaueEditor Grid.Row="1" x:Name="yEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0" MinWidth="50"/>
 
         <Label Grid.Row="2" Content="Z:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White"/>
-        <local:AmbiguousUIntEditor Grid.Row="2" x:Name="zEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0"/>
+        <local:LookupVaueEditor Grid.Row="2" x:Name="zEditor" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,3,0,0" MinWidth="50"/>
     </Grid>
 </UserControl>

@@ -13,10 +13,9 @@ namespace NgineUI.ViewModels.Network.Nodes
         {
         }
 
-        protected override Layer1D EvaluateOutput(QuotedFunction function)
+        protected override Layer1D EvaluateOutput(Ngine.Domain.Schemas.Activator function)
         {
-            return Layer1D.NewActivation1D(
-                Ngine.Domain.Schemas.Activator.NewQuotedFunction(function),
+            return Layer1D.NewActivation1D(function,
                 Previous.Value ?? NonHeadLayer<Layer1D, Sensor1D>.NewLayer(HeadLayer<Layer1D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer1D.Empty1D)));
         }
     }
