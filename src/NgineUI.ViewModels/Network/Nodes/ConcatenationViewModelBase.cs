@@ -23,24 +23,17 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineListInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
 
-            Previous.Values.Connect().Subscribe(_ =>
-            {
-                var maxLevel = Previous.Values.Items
-                    .Where(i => i != null)
-                    .Select(i => NetworkConverters.getLayerId(i).Item1)
-                    .DefaultIfEmpty(0u)
-                    .Max();
-
-                if (maxLevel + 1 != Id.Item1)
-                {
-                    Id = idTracker.Generate(maxLevel);
-                }
-            });
-
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
-                Value = this.WhenValueChanged(vm => vm.Id).Select(id =>
-                    HeadLayer<TLayer>.NewHeadLayer(id, EvaluateOutput(Previous.Values.Items.ToArray())))
+                Value = Previous.Values.Connect().Select(_ =>
+                {
+                    foreach (var l in Previous.Values.Items)
+                    {
+                        UpdateId(l, DefaultPrevious);
+                    }
+
+                    return HeadLayer<TLayer>.NewHeadLayer(this.Id, EvaluateOutput(Previous.Values.Items.ToArray()));
+                })
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)
@@ -53,5 +46,6 @@ namespace NgineUI.ViewModels.Network.Nodes
         }
 
         protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor>[] layers);
+        protected abstract TLayer DefaultPrevious { get; }
     }
 }

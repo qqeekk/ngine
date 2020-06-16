@@ -64,21 +64,16 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
 
-            Previous.ValueChanged
-                .Where(i => i != null)
-                .Select(i => NetworkConverters.getLayerId(i).Item1)
-                .Subscribe(prevId => this.Id = (prevId + 1u != Id.Item1) ? idTracker.Generate(prevId) : Id);
-
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
                 Value = Observable.CombineLatest(
-                    (this).WhenValueChanged(vm => vm.Id),
+                    Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious)),
                     FiltersEditor.ValueChanged,
                     KernelEditor.ValueChanged,
                     StridesEditor.ValueChanged,
                     PaddingEditor.ValueChanged.Select(p => PaddingEncoder.tryParsePadding(p).Value),
-                    (id, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(id,
-                        EvaluateOutput(OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, filtersEditor.SelectedValue), k, s, p)))
+                    (o, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(o.Id,
+                        EvaluateOutput(o.Prev, OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, filtersEditor.SelectedValue), k, s, p)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)
@@ -90,7 +85,8 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
+        protected abstract TLayer DefaultPrevious { get; }
         protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
-        protected abstract TLayer EvaluateOutput(AmbiguousUIntViewModel filters, TVector kernel, TVector strides, Padding padding);
+        protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, AmbiguousUIntViewModel filters, TVector kernel, TVector strides, Padding padding);
     }
 }

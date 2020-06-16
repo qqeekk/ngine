@@ -1,9 +1,7 @@
 ﻿using DynamicData;
-using DynamicData.Binding;
 using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Schemas.Expressions;
-using Ngine.Domain.Services.Conversion;
 using Ngine.Domain.Utils;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
@@ -11,6 +9,7 @@ using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
 using System;
 using System.Reactive.Linq;
+using Activator = Ngine.Domain.Schemas.Activator;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
@@ -27,8 +26,8 @@ namespace NgineUI.ViewModels.Network.Nodes
             PortType port,
             string name, bool setId) : base(idTracker, NodeType.Layer, name, setId)
         {
-            var defaultActivator = Ngine.Domain.Schemas.Activator.NewQuotedFunction(QuotedFunction.ReLu);
-            var activationEditor = new LookupEditorViewModel<Ngine.Domain.Schemas.Activator>(
+            var defaultActivator = Activator.NewQuotedFunction(QuotedFunction.ReLu);
+            var activationEditor = new LookupEditorViewModel<Activator>(
                     v => ResultExtensions.toOption(activatorConverter.Decode(v)),
                     activatorConverter.Encode(defaultActivator))
             {
@@ -46,17 +45,12 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
 
-            Previous.ValueChanged
-                .Where(i => i != null)
-                .Select(i => NetworkConverters.getLayerId(i).Item1)
-                .Subscribe(prevId => this.Id = (prevId + 1u != Id.Item1) ? idTracker.Generate(prevId) : Id);
-
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
-            {
+            { 
                 Value = Observable.CombineLatest(
-                    this.WhenValueChanged(vm => vm.Id),
+                    Previous.ValueChanged.Select(prev => UpdateId(prev, DefaultPrevious)),
                     ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(defaultActivator, activationEditor.SelectedValue)),
-                    (id, activation) => HeadLayer<TLayer>.NewHeadLayer(id, EvaluateOutput(activation)))
+                    (o, activation) => HeadLayer<TLayer>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev, activation)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)
@@ -68,6 +62,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
-        protected abstract TLayer EvaluateOutput(Ngine.Domain.Schemas.Activator function);
+        protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, Activator function);
+        protected abstract TLayer DefaultPrevious { get; }
     }
 }

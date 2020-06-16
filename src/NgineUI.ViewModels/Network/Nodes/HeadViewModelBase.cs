@@ -19,7 +19,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeInputViewModel<string> LossEditor { get; }
         public ValueNodeInputViewModel<float> LossWeightEditor { get; }
         public ValueNodeInputViewModel<HeadLayer<TLayer>> Previous { get; }
-        public ValueNodeOutputViewModel<Head> Output { get; }
+        public IObservable<Head> Output { get; }
 
         public HeadViewModelBase(
             IActivatorConverter activatorConverter,
@@ -61,19 +61,15 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineInputViewModel<HeadLayer<TLayer>>(PortType.Head);
             this.Inputs.Add(Previous);
 
-            Output = new NgineOutputViewModel<Head>(PortType.Head)
-            {
-                Value = Observable.CombineLatest(
-                    Previous.ValueChanged,
+            Output = Observable.CombineLatest(
+                    Previous.ValueChanged.Select(p => p ?? WrapEmpty(DefaultPrevious)),
                     ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(DefaultActivator, activationEditor.SelectedValue)),
                     LossEditor.ValueChanged.Select(v => lossConverter.DecodeLoss(v).ResultValue),
                     LossWeightEditor.ValueChanged,
-                    EvaluateValue)
-            };
-            Output.Port.IsVisible = false;
-            this.Outputs.Add(Output);
+                    EvaluateValue);
         }
 
+        protected abstract TLayer DefaultPrevious { get; }
         protected abstract TActivator DefaultActivator { get; }
         protected abstract Head EvaluateValue(HeadLayer<TLayer> prev, TActivator activator, Loss loss, float lossWeight);
         protected abstract FSharpOption<TActivator> ParseActivator(IActivatorConverter converter, string value);

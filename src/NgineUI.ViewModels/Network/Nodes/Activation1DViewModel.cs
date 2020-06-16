@@ -1,8 +1,6 @@
 ﻿using Ngine.Domain.Schemas;
-using Ngine.Domain.Schemas.Expressions;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
-using System;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
@@ -13,10 +11,9 @@ namespace NgineUI.ViewModels.Network.Nodes
         {
         }
 
-        protected override Layer1D EvaluateOutput(Ngine.Domain.Schemas.Activator function)
-        {
-            return Layer1D.NewActivation1D(function,
-                Previous.Value ?? NonHeadLayer<Layer1D, Sensor1D>.NewLayer(HeadLayer<Layer1D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer1D.Empty1D)));
-        }
+        protected override Layer1D DefaultPrevious => Layer1D.Empty1D;
+
+        protected override Layer1D EvaluateOutput(NonHeadLayer<Layer1D, Sensor1D> prev, Activator function)
+            => Layer1D.NewActivation1D(function, prev);
     }
 }

@@ -17,14 +17,12 @@ namespace NgineUI.ViewModels.Network.Nodes
         {
         }
 
+        protected override Layer2D DefaultPrevious => Layer2D.Empty2D;
+
         protected override ValueEditorViewModel<Ambiguous2DTuple> CreateVectorEditor(ObservableCollection<string> ambiguities)
             => new AmbiguousUIntVector2DEditorViewModel(ambiguities);
 
-        protected override Layer2D EvaluateOutput(AmbiguousUIntViewModel filters, Ambiguous2DTuple kernel, Ambiguous2DTuple strides, Padding padding)
-        {
-            return Layer2D.NewConv2D(
-                new Convolutional2D(filters, kernel, strides, padding),
-                Previous.Value ?? NonHeadLayer<Layer2D, Sensor2D>.NewLayer(HeadLayer<Layer2D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer2D.Empty2D)));
-        }
+        protected override Layer2D EvaluateOutput(NonHeadLayer<Layer2D, Sensor2D> prev, AmbiguousUIntViewModel filters, Ambiguous2DTuple kernel, Ambiguous2DTuple strides, Padding padding)
+            => Layer2D.NewConv2D(new Convolutional2D(filters, kernel, strides, padding), prev);
     }
 }

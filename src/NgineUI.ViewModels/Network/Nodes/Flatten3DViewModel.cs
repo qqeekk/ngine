@@ -11,10 +11,9 @@ namespace NgineUI.ViewModels.Network.Nodes
         {
         }
 
-        protected override Layer1D EvaluateOutput()
-        {
-            return Layer1D.NewFlatten3D(Previous.Value
-                ?? NonHeadLayer<Layer3D, Sensor3D>.NewLayer(HeadLayer<Layer3D>.NewHeadLayer(Tuple.Create(0u, 0u), Layer3D.Empty3D)));
-        }
+        protected override Layer3D DefaultPrevious => Layer3D.Empty3D;
+
+        protected override Layer1D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D> prev)
+            => Layer1D.NewFlatten3D(prev);
     }
 }

@@ -9,7 +9,6 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Reactive.Linq;
 using static Ngine.Domain.Schemas.Schema;
 using static NodeNetwork.Toolkit.NodeList.NodeListViewModel;
 
@@ -51,15 +50,29 @@ namespace NgineUI.ViewModels
 
         public MainViewModel()
         {
+            // TODO: inject
             var idTracker = new LayerIdTracker();
             var activatorConverter = ActivatorConverter.instance;
             var lossConverter = LossConverter.instance;
             var ambiguityConverter = AmbiguityConverter.instance;
-            var ambiguities = new ObservableCollection<string>(new[] { "aaa", "bbb" });
+
+            // Set up ambiguity values.
+            // TODO: remove these
+            var ambiguities = new ObservableCollection<string>
+            { 
+                "aaa",
+                "bbb"
+            };
+
             var ambiguityValues = new ObservableCollection<Ambiguity>
             {
-                ambiguityConverter.Encode(new KeyValuePair<AmbiguityVariableName, Values<uint>>(AmbiguityVariableName.NewVariable(ambiguities[0]), Values<uint>.NewList(new[]{ 3u, 5u }))),
-                ambiguityConverter.Encode(new KeyValuePair<AmbiguityVariableName, Values<uint>>(AmbiguityVariableName.NewVariable(ambiguities[1]), Values<uint>.NewRange(new Range<uint>( 84u, 4u, 100u ))))
+                ambiguityConverter.Encode(KeyValuePair.Create(
+                    AmbiguityVariableName.NewVariable(ambiguities[0]),
+                    Values<uint>.NewList(new[]{ 3u, 5u }))),
+
+                ambiguityConverter.Encode(KeyValuePair.Create(
+                    AmbiguityVariableName.NewVariable(ambiguities[1]),
+                    Values<uint>.NewRange(new Range<uint>(84u, 4u, 100u))))
             };
 
             Ambiguities = new AmbiguitiesViewModel
@@ -100,10 +113,11 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Head2DViewModel(activatorConverter, lossConverter));
             NodeList.AddNodeType(() => new Head3DViewModel(activatorConverter, lossConverter));
 
+            //TODO: remove/uncomment. 
             //var codeObservable = eventNode.OnClickFlow.Values.Connect().Select(_ => new StatementSequence(eventNode.OnClickFlow.Values.Items));
             //codeObservable.BindTo(this, vm => vm.CodePreview.Code);
             //codeObservable.BindTo(this, vm => vm.CodeSim.Code);
-
+             
             //ForceDirectedLayouter layouter = new ForceDirectedLayouter();
             //var config = new Configuration
             //{

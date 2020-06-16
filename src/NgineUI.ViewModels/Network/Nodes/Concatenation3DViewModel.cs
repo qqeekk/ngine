@@ -1,8 +1,6 @@
 ﻿using Ngine.Domain.Schemas;
-using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
-using System;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
@@ -11,6 +9,8 @@ namespace NgineUI.ViewModels.Network.Nodes
         public Concatenation3DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, PortType.Layer3D, "Concatenation3D", setId)
         {
         }
+
+        protected override Layer3D DefaultPrevious => Layer3D.Empty3D;
 
         protected override Layer3D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D>[] layers) =>
             Layer3D.NewConcatenation3D(layers);

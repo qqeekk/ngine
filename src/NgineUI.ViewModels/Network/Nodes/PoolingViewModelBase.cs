@@ -1,16 +1,12 @@
 ﻿using DynamicData;
-using DynamicData.Binding;
 using Ngine.Backend.Converters;
 using Ngine.Domain.Schemas;
-using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
-using System;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using static Ngine.Domain.Schemas.Schema;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
@@ -53,19 +49,14 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
 
-            Previous.ValueChanged
-                .Where(i => i != null)
-                .Select(i => NetworkConverters.getLayerId(i).Item1)
-                .Subscribe(prevId => this.Id = (prevId + 1u != Id.Item1) ? idTracker.Generate(prevId) : Id);
-
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
                 Value = Observable.CombineLatest(
-                    (this).WhenValueChanged(vm => vm.Id),
+                    Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious)),
                     KernelEditor.ValueChanged,
                     StridesEditor.ValueChanged,
                     PoolingEditor.ValueChanged.Select(p => PoolingTypeEncoder.tryParsePoolingType(p).Value),
-                    (id, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(id, EvaluateOutput(k, s, p)))
+                    (o, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev, k, s, p)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)
@@ -77,7 +68,8 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(HeadOutput);
         }
 
+        protected abstract TLayer DefaultPrevious { get; }
         protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
-        protected abstract TLayer EvaluateOutput(TVector kernel, TVector strides, PoolingType pooling);
+        protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, TVector kernel, TVector strides, PoolingType pooling);
     }
 }
