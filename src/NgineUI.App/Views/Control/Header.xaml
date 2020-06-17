@@ -10,11 +10,11 @@
         <MenuItem Header="Файл">
             <MenuItem Header="Создать проект..."></MenuItem>
             <MenuItem Header="Открыть проект..."></MenuItem>
-            <MenuItem Header="Сохранить"></MenuItem>
+            <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
         </MenuItem>
-        <MenuItem Header="Проект">
+        <!--<MenuItem Header="Проект">
             <MenuItem Header="Импортировать схему..."></MenuItem>
-        </MenuItem>
+        </MenuItem>-->
         <MenuItem Header="Параметры">
             <MenuItem Header="Настройка гиперпараметров модели..."></MenuItem>
             <MenuItem Header="Обучение модели..."></MenuItem>

@@ -1,6 +1,8 @@
 ﻿using Ngine.Backend.Converters;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.AppServices.Abstract;
+using NgineUI.ViewModels.Control;
 using NgineUI.ViewModels.Network;
 using NgineUI.ViewModels.Network.Nodes;
 using NodeNetwork.Toolkit.NodeList;
@@ -47,8 +49,9 @@ namespace NgineUI.ViewModels
         public NetworkViewModel Network { get; } = new NetworkViewModel();
         public NodeListViewModel NodeList { get; }
         public AmbiguitiesViewModel Ambiguities { get; }
+        public HeaderViewModel Header { get; set; }
 
-        public MainViewModel()
+        public MainViewModel(INetworkPartsConverter partsConverter)
         {
             // TODO: inject
             var idTracker = new LayerIdTracker();
@@ -92,6 +95,8 @@ namespace NgineUI.ViewModels
                     _ => throw new Exception()
                 }
             };
+
+            Header = new HeaderViewModel(Network, Ambiguities, partsConverter);
 
             NodeList.AddNodeType(() => new Input1DViewModel(idTracker, !InvertIfTrue(ref input1DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Input2DViewModel(idTracker, !InvertIfTrue(ref input2DViewModelIsFirstLoaded)));

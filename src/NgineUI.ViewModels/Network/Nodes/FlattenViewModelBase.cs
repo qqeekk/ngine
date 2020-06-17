@@ -1,5 +1,6 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
+using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
@@ -39,5 +40,8 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         protected abstract TLayer DefaultPrevious { get; }
         protected abstract Layer1D EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev);
+
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => HeadLayerChoice(HeadLayer.NewD1(HeadOutput.CurrentValue));
     }
 }

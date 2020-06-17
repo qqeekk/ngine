@@ -1,4 +1,5 @@
-﻿using Ngine.Domain.Schemas;
+﻿using Microsoft.FSharp.Core;
+using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 
@@ -12,7 +13,10 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         protected override Layer3D DefaultPrevious => Layer3D.Empty3D;
 
-        protected override Layer3D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D>[] layers) =>
-            Layer3D.NewConcatenation3D(layers);
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => HeadLayerChoice(HeadLayer.NewD3(HeadOutput.CurrentValue));
+
+        protected override Layer3D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D>[] layers)
+            => Layer3D.NewConcatenation3D(layers);
     }
 }

@@ -48,5 +48,8 @@ namespace NgineUI.ViewModels.Network.Nodes
             this.Outputs.Add(Output);
             this.Outputs.Add(HeadOutput);
         }
+
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => HeadLayerChoice(HeadLayer.NewD1(HeadOutput.CurrentValue));
     }
 }

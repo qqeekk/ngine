@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
@@ -45,5 +46,8 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             this.Outputs.Add(Output);
         }
+
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => SensorChoice(Sensor.NewSensor3D(Id, (Output.CurrentValue as NonHeadLayer<Layer3D, Sensor3D>.Sensor).Item2));
     }
 }

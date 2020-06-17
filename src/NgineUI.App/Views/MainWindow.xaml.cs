@@ -1,4 +1,7 @@
-﻿using NgineUI.ViewModels;
+﻿using Ngine.Backend.Converters;
+using Ngine.Domain.Services.Conversion;
+using NgineUI.ViewModels;
+using NgineUI.ViewModels.Functional;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -46,12 +49,15 @@ namespace NgineUI.App
 
             this.WhenActivated(d =>
             {
+                this.OneWayBind(ViewModel, vm => vm.Header, v => v.header.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.Network, v => v.network.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.NodeList, v => v.nodeList.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.Ambiguities, v => v.ambiguities.ViewModel).DisposeWith(d);
             });
 
-            this.ViewModel = new MainViewModel();
+            var kernelConverter = KernelConverter.create(ActivatorConverter.instance);
+            var networkConverter = NetworkConverters.create(kernelConverter, LossConverter.instance, OptimizerConverter.instance, AmbiguityConverter.instance);
+            this.ViewModel = new MainViewModel(NetworkManager.instance(networkConverter));
         }
     }
 }

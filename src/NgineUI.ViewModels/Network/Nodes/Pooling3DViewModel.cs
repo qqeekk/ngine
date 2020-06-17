@@ -1,4 +1,5 @@
-﻿using Ngine.Domain.Schemas;
+﻿using Microsoft.FSharp.Core;
+using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
@@ -24,5 +25,8 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         protected override Layer3D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D> prev, Ambiguous3DTuple kernel, Ambiguous3DTuple strides, PoolingType pooling)
             => Layer3D.NewPooling3D(new Pooling3D(kernel, strides, pooling), prev);
+
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => HeadLayerChoice(HeadLayer.NewD3(HeadOutput.CurrentValue));
     }
 }

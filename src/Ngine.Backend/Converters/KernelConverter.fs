@@ -334,6 +334,7 @@ module PoolingEncoder =
         let encode (pooling:Pooling2D) =
             seq {
                 nameof m2.pooling, fun _ ->  m2.pooling.encode pooling.PoolingType
+                nameof m2.strides, fun _ ->  m2.strides.encode pooling.Strides
                 nameof m2.kernel, fun _ -> m2.kernel.encode pooling.Kernel }
             |> encode m2
 
@@ -351,6 +352,7 @@ module PoolingEncoder =
         let encode (pooling:Pooling3D) =
             seq {
                 nameof m3.pooling, fun _ ->  m3.pooling.encode pooling.PoolingType
+                nameof m3.strides, fun _ ->  m3.strides.encode pooling.Strides
                 nameof m3.kernel, fun _ -> m3.kernel.encode pooling.Kernel }
             |> encode m3
 

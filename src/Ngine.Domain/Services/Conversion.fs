@@ -123,7 +123,25 @@ module public NetworkConverters =
                         | Sensor.Sensor1D (layerId, sensor) -> createSchema (layerId, None) (LayerProps.Sensor1D sensor) |> Some
             
             do Array.iter (encode >> ignore) layers
-            map.Values |> Seq.choose id |> Seq.toArray
+            map.Values |> Seq.choose id |> Seq.distinctBy (fun l -> l.LayerId) |> Seq.toArray
+
+        let encodeHeads heads : Schema.Head [] =
+            heads
+            |> Array.map (function
+                | Head.Activator (lossWeight, loss, D1 (HeadLayer (layerId, _)), activator)
+                | Head.Activator (lossWeight, loss, D2 (HeadLayer (layerId, _)), activator)
+                | Head.Activator (lossWeight, loss, D3 (HeadLayer (layerId, _)), activator) -> {
+                    LayerId = layerId
+                    Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Activator activator)
+                    Loss = lossConverter.EncodeLoss loss
+                    LossWeight = lossWeight }
+
+                | Head.Softmax (lossWeight, loss, (HeadLayer (layerId, _))) -> {
+                    LayerId = layerId
+                    Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Softmax)
+                    Loss = lossConverter.EncodeLoss loss
+                    LossWeight = lossWeight
+                })
 
 
         let encode (entity : Network) : Schema.Network =
@@ -139,23 +157,8 @@ module public NetworkConverters =
                     | Head.Softmax (_, _, layer) -> D1 layer)
                 |> encodeLayers
 
-            let heads : Schema.Head[]=
-                entity.Heads
-                |> Array.map (function
-                    | Head.Activator (lossWeight, loss, D1 (HeadLayer (layerId, _)), activator)
-                    | Head.Activator (lossWeight, loss, D2 (HeadLayer (layerId, _)), activator)
-                    | Head.Activator (lossWeight, loss, D3 (HeadLayer (layerId, _)), activator) -> {
-                        LayerId = layerId
-                        Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Activator activator)
-                        Loss = lossConverter.EncodeLoss loss
-                        LossWeight = lossWeight }
-
-                    | Head.Softmax (lossWeight, loss, (HeadLayer (layerId, _))) -> {
-                        LayerId = layerId
-                        Activation = propsConverter.ActivatorConverter.EncodeHeadActivation(HeadFunction.Softmax)
-                        Loss = lossConverter.EncodeLoss loss
-                        LossWeight = lossWeight
-                    })
+            let heads : Schema.Head[] = 
+                encodeHeads entity.Heads
 
             { Layers = layers
               Ambiguities = ambiguities
@@ -556,4 +559,5 @@ module public NetworkConverters =
             member _.Encode(NotNull "entity" entity) = encode entity
             member _.Decode(NotNull "network schema" schema) = decode schema
             member _.EncodeLayers(NotNull "layers" layers) = encodeLayers layers
+            member _.EncodeHeads(NotNull "heads" heads) = encodeHeads heads
             member _.DecodeLayers(NotNull "layers" layers) (NotNull "ambiguites" ambiguites) = decodeLayers layers ambiguites} 

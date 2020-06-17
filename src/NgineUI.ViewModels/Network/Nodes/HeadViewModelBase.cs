@@ -6,6 +6,7 @@ using Ngine.Domain.Utils;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
+using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
@@ -19,7 +20,9 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeInputViewModel<string> LossEditor { get; }
         public ValueNodeInputViewModel<float> LossWeightEditor { get; }
         public ValueNodeInputViewModel<HeadLayer<TLayer>> Previous { get; }
-        public IObservable<Head> Output { get; }
+
+        public Head Output => output.Value;
+        private ObservableAsPropertyHelper<Head> output;
 
         public HeadViewModelBase(
             IActivatorConverter activatorConverter,
@@ -61,13 +64,18 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineInputViewModel<HeadLayer<TLayer>>(PortType.Head);
             this.Inputs.Add(Previous);
 
-            Output = Observable.CombineLatest(
+            Observable
+                .CombineLatest(
                     Previous.ValueChanged.Select(p => p ?? WrapEmpty(DefaultPrevious)),
                     ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(DefaultActivator, activationEditor.SelectedValue)),
                     LossEditor.ValueChanged.Select(v => lossConverter.DecodeLoss(v).ResultValue),
                     LossWeightEditor.ValueChanged,
-                    EvaluateValue);
+                    EvaluateValue)
+                .ToProperty(this, vm => vm.Output, out output);
         }
+
+        public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
+            => HeadChoice(Output);
 
         protected abstract TLayer DefaultPrevious { get; }
         protected abstract TActivator DefaultActivator { get; }

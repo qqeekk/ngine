@@ -1,26 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using NgineUI.ViewModels.Control;
+using ReactiveUI;
+using System.Reactive.Disposables;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NgineUI.App.Views.Control
 {
     /// <summary>
     /// Interaction logic for Header.xaml
     /// </summary>
-    public partial class Header : UserControl
+    public partial class Header : IViewFor<HeaderViewModel>
     {
+        #region ViewModel
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel),
+            typeof(HeaderViewModel), typeof(Header), new PropertyMetadata(null));
+
+        public HeaderViewModel ViewModel
+        {
+            get => (HeaderViewModel)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
+
+        object IViewFor.ViewModel
+        {
+            get => ViewModel;
+            set => ViewModel = (HeaderViewModel)value;
+        }
+        #endregion
         public Header()
         {
             InitializeComponent();
+         
+            this.WhenActivated(d =>
+            {
+                this.BindCommand(ViewModel, vm => vm.SaveModelCommand, v => v.saveNodesItem).DisposeWith(d);
+            });
         }
     }
 }

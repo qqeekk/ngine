@@ -1,4 +1,5 @@
 ﻿using DynamicData.Binding;
+using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
@@ -16,7 +17,7 @@ namespace NgineUI.ViewModels.Network
         Input,
     }
 
-    public class NgineNodeViewModel : NodeViewModel
+    public abstract class NgineNodeViewModel : NodeViewModel
     {
         private readonly LayerIdTracker idTracker;
         private readonly bool setId;
@@ -64,5 +65,15 @@ namespace NgineUI.ViewModels.Network
 
         private static NonHeadLayer<TLayer, TSensor> DefaultIfNull<TLayer, TSensor>(NonHeadLayer<TLayer, TSensor> layer, TLayer @default) =>
             layer ?? WrapNonHead<TLayer, TSensor>(WrapEmpty(@default));
+
+        protected static FSharpChoice<Head, HeadLayer, Sensor> HeadLayerChoice(HeadLayer node) =>
+            FSharpChoice<Head, HeadLayer, Sensor>.NewChoice2Of3(node);
+
+        protected static FSharpChoice<Head, HeadLayer, Sensor> SensorChoice(Sensor node) =>
+            FSharpChoice<Head, HeadLayer, Sensor>.NewChoice3Of3(node);
+        protected static FSharpChoice<Head, HeadLayer, Sensor> HeadChoice(Head node) =>
+            FSharpChoice<Head, HeadLayer, Sensor>.NewChoice1Of3(node);
+
+        public abstract FSharpChoice<Head, HeadLayer, Sensor> GetValue();
     }
 }

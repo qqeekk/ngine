@@ -128,6 +128,7 @@ type INetworkConverter =
     abstract member Encode: Network -> Schema.Network
     abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError[]>
     abstract member EncodeLayers: layers: Choice<HeadLayer, Sensor>[] -> Schema.Layer[]
+    abstract member EncodeHeads: heads: Head[] -> Schema.Head[]
     abstract member DecodeLayers:
         layers: seq<Schema.Layer> 
         -> ambiguities: seq<Schema.Ambiguity>
