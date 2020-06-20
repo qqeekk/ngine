@@ -40,6 +40,11 @@ module Ambiguous =
         | List a -> a.[0]
         | Range { start = s } -> s
 
+    let stringify (v: Ambiguous<'a>) =
+        match v with
+        | Fixed a -> a.ToString()
+        | RefName (Variable name) -> name
+
 type Activator =
     | QuotedFunction of QuotedFunction
     // TODO: | Polynomial of Polynomial
@@ -70,32 +75,32 @@ type Sensor1D = {
 }
 
 /// {{ int_filters }}:[{{ int_k1 }}x{{ int_k2 }}](, strides = [{{ int_s1 }}x{{ int_s2 }}])?(, padding = [{{ int_p1 }}x{{ int_p2 }}])?
-type Convolutional2D = {
-    Filters: Ambiguous<uint32>
-    Kernel: Vector2D<Ambiguous<uint32>>
-    Strides: Vector2D<Ambiguous<uint32>>
-    Padding: Padding
-}
+//type Convolutional2D = {
+//    Filters: Ambiguous<uint32>
+//    Kernel: Vector2D<Ambiguous<uint32>>
+//    Strides: Vector2D<Ambiguous<uint32>>
+//    Padding: Padding
+//}
 
 /// {{ int_filters }}:[{{ int_k1 }}x{{ int_k2 }}x{{ int_k3 }}](, strides = [{{ int_s1 }}x{{ int_s2 }}x{{ int_s3 }}])?(, padding = [{{ int_p1 }}x{{ int_p2 }}]x{{ int_p3 }})?
-type Convolutional3D = {
+type Convolutional<'TVector> = {
     Filters: Ambiguous<uint32>
-    Kernel: Vector3D<Ambiguous<uint32>>
-    Strides: Vector3D<Ambiguous<uint32>>
+    Kernel: 'TVector
+    Strides: 'TVector
     Padding: Padding
 }
 
 /// {{ max | avg | min }}:[{{ int_k1 }}x{{ int_k2 }}]
-type Pooling2D = {
-    Kernel: Vector2D<Ambiguous<uint32>>
-    Strides: Vector2D<Ambiguous<uint32>>
-    PoolingType: PoolingType
-}
+//type Pooling2D = {
+//    Kernel: Vector2D<Ambiguous<uint32>>
+//    Strides: Vector2D<Ambiguous<uint32>>
+//    PoolingType: PoolingType
+//}
 
 /// {{ max | avg | min }}:[{{ int_k1 }}x{{ int_k2 }}x{{ int_k3 }}]
-type Pooling3D = {
-    Kernel: Vector3D<Ambiguous<uint32>>
-    Strides: Vector3D<Ambiguous<uint32>>
+type Pooling<'TVector> = {
+    Kernel: 'TVector
+    Strides: 'TVector
     PoolingType: PoolingType
 }
 
@@ -114,16 +119,16 @@ type NonHeadLayer<'TLayer, 'TSensor> =
 [<ReferenceEquality>]
 type Layer3D =
     | Concatenation3D of NonHeadLayer<Layer3D, Sensor3D>[]
-    | Conv3D of Convolutional3D * NonHeadLayer<Layer3D, Sensor3D>
-    | Pooling3D of Pooling3D * NonHeadLayer<Layer3D, Sensor3D>
+    | Conv3D of Convolutional<Vector3D<Ambiguous<uint32>>> * NonHeadLayer<Layer3D, Sensor3D>
+    | Pooling3D of Pooling<Vector3D<Ambiguous<uint32>>> * NonHeadLayer<Layer3D, Sensor3D>
     | Activation3D of Activator * NonHeadLayer<Layer3D, Sensor3D>
     | Empty3D
 
 [<ReferenceEquality>]
 type Layer2D =
     | Concatenation2D of NonHeadLayer<Layer2D, Sensor2D>[]
-    | Conv2D of Convolutional2D * NonHeadLayer<Layer2D, Sensor2D>
-    | Pooling2D of Pooling2D * NonHeadLayer<Layer2D, Sensor2D>
+    | Conv2D of Convolutional<Vector2D<Ambiguous<uint32>>> * NonHeadLayer<Layer2D, Sensor2D>
+    | Pooling2D of Pooling<Vector2D<Ambiguous<uint32>>> * NonHeadLayer<Layer2D, Sensor2D>
     | Activation2D of Activator * NonHeadLayer<Layer2D, Sensor2D>
     | Empty2D
 
@@ -142,10 +147,19 @@ type HeadLayer =
     | D2 of HeadLayer<Layer2D>
     | D1 of HeadLayer<Layer1D>
 
+type Sensor =
+    | Sensor3D of LayerId * Sensor3D
+    | Sensor2D of LayerId * Sensor2D
+    | Sensor1D of LayerId * Sensor1D
+
 type Loss =
     | MSE
     | BCE
     | CE
+
+type HeadFunction =
+    | Softmax
+    | Activator of Activator
 
 type Head =
     | Softmax of float32 * Loss * HeadLayer<Layer1D> // Classification
@@ -168,6 +182,13 @@ type Optimizer =
     | RMSProp of float32 * RMSProp
     | SGD of float32 * SGD
     | Adam of float32 * Adam
+
+type InconsistentNetwork = {
+    Heads: Head []
+    Layers: Choice<HeadLayer, Sensor>[]
+    Ambiguities: IDictionary<AmbiguityVariableName, Values<uint32>>
+    Optimizer: Optimizer
+}
 
 type Network = {
     Heads: Head []

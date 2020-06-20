@@ -60,29 +60,18 @@ namespace NgineUI.ViewModels
             var ambiguityConverter = AmbiguityConverter.instance;
 
             // Set up ambiguity values.
+            Ambiguities = new AmbiguitiesViewModel();
+
             // TODO: remove these
-            var ambiguities = new ObservableCollection<string>
-            { 
-                "aaa",
-                "bbb"
-            };
+            Ambiguities.Add(
+                 ambiguityConverter.Encode(KeyValuePair.Create(
+                     AmbiguityVariableName.NewVariable("bbb"),
+                     Values<uint>.NewRange(new Range<uint>(84u, 4u, 100u)))));
 
-            var ambiguityValues = new ObservableCollection<Ambiguity>
-            {
-                ambiguityConverter.Encode(KeyValuePair.Create(
-                    AmbiguityVariableName.NewVariable(ambiguities[0]),
-                    Values<uint>.NewList(new[]{ 3u, 5u }))),
-
-                ambiguityConverter.Encode(KeyValuePair.Create(
-                    AmbiguityVariableName.NewVariable(ambiguities[1]),
-                    Values<uint>.NewRange(new Range<uint>(84u, 4u, 100u))))
-            };
-
-            Ambiguities = new AmbiguitiesViewModel
-            {
-                Items = ambiguityValues
-            };
-
+            Ambiguities.Add(ambiguityConverter.Encode(KeyValuePair.Create(
+                    AmbiguityVariableName.NewVariable("aaa"),
+                    Values<uint>.NewList(new[] { 3u, 5u }))));
+            
             NodeList = new NodeListViewModel
             {
                 Title = "Добавить слой",
@@ -101,11 +90,11 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Input1DViewModel(idTracker, !InvertIfTrue(ref input1DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Input2DViewModel(idTracker, !InvertIfTrue(ref input2DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Input3DViewModel(idTracker, !InvertIfTrue(ref input3DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new DenseViewModel(idTracker, ambiguities, !InvertIfTrue(ref denseViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Conv2DViewModel(idTracker, ambiguities, !InvertIfTrue(ref conv2DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Conv3DViewModel(idTracker, ambiguities, !InvertIfTrue(ref conv3DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Pooling2DViewModel(idTracker, ambiguities, !InvertIfTrue(ref pooling2DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Pooling3DViewModel(idTracker, ambiguities, !InvertIfTrue(ref pooling3DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new DenseViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref denseViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Conv2DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref conv2DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Conv3DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref conv3DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Pooling2DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref pooling2DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Pooling3DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref pooling3DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation1DViewModel(activatorConverter, idTracker, !InvertIfTrue(ref activation1DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation2DViewModel(activatorConverter, idTracker, !InvertIfTrue(ref activation2DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation3DViewModel(activatorConverter, idTracker, !InvertIfTrue(ref activation3DViewModelIsFirstLoaded)));

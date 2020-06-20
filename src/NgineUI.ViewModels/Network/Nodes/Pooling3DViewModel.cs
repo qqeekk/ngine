@@ -14,7 +14,7 @@ namespace NgineUI.ViewModels.Network.Nodes
     public class Pooling3DViewModel : PoolingViewModelBase<Ambiguous3DTuple, Layer3D, Sensor3D>
     {
         public Pooling3DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
-            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, "Pooling3D", setId)
+            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, setId)
         {
         }
 
@@ -24,7 +24,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             => new AmbiguousUIntVector3DEditorViewModel(ambiguities);
 
         protected override Layer3D EvaluateOutput(NonHeadLayer<Layer3D, Sensor3D> prev, Ambiguous3DTuple kernel, Ambiguous3DTuple strides, PoolingType pooling)
-            => Layer3D.NewPooling3D(new Pooling3D(kernel, strides, pooling), prev);
+            => Layer3D.NewPooling3D(new Pooling<Ambiguous3DTuple>(kernel, strides, pooling), prev);
 
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => HeadLayerChoice(HeadLayer.NewD3(HeadOutput.CurrentValue));

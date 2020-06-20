@@ -2,17 +2,18 @@
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Schemas.Expressions;
 using Ngine.Domain.Utils;
+using NgineUI.ViewModels.Network.Connections;
 using System;
 using System.Collections.Generic;
 using Activator = Ngine.Domain.Schemas.Activator;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public class Head1DViewModel : HeadViewModelBase<Layer1D, HeadFunction>
+    public class Head1DViewModel : HeadViewModelBase<Layer1D>
     {
         public Head1DViewModel(
             IActivatorConverter activatorConverter,
-            ILossConverter lossConverter) : base(activatorConverter, lossConverter, "Head1D")
+            ILossConverter lossConverter) : base(activatorConverter, lossConverter, PortType.Layer1D)
         {
         }
 

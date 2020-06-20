@@ -7,7 +7,7 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public class Flatten3DViewModel : FlattenViewModelBase<Layer3D, Sensor3D>
     {
-        public Flatten3DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, PortType.Layer3D, "Flatten3D", setId)
+        public Flatten3DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, PortType.Layer3D, setId)
         {
         }
 

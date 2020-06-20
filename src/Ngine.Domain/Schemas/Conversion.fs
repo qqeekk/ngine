@@ -50,8 +50,8 @@ module Errors =
     type LossError =
         | UnknownType
 
-    type HeadError =
-        | LayerError of Schema.Layer option * LayerError<LayerConversionError>
+    type HeadError<'TLayerError> =
+        | LayerError of Schema.Layer option * LayerError<'TLayerError>
         | LossError of LossError
         | HeadFunctionError of PropsConversionError
 
@@ -59,25 +59,20 @@ module Errors =
         | LayerError of Schema.Layer * LayerError<'TError>
         | AmbiguityError of Schema.Ambiguity * PropsConversionError[]
 
-    type NetworkConversionError =
-        | LayerSequenceError of LayerSequenceError<LayerConversionError>
+    type NetworkConversionError<'TLayerError> =
+        | LayerSequenceError of LayerSequenceError<'TLayerError>
         | OptimizerError of PropsConversionError
-        | HeadError of Schema.Head * HeadError[]
-
-type Sensor =
-    | Sensor3D of LayerId * Sensor3D
-    | Sensor2D of LayerId * Sensor2D
-    | Sensor1D of LayerId * Sensor1D
+        | HeadError of Schema.Head * HeadError<'TLayerError>[]
 
 type LayerProps =
     | Dense of Dense
     | Sensor3D of Sensor3D
     | Sensor2D of Sensor2D
     | Sensor1D of Sensor1D
-    | Convolutional2D of Convolutional2D
-    | Convolutional3D of Convolutional3D
-    | Pooling2D of Pooling2D
-    | Pooling3D of Pooling3D
+    | Convolutional2D of Convolutional<Vector2D<Ambiguous<uint32>>>
+    | Convolutional3D of Convolutional<Vector3D<Ambiguous<uint32>>>
+    | Pooling2D of Pooling<Vector2D<Ambiguous<uint32>>>
+    | Pooling3D of Pooling<Vector3D<Ambiguous<uint32>>>
     | PrevLayers of LayerId []
     | Dropout of float32
     | Activator1D of Activator
@@ -85,10 +80,6 @@ type LayerProps =
     | Activator3D of Activator
     | Flatten3D
     | Flatten2D
-
-type HeadFunction =
-    | Softmax
-    | Activator of Activator
 
 type LayerPropsDecoder = delegate of schema:string -> Result<LayerProps, PropsConversionError>
 
@@ -123,17 +114,6 @@ type IOptimizerConverter =
     abstract member Decode: string -> Result<Optimizer, PropsConversionError>
     abstract member OptimizerNames: Pretty [] with get
 
-[<Interface>]
-type INetworkConverter =
-    abstract member Encode: Network -> Schema.Network
-    abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError[]>
-    abstract member EncodeLayers: layers: Choice<HeadLayer, Sensor>[] -> Schema.Layer[]
-    abstract member EncodeHeads: heads: Head[] -> Schema.Head[]
-    abstract member DecodeLayers:
-        layers: seq<Schema.Layer> 
-        -> ambiguities: seq<Schema.Ambiguity>
-        -> Result<Choice<HeadLayer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]>
-
 type Ambiguity = KeyValuePair<AmbiguityVariableName, Values<uint32>> 
 
 [<Interface>]
@@ -141,3 +121,19 @@ type IAmbiguityConverter =
     abstract member Encode: Ambiguity -> Schema.Ambiguity
     abstract member Decode: Schema.Ambiguity -> Result<Ambiguity, PropsConversionError[]>
     abstract member ListPattern: Pretty with get
+
+[<Interface>]
+type INetworkConverter =
+    abstract member LayerConverter : ILayerPropsConverter with get
+    abstract member AmbiguityConverter : IAmbiguityConverter with get
+    abstract member LossConverter : ILossConverter with get
+
+    abstract member Encode: Network -> Schema.Network
+    abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError<LayerConversionError>[]>
+    abstract member EncodeLayers: layers: Choice<HeadLayer, Sensor>[] -> Schema.Layer[]
+    abstract member EncodeHeads: heads: Head[] -> Schema.Head[]
+    abstract member DecodeInconsistent: Schema.Network -> Result<InconsistentNetwork, NetworkConversionError<InconsistentLayerConversionError>[]>
+    abstract member DecodeLayers:
+        layers: seq<Schema.Layer> 
+        -> ambiguities: seq<Schema.Ambiguity>
+        -> Result<Choice<HeadLayer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]>

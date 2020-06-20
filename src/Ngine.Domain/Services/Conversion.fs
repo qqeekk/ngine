@@ -166,20 +166,22 @@ module public NetworkConverters =
               Optimizer = optimizerConverter.Encode(entity.Optimizer) }
 
 
+        let decodeAmbiguities ambiguities =
+            ambiguities
+            |> Seq.map (fun amb ->
+                ambiguityConverter.Decode amb
+                |> Result.mapError (fun e -> amb, e))
+            |> ResultExtensions.aggregate
+            |> function
+            | Ok kvps ->
+                Dictionary kvps |> Ok
+            | Error errors ->
+                errors |> Array.map AmbiguityError |> Error
+
         let decodeLayers (layers: seq<Schema.Layer>)
                          (ambiguities: seq<Schema.Ambiguity>)
                          : Result<Choice<HeadLayer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]> =
-            let ambiguities' =
-                ambiguities
-                |> Seq.map (fun amb ->
-                    ambiguityConverter.Decode amb
-                    |> Result.mapError (fun e -> amb, e))
-                |> ResultExtensions.aggregate
-                |> function
-                | Ok kvps ->
-                    Dictionary kvps |> Ok
-                | Error errors ->
-                    errors |> Array.map AmbiguityError |> Error
+            let ambiguities' = decodeAmbiguities ambiguities
 
             let idmap: Dictionary<LayerId, Schema.Layer> = Dictionary()
             let idmapPopulatingResult =
@@ -423,6 +425,83 @@ module public NetworkConverters =
                 | Error errors -> Error (errors |> Seq.distinct |> Seq.map LayerSequenceError.LayerError |> Seq.toArray)
 
 
+        let decodeInconsistent (schema: Schema.Network) =
+            let findLayer id =
+                schema.Layers |> Seq.find (fun l -> fst l.LayerId = id)
+
+            let layersResult =
+                decodeLayers (schema.Layers) (schema.Ambiguities)
+
+            match layersResult with
+            | Ok (layers, ambiguities) ->
+                let decodeHead (NotNull "head schema" headSchema : Schema.Head) =
+                    let lossResult =
+                        lossConverter.DecodeLoss headSchema.Loss
+                        |> Result.mapError HeadError.LossError
+
+                    let headActivationResult =
+                        propsConverter.ActivatorConverter.DecodeHeadActivation headSchema.Activation
+                        |> Result.mapError HeadError.HeadFunctionError
+
+                    let layerResult =
+                        layers
+                        |> Seq.tryPick (function
+                            | Choice1Of2 (D1 (HeadLayer (lid, _)) | D2 (HeadLayer (lid, _)) | D3 (HeadLayer (lid, _)))
+                            | Choice2Of2 (Sensor.Sensor1D (lid, _) | Sensor.Sensor2D (lid, _) | Sensor.Sensor3D (lid, _))
+                                as l when lid = headSchema.LayerId -> Some (Ok l)
+                            | _ -> None)
+                        |> Option.defaultValue (Error <| HeadError.LayerError
+                            (None, LayerError.LayerError [| MissingLayerId headSchema.LayerId |]))
+
+                    match ResultExtensions.zip layerResult headActivationResult with
+                    | Ok (Choice1Of2 (D1 layer), HeadFunction.Softmax) ->
+                        lossResult
+                        |> Result.map (fun loss -> Head.Softmax (headSchema.LossWeight, loss, layer))
+                        |> Result.mapError (Array.singleton)
+
+                    | Ok (Choice1Of2 layer, HeadFunction.Activator activator) ->
+                        lossResult
+                        |> Result.map (fun loss -> Head.Activator (headSchema.LossWeight, loss, layer, activator))
+                        |> Result.mapError (Array.singleton)
+
+                    | Ok ((Choice1Of2 (D2 _ | D3 _) | Choice2Of2 _), HeadFunction.Softmax)
+                    | Ok ((Choice2Of2 _), HeadFunction.Activator _) ->
+                        let layerError = HeadError.LayerError (None, LayerCompatibilityError {
+                            Layer2 = findLayer headSchema.LayerId
+                            Error = DimensionMissmatch })
+
+                        match lossResult with
+                        | Ok _ -> Error [| layerError |]
+                        | Error lossResult -> Error [| lossResult; layerError |]
+
+                    | Error errors ->
+                        match lossResult with
+                        | Ok _ -> errors
+                        | Error lossResult -> lossResult::errors
+                        |> List.toArray |> Error
+
+                let headsResult =
+                    schema.Heads
+                    |> Seq.map (fun head ->
+                        decodeHead head
+                        |> Result.mapError (fun errors -> HeadError (head, errors)))
+                    |> ResultExtensions.aggregate
+
+                let optimizerResult =
+                    optimizerConverter.Decode (schema.Optimizer)
+                    |> Result.mapError (NetworkConversionError.OptimizerError >> Array.singleton)
+
+                match ResultExtensions.zip headsResult optimizerResult with
+                | Ok (heads, optimizer) -> Ok {
+                    Heads = heads
+                    Layers = layers
+                    Optimizer = optimizer
+                    Ambiguities = ambiguities }
+                | Error errors -> Error (Seq.concat errors |> Seq.distinct |> Seq.toArray)
+
+            | Error errors -> Error (Array.map LayerSequenceError errors)
+
+
         let decode (schema: Schema.Network) =
             let findLayer id =
                 schema.Layers |> Seq.find (fun l -> fst l.LayerId = id)
@@ -512,18 +591,18 @@ module public NetworkConverters =
                         |> Option.defaultValue (Error <| HeadError.LayerError (None, LayerError.LayerError [| Inconsistent (MissingLayerId headSchema.LayerId) |]))
 
                     match ResultExtensions.zip layerResult headActivationResult with
-                    | Ok (Choice1Of2 (D1 layer), Softmax) ->
+                    | Ok (Choice1Of2 (D1 layer), HeadFunction.Softmax) ->
                         lossResult
                         |> Result.map (fun loss -> Head.Softmax (headSchema.LossWeight, loss, layer))
                         |> Result.mapError (Array.singleton)
 
-                    | Ok (Choice1Of2 layer, Activator activator) ->
+                    | Ok (Choice1Of2 layer, HeadFunction.Activator activator) ->
                         lossResult
                         |> Result.map (fun loss -> Head.Activator (headSchema.LossWeight, loss, layer, activator))
                         |> Result.mapError (Array.singleton)
 
-                    | Ok ((Choice1Of2 (D2 _ | D3 _) | Choice2Of2 _), Softmax)
-                    | Ok ((Choice2Of2 _), Activator _) ->
+                    | Ok ((Choice1Of2 (D2 _ | D3 _) | Choice2Of2 _), HeadFunction.Softmax)
+                    | Ok ((Choice2Of2 _), HeadFunction.Activator _) ->
                         let layerError = HeadError.LayerError (None, LayerCompatibilityError {
                             Layer2 = findLayer headSchema.LayerId
                             Error = DimensionMissmatch })
@@ -556,8 +635,12 @@ module public NetworkConverters =
             | Error errors -> Error (Array.map LayerSequenceError errors)
 
         { new INetworkConverter with
+            member _.AmbiguityConverter: IAmbiguityConverter = ambiguityConverter
+            member _.LayerConverter: ILayerPropsConverter = propsConverter
+            member _.LossConverter: ILossConverter = lossConverter
             member _.Encode(NotNull "entity" entity) = encode entity
             member _.Decode(NotNull "network schema" schema) = decode schema
+            member _.DecodeInconsistent(NotNull "network schema" schema) = decodeInconsistent schema
             member _.EncodeLayers(NotNull "layers" layers) = encodeLayers layers
             member _.EncodeHeads(NotNull "heads" heads) = encodeHeads heads
             member _.DecodeLayers(NotNull "layers" layers) (NotNull "ambiguites" ambiguites) = decodeLayers layers ambiguites} 

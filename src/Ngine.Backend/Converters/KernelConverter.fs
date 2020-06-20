@@ -118,7 +118,7 @@ module ConvEncoder =
                 Padding = Option.defaultValue (Zero) p }
 
         let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
-        let encode (conv:Convolutional2D) =
+        let encode (conv:Convolutional<Vector2D<Ambiguous<uint32>>>) =
             seq {
                 nameof m2.filters, fun _ -> m2.filters.encode conv.Filters
                 nameof m2.kernel, fun _ -> m2.kernel.encode conv.Kernel
@@ -138,7 +138,7 @@ module ConvEncoder =
                 Padding = Option.defaultValue (Zero) p }
 
         let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
-        let encode (conv:Convolutional3D) =
+        let encode (conv:Convolutional<Vector3D<Ambiguous<uint32>>>) =
             seq {
                 nameof m3.filters, fun _ -> m3.filters.encode conv.Filters
                 nameof m3.kernel, fun _ -> m3.kernel.encode conv.Kernel
@@ -331,7 +331,7 @@ module PoolingEncoder =
                 PoolingType = p }
 
         let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
-        let encode (pooling:Pooling2D) =
+        let encode (pooling:Pooling<Vector2D<Ambiguous<uint32>>>) =
             seq {
                 nameof m2.pooling, fun _ ->  m2.pooling.encode pooling.PoolingType
                 nameof m2.strides, fun _ ->  m2.strides.encode pooling.Strides
@@ -349,7 +349,7 @@ module PoolingEncoder =
                 PoolingType = p }
 
         let encoder = { pretty = pretty; decode = LayerPropsDecoder decode }
-        let encode (pooling:Pooling3D) =
+        let encode (pooling:Pooling<Vector3D<Ambiguous<uint32>>>) =
             seq {
                 nameof m3.pooling, fun _ ->  m3.pooling.encode pooling.PoolingType
                 nameof m3.strides, fun _ ->  m3.strides.encode pooling.Strides

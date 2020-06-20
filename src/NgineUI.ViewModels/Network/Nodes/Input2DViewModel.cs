@@ -12,29 +12,20 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     using UIntVector2D = Tuple<uint, uint>;
 
-    public class Input2DViewModel : NgineNodeViewModel
+    public class Input2DViewModel : NgineNodeViewModel, IConfigurable<Sensor2D>
     {
-        public ValueNodeInputViewModel<UIntVector2D> InputsEditor { get; }
-        public ValueNodeInputViewModel<uint> ChannelsEditor { get; }
+        public ValueEditorViewModel<UIntVector2D> InputsEditor { get; }
+        public ValueEditorViewModel<uint> ChannelsEditor { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<Layer2D, Sensor2D>> Output { get; }
 
-        public Input2DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, NodeType.Input, "Input2D", setId)
+        public Input2DViewModel(LayerIdTracker idTracker, bool setId)
+            : base(idTracker, NodeType.Input, CombineName("Input", PortType.Layer2D), setId)
         {
-            InputsEditor = new ValueNodeInputViewModel<UIntVector2D>
-            {
-                Name = "Inputs",
-                Editor = new UIntVector2DEditorViewModel(),
-            };
-            InputsEditor.Port.IsVisible = false;
-            this.Inputs.Add(InputsEditor);
+            InputsEditor = new UIntVector2DEditorViewModel();
+            AddInlinedInput("Inputs", InputsEditor);
 
-            ChannelsEditor = new ValueNodeInputViewModel<uint>
-            {
-                Name = "Channels",
-                Editor = new UIntEditorViewModel(),
-            };
-            ChannelsEditor.Port.IsVisible = false;
-            this.Inputs.Add(ChannelsEditor);
+            ChannelsEditor = new UIntEditorViewModel();
+            AddInlinedInput("Channels", ChannelsEditor);
 
             Output = new NgineOutputViewModel<NonHeadLayer<Layer2D, Sensor2D>>(PortType.Layer2D)
             {
@@ -48,5 +39,11 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => SensorChoice(Sensor.NewSensor2D(Id, (Output.CurrentValue as NonHeadLayer<Layer2D, Sensor2D>.Sensor).Item2));
+
+        public void Setup(Sensor2D config)
+        {
+            InputsEditor.Value = config.Inputs;
+            ChannelsEditor.Value = config.Channels;
+        }
     }
 }

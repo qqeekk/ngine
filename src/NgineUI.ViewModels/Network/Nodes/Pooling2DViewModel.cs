@@ -13,7 +13,7 @@ namespace NgineUI.ViewModels.Network.Nodes
     public class Pooling2DViewModel : PoolingViewModelBase<Ambiguous2DTuple, Layer2D, Sensor2D>
     {
         public Pooling2DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
-            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer2D, "Pooling2D", setId)
+            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer2D, setId)
         {
         }
 
@@ -26,6 +26,6 @@ namespace NgineUI.ViewModels.Network.Nodes
             => new AmbiguousUIntVector2DEditorViewModel(ambiguities);
 
         protected override Layer2D EvaluateOutput(NonHeadLayer<Layer2D, Sensor2D> prev, Ambiguous2DTuple kernel, Ambiguous2DTuple strides, PoolingType pooling)
-            => Layer2D.NewPooling2D(new Pooling2D(kernel, strides, pooling), prev);
+            => Layer2D.NewPooling2D(new Pooling<Ambiguous2DTuple>(kernel, strides, pooling), prev);
     }
 }

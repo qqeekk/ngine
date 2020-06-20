@@ -10,9 +10,9 @@ using System.Reactive.Linq;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public class DenseViewModel : NgineNodeViewModel
+    public class DenseViewModel : NgineNodeViewModel, IConfigurable<Dense>
     {
-        public ValueNodeInputViewModel<string> UnitsEditor { get; }
+        public AmbiguousUIntEditorViewModel UnitsEditor { get; }
         public ValueNodeInputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Previous { get; }
         public ValueNodeOutputViewModel<HeadLayer<Layer1D>> HeadOutput { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Output { get; }
@@ -20,14 +20,8 @@ namespace NgineUI.ViewModels.Network.Nodes
         public DenseViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
             : base(idTracker, NodeType.Layer, "Dense", setId)
         {
-            var unitsEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
-            UnitsEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Units",
-                Editor = unitsEditor,
-            };
-            UnitsEditor.Port.IsVisible = false;
-            this.Inputs.Add(UnitsEditor);
+            UnitsEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
+            AddInlinedInput("Units", UnitsEditor);
 
             Previous = new NgineInputViewModel<NonHeadLayer<Layer1D, Sensor1D>>(PortType.Layer1D);
             this.Inputs.Add(Previous);
@@ -36,7 +30,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             {
                 Value = Observable.CombineLatest(
                     Previous.ValueChanged.Select(p => UpdateId(p, Layer1D.Empty1D)),
-                    UnitsEditor.ValueChanged.Select(_ => OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, unitsEditor.SelectedValue)),
+                    UnitsEditor.ValueChanged.Select(_ => OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, UnitsEditor.SelectedValue)),
                     (o, units) => HeadLayer<Layer1D>.NewHeadLayer(o.Id, Layer1D.NewDense(new Dense(units), o.Prev)))
             };
 
@@ -51,5 +45,10 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => HeadLayerChoice(HeadLayer.NewD1(HeadOutput.CurrentValue));
+
+        public void Setup(Dense config)
+        {
+            UnitsEditor.Value = Ambiguous.stringify(config.Units);
+        }
     }
 }

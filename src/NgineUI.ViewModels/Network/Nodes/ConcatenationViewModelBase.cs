@@ -13,12 +13,14 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public abstract class ConcatenationViewModelBase<TLayer, TSensor> : NgineNodeViewModel
     {
+        private const string NameBase = "Concatenation";
+
         public ValueListNodeInputViewModel<NonHeadLayer<TLayer, TSensor>> Previous { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
-        public ConcatenationViewModelBase(LayerIdTracker idTracker, PortType port, string name, bool setId)
-            : base(idTracker, NodeType.Layer, name, setId)
+        public ConcatenationViewModelBase(LayerIdTracker idTracker, PortType port, bool setId)
+            : base(idTracker, NodeType.Layer, CombineName(NameBase, port), setId)
         {
             Previous = new NgineListInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);

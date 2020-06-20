@@ -9,21 +9,17 @@ using System.Reactive.Linq;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public class Input1DViewModel : NgineNodeViewModel
+    public class Input1DViewModel : NgineNodeViewModel, IConfigurable<Sensor1D>
     {
-        public ValueNodeInputViewModel<uint> InputsEditor { get; }
+        public ValueEditorViewModel<uint> InputsEditor { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Output { get; }
 
-        public Input1DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, NodeType.Input, "Input1D", setId)
+        public Input1DViewModel(LayerIdTracker idTracker, bool setId)
+            : base(idTracker, NodeType.Input, CombineName("Input", PortType.Layer1D), setId)
         {
-            InputsEditor = new ValueNodeInputViewModel<uint>
-            {
-                Name = "Inputs",
-                Editor = new UIntEditorViewModel(),
-            };
-            InputsEditor.Port.IsVisible = false;
-            this.Inputs.Add(InputsEditor);
-
+            InputsEditor = new UIntEditorViewModel();
+            AddInlinedInput("Inputs", InputsEditor);
+            
             Output = new NgineOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>>(PortType.Layer1D)
             {
                 Value = InputsEditor.ValueChanged.Select(v => NonHeadLayer<Layer1D, Sensor1D>.NewSensor(Id, new Sensor1D(v)))
@@ -34,5 +30,10 @@ namespace NgineUI.ViewModels.Network.Nodes
 
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => SensorChoice(Sensor.NewSensor1D(Id, (Output.CurrentValue as NonHeadLayer<Layer1D, Sensor1D>.Sensor).Item2));
+
+        public void Setup(Sensor1D config)
+        {
+            InputsEditor.Value = config.Inputs;
+        }
     }
 }

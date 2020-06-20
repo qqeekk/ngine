@@ -8,7 +8,7 @@ namespace NgineUI.ViewModels.Network.Nodes
     public class Activation1DViewModel : ActivationViewModelBase<Layer1D, Sensor1D>
     {
         public Activation1DViewModel(IActivatorConverter activatorConverter, LayerIdTracker idTracker, bool setId)
-            : base(activatorConverter, idTracker, PortType.Layer1D, "Activation1D", setId)
+            : base(activatorConverter, idTracker, PortType.Layer1D, setId)
         {
         }
 

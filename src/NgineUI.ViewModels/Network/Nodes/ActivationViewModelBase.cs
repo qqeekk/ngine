@@ -13,9 +13,12 @@ using Activator = Ngine.Domain.Schemas.Activator;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public abstract class ActivationViewModelBase<TLayer, TSensor> : NgineNodeViewModel
+    public abstract class ActivationViewModelBase<TLayer, TSensor> : NgineNodeViewModel, IConfigurable<Activator>
     {
-        public ValueNodeInputViewModel<string> ActivationEditor { get; }
+        private const string NameBase = "Activation";
+        private readonly IActivatorConverter activatorConverter;
+
+        public LookupEditorViewModel<Activator> ActivationEditor { get; }
         public ValueNodeInputViewModel<NonHeadLayer<TLayer, TSensor>> Previous { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
@@ -24,23 +27,16 @@ namespace NgineUI.ViewModels.Network.Nodes
             IActivatorConverter activatorConverter,
             LayerIdTracker idTracker,
             PortType port,
-            string name, bool setId) : base(idTracker, NodeType.Layer, name, setId)
+            bool setId) : base(idTracker, NodeType.Layer, CombineName(NameBase, port), setId)
         {
             var defaultActivator = Activator.NewQuotedFunction(QuotedFunction.ReLu);
-            var activationEditor = new LookupEditorViewModel<Activator>(
+            ActivationEditor = new LookupEditorViewModel<Activator>(
                     v => ResultExtensions.toOption(activatorConverter.Decode(v)),
                     activatorConverter.Encode(defaultActivator))
             {
                 LookupValues = Array.ConvertAll(activatorConverter.ActivationFunctionNames, p => p.defn.Value)
             };
-
-            ActivationEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Activation",
-                Editor = activationEditor,
-            };
-            ActivationEditor.Port.IsVisible = false;
-            this.Inputs.Add(ActivationEditor); ;
+            AddInlinedInput("Activation", ActivationEditor);
 
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
@@ -49,7 +45,7 @@ namespace NgineUI.ViewModels.Network.Nodes
             { 
                 Value = Observable.CombineLatest(
                     Previous.ValueChanged.Select(prev => UpdateId(prev, DefaultPrevious)),
-                    ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(defaultActivator, activationEditor.SelectedValue)),
+                    ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(defaultActivator, ActivationEditor.SelectedValue)),
                     (o, activation) => HeadLayer<TLayer>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev, activation)))
             };
 
@@ -60,9 +56,16 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             this.Outputs.Add(Output);
             this.Outputs.Add(HeadOutput);
+            this.activatorConverter = activatorConverter;
         }
 
         protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, Activator function);
+
+        public void Setup(Activator config)
+        {
+            ActivationEditor.Value = activatorConverter.Encode(config);
+        }
+
         protected abstract TLayer DefaultPrevious { get; }
     }
 }

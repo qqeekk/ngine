@@ -15,7 +15,7 @@ module NetworkErrorPrettyPrinter =
             "Some values indicated in pattern are out of range",
             (ps |> Seq.map (fun p -> Node (sprintf "%s - %s" p.Property p.IndicatedValue, [])) |> Seq.toList)
 
-    let prettify (errors: NetworkConversionError[]) =
+    let prettify (errors: NetworkConversionError<LayerConversionError>[]) =
         let uniqueLayerErrors =
             errors
             |> Seq.collect (function

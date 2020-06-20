@@ -14,11 +14,15 @@ using Activator = Ngine.Domain.Schemas.Activator;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public abstract class HeadViewModelBase<TLayer, TActivator> : NgineNodeViewModel where TActivator : HeadFunction
+    public abstract class HeadViewModelBase<TLayer> : NgineNodeViewModel, IConfigurable<Head>
     {
-        public ValueNodeInputViewModel<string> ActivationEditor { get; }
-        public ValueNodeInputViewModel<string> LossEditor { get; }
-        public ValueNodeInputViewModel<float> LossWeightEditor { get; }
+        private const string NameBase = "Head";
+        private readonly IActivatorConverter activatorConverter;
+        private readonly ILossConverter lossConverter;
+
+        public LookupEditorViewModel<HeadFunction> ActivationEditor { get; }
+        public ValueEditorViewModel<string> LossEditor { get; }
+        public ValueEditorViewModel<float> LossWeightEditor { get; }
         public ValueNodeInputViewModel<HeadLayer<TLayer>> Previous { get; }
 
         public Head Output => output.Value;
@@ -27,39 +31,22 @@ namespace NgineUI.ViewModels.Network.Nodes
         public HeadViewModelBase(
             IActivatorConverter activatorConverter,
             ILossConverter lossConverter,
-            string name) : base(null, NodeType.Head, name, false)
+            PortType port) : base(null, NodeType.Head, CombineName(NameBase, port), false)
         {
-            var activationEditor = new LookupEditorViewModel<TActivator>(
+            ActivationEditor = new LookupEditorViewModel<HeadFunction>(
                     v => ParseActivator(activatorConverter, v),
                     activatorConverter.EncodeHeadActivation(DefaultActivator))
             {
                 LookupValues = GetLookupValues(activatorConverter)
             };
-
-            ActivationEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Activation",
-                Editor = activationEditor,
-            };
-            ActivationEditor.Port.IsVisible = false;
-            this.Inputs.Add(ActivationEditor); ;
+            AddInlinedInput("Activation", ActivationEditor);
 
             var lossNames = Array.ConvertAll(lossConverter.LossFunctionNames, p => p.name);
-            LossEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Loss",
-                Editor = new ComboEditorViewModel(lossNames),
-            };
-            LossEditor.Port.IsVisible = false;
-            this.Inputs.Add(LossEditor); ;
+            LossEditor = new ComboEditorViewModel(lossNames);
+            AddInlinedInput("Loss", LossEditor);
 
-            LossWeightEditor = new ValueNodeInputViewModel<float>
-            {
-                Name = "Loss Weight",
-                Editor = new FloatEditorViewModel(),
-            };
-            LossWeightEditor.Port.IsVisible = false;
-            this.Inputs.Add(LossWeightEditor);
+            LossWeightEditor = new FloatEditorViewModel();
+            AddInlinedInput("Loss Weight", LossWeightEditor);
 
             Previous = new NgineInputViewModel<HeadLayer<TLayer>>(PortType.Head);
             this.Inputs.Add(Previous);
@@ -67,44 +54,63 @@ namespace NgineUI.ViewModels.Network.Nodes
             Observable
                 .CombineLatest(
                     Previous.ValueChanged.Select(p => p ?? WrapEmpty(DefaultPrevious)),
-                    ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(DefaultActivator, activationEditor.SelectedValue)),
+                    ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(DefaultActivator, ActivationEditor.SelectedValue)),
                     LossEditor.ValueChanged.Select(v => lossConverter.DecodeLoss(v).ResultValue),
                     LossWeightEditor.ValueChanged,
                     EvaluateValue)
                 .ToProperty(this, vm => vm.Output, out output);
+            this.activatorConverter = activatorConverter;
+            this.lossConverter = lossConverter;
+        }
+
+        public void Setup(Head config)
+        {
+            switch (config)
+            {
+                case Head.Activator a:
+                    LossWeightEditor.Value = a.Item1;
+                    LossEditor.Value = lossConverter.EncodeLoss(a.Item2);
+                    ActivationEditor.Value = activatorConverter.EncodeHeadActivation(HeadFunction.NewActivator(a.Item4));
+                    break;
+                case Head.Softmax s:
+                    LossWeightEditor.Value = s.Item1;
+                    LossEditor.Value = lossConverter.EncodeLoss(s.Item2);
+                    ActivationEditor.Value = activatorConverter.EncodeHeadActivation(HeadFunction.Softmax);
+                    break;
+            }
         }
 
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => HeadChoice(Output);
 
         protected abstract TLayer DefaultPrevious { get; }
-        protected abstract TActivator DefaultActivator { get; }
-        protected abstract Head EvaluateValue(HeadLayer<TLayer> prev, TActivator activator, Loss loss, float lossWeight);
-        protected abstract FSharpOption<TActivator> ParseActivator(IActivatorConverter converter, string value);
+        protected abstract HeadFunction DefaultActivator { get; }
+        protected abstract Head EvaluateValue(HeadLayer<TLayer> prev, HeadFunction activator, Loss loss, float lossWeight);
+        protected abstract FSharpOption<HeadFunction> ParseActivator(IActivatorConverter converter, string value);
         protected abstract IEnumerable<string> GetLookupValues(IActivatorConverter converter);
     }
 
-    public abstract class MultiDimensionalHeadViewModel<TLayer> : HeadViewModelBase<TLayer, HeadFunction.Activator>
+    public abstract class MultiDimensionalHeadViewModel<TLayer> : HeadViewModelBase<TLayer>
     {
         public MultiDimensionalHeadViewModel(
             IActivatorConverter activatorConverter,
-            ILossConverter lossConverter, string name) : base(activatorConverter, lossConverter, name)
+            ILossConverter lossConverter, PortType port) : base(activatorConverter, lossConverter, port)
         {
         }
 
-        protected override HeadFunction.Activator DefaultActivator =>
-            HeadFunction.NewActivator(Activator.NewQuotedFunction(QuotedFunction.ReLu)) as HeadFunction.Activator;
+        protected override HeadFunction DefaultActivator =>
+            HeadFunction.NewActivator(Activator.NewQuotedFunction(QuotedFunction.ReLu));
 
         protected override IEnumerable<string> GetLookupValues(IActivatorConverter converter)
         {
             return Array.ConvertAll(converter.ActivationFunctionNames, p => p.defn.Value);
         }
 
-        protected override FSharpOption<HeadFunction.Activator> ParseActivator(IActivatorConverter converter, string value)
+        protected override FSharpOption<HeadFunction> ParseActivator(IActivatorConverter converter, string value)
         {
             var activator = ResultExtensions.toOption(converter.Decode(value));
-            return OptionModule.Map(FSharpFunc<Activator, HeadFunction.Activator>
-                .FromConverter(a => HeadFunction.NewActivator(a) as HeadFunction.Activator), activator);
+            return OptionModule.Map(FSharpFunc<Activator, HeadFunction>
+                .FromConverter(a => HeadFunction.NewActivator(a)), activator);
         }
     }
 }

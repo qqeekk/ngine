@@ -1,8 +1,11 @@
-﻿using DynamicData.Binding;
+﻿using DynamicData;
+using DynamicData.Binding;
 using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.Network.Connections;
+using NodeNetwork.Toolkit.ValueNode;
 using NodeNetwork.ViewModels;
 using ReactiveUI;
 using System;
@@ -20,7 +23,7 @@ namespace NgineUI.ViewModels.Network
     public abstract class NgineNodeViewModel : NodeViewModel
     {
         private readonly LayerIdTracker idTracker;
-        private readonly bool setId;
+        private bool setId;
         private Tuple<uint, uint> id;
 
         public Tuple<uint, uint> Id
@@ -42,6 +45,8 @@ namespace NgineUI.ViewModels.Network
             Id = setId ? idTracker.Generate(0u) : Tuple.Create(0u, 0u);
             NodeType = type;
         }
+
+        public void EnableIdGenerator() => setId = false;
 
         protected (Tuple<uint, uint> Id, NonHeadLayer<TLayer, TSensor> Prev) UpdateId<TLayer, TSensor>(
             NonHeadLayer<TLayer, TSensor> previous, TLayer layerFallback)
@@ -73,6 +78,28 @@ namespace NgineUI.ViewModels.Network
             FSharpChoice<Head, HeadLayer, Sensor>.NewChoice3Of3(node);
         protected static FSharpChoice<Head, HeadLayer, Sensor> HeadChoice(Head node) =>
             FSharpChoice<Head, HeadLayer, Sensor>.NewChoice1Of3(node);
+
+        protected static string CombineName(string @base, PortType? outPort = null)
+        {
+            return @base + outPort switch
+            {
+                PortType.Layer3D => "3D",
+                PortType.Layer2D => "2D",
+                PortType.Layer1D => "1D",
+                _ => "",
+            };
+        }
+
+        protected virtual void AddInlinedInput<TValue>(string name, ValueEditorViewModel<TValue> editor)
+        {
+            var input = new ValueNodeInputViewModel<TValue>
+            {
+                Name = name,
+                Editor = editor,
+            };
+            input.Port.IsVisible = false;
+            this.Inputs.Add(input);
+        }
 
         public abstract FSharpChoice<Head, HeadLayer, Sensor> GetValue();
     }

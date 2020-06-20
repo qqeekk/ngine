@@ -10,41 +10,32 @@ using System.Reactive.Linq;
 
 namespace NgineUI.ViewModels.Network.Nodes
 {
-    public abstract class PoolingViewModelBase<TVector, TLayer, TSensor> : NgineNodeViewModel
+    public abstract class PoolingViewModelBase<TVector, TLayer, TSensor> : NgineNodeViewModel, IConfigurable<Pooling<TVector>>
     {
-        public ValueNodeInputViewModel<string> PoolingEditor { get; }
-        public ValueNodeInputViewModel<TVector> KernelEditor { get; }
-        public ValueNodeInputViewModel<TVector> StridesEditor { get; }
+        private const string NameBase = "Pooling";
+        public ValueEditorViewModel<string> PoolingEditor { get; }
+        public ValueEditorViewModel<TVector> KernelEditor { get; }
+        public ValueEditorViewModel<TVector> StridesEditor { get; }
         public ValueNodeInputViewModel<NonHeadLayer<TLayer, TSensor>> Previous { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
-        public PoolingViewModelBase(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, NodeType type, PortType port, string name, bool setId)
-            : base(idTracker, type, name, setId)
+        public PoolingViewModelBase(
+            LayerIdTracker idTracker, 
+            ObservableCollection<string> ambiguities,
+            NodeType type,
+            PortType port, 
+            bool setId)
+            : base(idTracker, type, CombineName(NameBase, port), setId)
         {
-            KernelEditor = new ValueNodeInputViewModel<TVector>
-            {
-                Name = "Kernel",
-                Editor = CreateVectorEditor(ambiguities),
-            };
-            KernelEditor.Port.IsVisible = false;
-            this.Inputs.Add(KernelEditor);
+            KernelEditor = CreateVectorEditor(ambiguities);
+            AddInlinedInput("Kernel", KernelEditor);
 
-            StridesEditor = new ValueNodeInputViewModel<TVector>
-            {
-                Name = "Strides",
-                Editor = CreateVectorEditor(ambiguities),
-            };
-            StridesEditor.Port.IsVisible = false;
-            this.Inputs.Add(StridesEditor);
+            StridesEditor = CreateVectorEditor(ambiguities);
+            AddInlinedInput("Strides", StridesEditor);
 
-            PoolingEditor = new ValueNodeInputViewModel<string>
-            {
-                Name = "Pooling",
-                Editor = new ComboEditorViewModel(PoolingTypeEncoder.values),
-            };
-            PoolingEditor.Port.IsVisible = false;
-            this.Inputs.Add(PoolingEditor);
+            PoolingEditor = new ComboEditorViewModel(PoolingTypeEncoder.values);
+            AddInlinedInput("Pooling", PoolingEditor);
 
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
@@ -66,6 +57,13 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             this.Outputs.Add(Output);
             this.Outputs.Add(HeadOutput);
+        }
+
+        public void Setup(Pooling<TVector> config)
+        {
+            KernelEditor.Value = config.Kernel;
+            StridesEditor.Value = config.Strides;
+            PoolingEditor.Value = PoolingTypeEncoder.encoder.encode.Invoke(config.PoolingType);
         }
 
         protected abstract TLayer DefaultPrevious { get; }

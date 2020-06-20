@@ -8,7 +8,7 @@ namespace NgineUI.ViewModels.Network.Nodes
     public class Activation3DViewModel : ActivationViewModelBase<Layer3D, Sensor3D>
     {
         public Activation3DViewModel(IActivatorConverter activatorConverter, LayerIdTracker idTracker, bool setId)
-            : base(activatorConverter, idTracker, PortType.Layer3D, "Activation3D", setId)
+            : base(activatorConverter, idTracker, PortType.Layer3D, setId)
         {
         }
 

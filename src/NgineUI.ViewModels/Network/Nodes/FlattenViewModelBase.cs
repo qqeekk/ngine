@@ -13,8 +13,10 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public abstract class FlattenViewModelBase<TLayer, TSensor> : NgineNodeViewModel
     {
-        public FlattenViewModelBase(LayerIdTracker idTracker, PortType port, string name, bool setId)
-            : base(idTracker, NodeType.Layer, name, setId)
+        private const string NameBase = "Flatten";
+
+        public FlattenViewModelBase(LayerIdTracker idTracker, PortType port, bool setId)
+            : base(idTracker, NodeType.Layer, CombineName(NameBase, port), setId)
         {
             Previous = new NgineInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);

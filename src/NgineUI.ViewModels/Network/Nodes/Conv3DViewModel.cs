@@ -14,7 +14,7 @@ namespace NgineUI.ViewModels.Network.Nodes
     public class Conv3DViewModel : ConvViewModelBase<Ambiguous3DTuple, Layer3D, Sensor3D>
     {
         public Conv3DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
-            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, "Conv3D", setId)
+            : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, setId)
         {
         }
 
@@ -32,6 +32,6 @@ namespace NgineUI.ViewModels.Network.Nodes
             Ambiguous3DTuple kernel,
             Ambiguous3DTuple strides,
             Padding padding)
-            => Layer3D.NewConv3D(new Convolutional3D(filters, kernel, strides, padding), prev);
+            => Layer3D.NewConv3D(new Convolutional<Ambiguous3DTuple>(filters, kernel, strides, padding), prev);
     }
 }

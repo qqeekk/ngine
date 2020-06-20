@@ -7,7 +7,7 @@ namespace NgineUI.ViewModels.Network.Nodes
 {
     public class Concatenation3DViewModel : ConcatenationViewModelBase<Layer3D, Sensor3D>
     {
-        public Concatenation3DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, PortType.Layer3D, "Concatenation3D", setId)
+        public Concatenation3DViewModel(LayerIdTracker idTracker, bool setId) : base(idTracker, PortType.Layer3D, setId)
         {
         }
 
