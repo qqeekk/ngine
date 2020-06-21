@@ -44,13 +44,14 @@ namespace NgineUI.ViewModels.Network.Nodes
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
                 Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
                     Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious)),
                     FiltersEditor.ValueChanged,
                     KernelEditor.ValueChanged,
                     StridesEditor.ValueChanged,
                     PaddingEditor.ValueChanged.Select(p => PaddingEncoder.tryParsePadding(p).Value),
-                    (o, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(o.Id,
-                        EvaluateOutput(o.Prev, OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, FiltersEditor.SelectedValue), k, s, p)))
+                    (_, prev, f, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(Id,
+                        EvaluateOutput(prev, OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, FiltersEditor.SelectedValue), k, s, p)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)

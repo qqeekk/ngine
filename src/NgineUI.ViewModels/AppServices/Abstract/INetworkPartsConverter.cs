@@ -1,14 +1,10 @@
-﻿using Microsoft.FSharp.Core;
-using Ngine.Domain.Schemas;
-using NgineUI.ViewModels.Network;
-using NodeNetwork.ViewModels;
-using static Ngine.Domain.Schemas.Errors;
+﻿using Ngine.Domain.Schemas;
 
 namespace NgineUI.ViewModels.AppServices.Abstract
 {
     public interface INetworkPartsConverter
     {
-        Schema.Network Encode(NetworkPartsDto parts);
-        FSharpResult<(NetworkViewModel, AmbiguitiesViewModel), NetworkConversionError<InconsistentLayerConversionError>[]> Decode(Schema.Network schema);
+        InconsistentNetwork Encode(MainViewModel parts);
+        void Decode(InconsistentNetwork schema, MainViewModel viewModel);
     }
 }

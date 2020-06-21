@@ -129,11 +129,6 @@ type INetworkConverter =
     abstract member LossConverter : ILossConverter with get
 
     abstract member Encode: Network -> Schema.Network
+    abstract member EncodeInconsistent: InconsistentNetwork -> Schema.Network
     abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError<LayerConversionError>[]>
-    abstract member EncodeLayers: layers: Choice<HeadLayer, Sensor>[] -> Schema.Layer[]
-    abstract member EncodeHeads: heads: Head[] -> Schema.Head[]
     abstract member DecodeInconsistent: Schema.Network -> Result<InconsistentNetwork, NetworkConversionError<InconsistentLayerConversionError>[]>
-    abstract member DecodeLayers:
-        layers: seq<Schema.Layer> 
-        -> ambiguities: seq<Schema.Ambiguity>
-        -> Result<Choice<HeadLayer, Sensor>[] * IDictionary<AmbiguityVariableName, Values<uint32>>, LayerSequenceError<InconsistentLayerConversionError>[]>

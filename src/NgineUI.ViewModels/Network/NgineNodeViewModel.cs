@@ -10,6 +10,8 @@ using NodeNetwork.ViewModels;
 using ReactiveUI;
 using System;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using Unit = System.Reactive.Unit;
 
 namespace NgineUI.ViewModels.Network
 {
@@ -24,20 +26,23 @@ namespace NgineUI.ViewModels.Network
     {
         private readonly LayerIdTracker idTracker;
         private bool setId;
-        private Tuple<uint, uint> id;
 
         public Tuple<uint, uint> Id
         {
             get => id;
             set => this.RaiseAndSetIfChanged(ref id, value);
         }
+        private Tuple<uint, uint> id;
 
         public NodeType NodeType { get; }
+
+        protected readonly BehaviorSubject<bool> shouldUpdateChanged;
 
         public NgineNodeViewModel(LayerIdTracker idTracker, NodeType type, string name, bool setId)
         {
             this.idTracker = idTracker;
             this.setId = setId;
+            this.shouldUpdateChanged = new BehaviorSubject<bool>(false);
             this.WhenValueChanged(vm => vm.Id)
                 .Where(id => id != null)
                 .Subscribe(id => this.Name = name + (id.Item1 != 0 ? $" ({id.Item1}-{id.Item2})" : ""));
@@ -46,9 +51,14 @@ namespace NgineUI.ViewModels.Network
             NodeType = type;
         }
 
-        public void EnableIdGenerator() => setId = false;
+        public void EnableIdGenerator()
+        {
+            setId = true;
+            shouldUpdateChanged.OnNext(true);
+            //shouldUpdateChanged.OnCompleted();
+        }
 
-        protected (Tuple<uint, uint> Id, NonHeadLayer<TLayer, TSensor> Prev) UpdateId<TLayer, TSensor>(
+        protected NonHeadLayer<TLayer, TSensor> UpdateId<TLayer, TSensor>(
             NonHeadLayer<TLayer, TSensor> previous, TLayer layerFallback)
         {
             previous = DefaultIfNull(previous, layerFallback);
@@ -59,7 +69,7 @@ namespace NgineUI.ViewModels.Network
                 this.Id = idTracker.Generate(prevId);
             }
 
-            return (this.Id, previous);
+            return previous;
         }
 
         protected static HeadLayer<TLayer> WrapEmpty<TLayer>(TLayer empty) =>

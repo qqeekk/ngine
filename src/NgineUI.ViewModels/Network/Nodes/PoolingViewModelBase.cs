@@ -43,11 +43,12 @@ namespace NgineUI.ViewModels.Network.Nodes
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
                 Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
                     Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious)),
                     KernelEditor.ValueChanged,
                     StridesEditor.ValueChanged,
                     PoolingEditor.ValueChanged.Select(p => PoolingTypeEncoder.tryParsePoolingType(p).Value),
-                    (o, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev, k, s, p)))
+                    (_, prev, k, s, p) => HeadLayer<TLayer>.NewHeadLayer(Id, EvaluateOutput(prev, k, s, p)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)

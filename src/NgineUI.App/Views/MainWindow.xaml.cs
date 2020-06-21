@@ -1,5 +1,7 @@
 ﻿using Ngine.Backend.Converters;
 using Ngine.Domain.Services.Conversion;
+using Ngine.Infrastructure.Serialization;
+using Ngine.Infrastructure.Services;
 using NgineUI.ViewModels;
 using NgineUI.ViewModels.Functional;
 using ReactiveUI;
@@ -53,11 +55,17 @@ namespace NgineUI.App
                 this.OneWayBind(ViewModel, vm => vm.Network, v => v.network.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.NodeList, v => v.nodeList.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.Ambiguities, v => v.ambiguities.ViewModel).DisposeWith(d);
+                ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы"));
             });
 
             var kernelConverter = KernelConverter.create(ActivatorConverter.instance);
-            var networkConverter = NetworkConverters.create(kernelConverter, LossConverter.instance, OptimizerConverter.instance, AmbiguityConverter.instance);
-            this.ViewModel = new MainViewModel(NetworkManager.instance(networkConverter));
+            var networkConverter = NetworkConverters.create(kernelConverter,
+                LossConverter.instance,
+                OptimizerConverter.instance,
+                AmbiguityConverter.instance);
+
+            var networkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
+            this.ViewModel = new MainViewModel(networkIO, NetworkManager.instance(networkConverter));
         }
     }
 }

@@ -115,7 +115,7 @@ module private IntegerEncoder =
 module private FloatEncoder =
     let tryParseFloat prop (num : Capture) =
         match Single.TryParse(num.Value, NumberStyles.Any, CultureInfo.InvariantCulture) with
-        | true, v when  v > 0.f && v <= 1.f -> Ok v
+        | true, v when  v >= 0.f && v <= 1.f -> Ok v
         | _ -> Error { 
             Property = prop
             IndicatedValue = num.Value }
@@ -516,7 +516,7 @@ module LayerConnectionEncoder =
     
     let private stringify createOptional (printer:Printer) =
         printer.[nameof m.first]
-        + createOptional ("/" + (printer.[nameof m.second]))
+        + createOptional (":" + (printer.[nameof m.second]))
 
     let private mkRegex = 
         seq {

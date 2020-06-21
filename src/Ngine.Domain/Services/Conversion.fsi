@@ -7,7 +7,8 @@ module public NetworkConverters =
     val convert3D: layer:NonHeadLayer<Layer3D, Sensor3D> -> Choice<HeadLayer, Sensor>
 
     val getLayerId: layer:NonHeadLayer<_, _> -> LayerId
-    
+    val getPreviousIds: layer: HeadLayer -> LayerId * LayerId list
+
     val create: propsConverter : ILayerPropsConverter ->
                lossConverter : ILossConverter ->
                optimizerConverter : IOptimizerConverter ->

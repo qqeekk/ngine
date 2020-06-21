@@ -22,6 +22,36 @@ module public NetworkConverters =
         | Layer (HeadLayer (id, _))
         | NonHeadLayer.Sensor (id, _) -> id
 
+    let getPreviousIds layer =
+        let getPreviousIds1D = function
+            | Layer1D.Activation1D (_, prev)
+            | Layer1D.Dropout (_, prev)
+            | Layer1D.Dense (_, prev) -> [getLayerId prev]
+            | Layer1D.Flatten2D (prev) -> [getLayerId prev]
+            | Layer1D.Flatten3D (prev) -> [getLayerId prev]
+            | Layer1D.Concatenation1D (prevs) -> [for p in prevs -> getLayerId p]
+            | Layer1D.Empty1D -> []
+
+        let getPreviousIds2D = function
+            | Layer2D.Activation2D (_, prev)
+            | Layer2D.Pooling2D (_, prev)
+            | Layer2D.Conv2D (_, prev) -> [getLayerId prev]
+            | Layer2D.Concatenation2D (prevs) -> [for p in prevs -> getLayerId p]
+            | Layer2D.Empty2D -> []
+        
+        let getPreviousIds3D = function
+            | Layer3D.Activation3D (_, prev)
+            | Layer3D.Pooling3D (_, prev)
+            | Layer3D.Conv3D (_, prev) -> [getLayerId prev]
+            | Layer3D.Concatenation3D (prevs) -> [for p in prevs -> getLayerId p]
+            | Layer3D.Empty3D -> []
+
+        match layer with
+        | D1 (HeadLayer (id, prev)) -> id, getPreviousIds1D prev
+        | D2 (HeadLayer (id, prev)) -> id, getPreviousIds2D prev
+        | D3 (HeadLayer (id, prev)) -> id, getPreviousIds3D prev
+
+
     let create (NotNull "props converter" propsConverter : ILayerPropsConverter)
                (NotNull "loss converter" lossConverter : ILossConverter)
                (NotNull "optimizer converter" optimizerConverter : IOptimizerConverter)
@@ -383,45 +413,9 @@ module public NetworkConverters =
                         | Ok (_, LayerProps.Sensor1D sensor) -> Ok <| Choice2Of2 (Sensor.Sensor1D (fst schema.LayerId, sensor))
                         | Error errors -> Error (schema, LayerError.LayerError (List.toArray errors))
 
-                let rec containsEntry (searchSpace: Choice<HeadLayer, Sensor> seq) (entry: Choice<HeadLayer, Sensor>) : bool =
-                    let rec isSubset (entry: Choice<HeadLayer, Sensor>) (super: Choice<HeadLayer, Sensor>) : bool =
-                        if super = entry then true else
-                        match super with
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Activation1D(_, prev))))
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Dropout(_, prev))))
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Dense(_, prev)))) -> isSubset entry (convert1D prev)
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Flatten2D prev)))
-                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Conv2D (_, prev))))
-                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Pooling2D (_, prev))))
-                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Activation2D (_, prev)))) -> isSubset entry (convert2D prev)
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Flatten3D prev)))
-                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Conv3D (_, prev))))
-                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Pooling3D (_, prev))))
-                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Activation3D (_, prev)))) -> isSubset entry (convert3D prev)
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Concatenation1D prevs))) -> containsEntry (Seq.map convert1D prevs) entry
-                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Concatenation2D prevs))) -> containsEntry (Seq.map convert2D prevs) entry
-                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Concatenation3D prevs))) -> containsEntry (Seq.map convert3D prevs) entry
-                        | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
-                        | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
-                        | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D)))
-                        | Choice2Of2 _ -> false
-
-                    Seq.exists (isSubset entry) searchSpace
-
                 let layersResult = layers |> Seq.map decodeLayer
                 match ResultExtensions.aggregate layersResult with
-                | Ok layers ->
-                    let _, uniques =
-                        Array.fold (fun (i, acc) curr ->
-                            let contains =
-                                containsEntry (seq {
-                                    for ind = 0 to layers.Length do
-                                        if i <> ind then layers.[ind] }) curr
-
-                            i+1, if contains then acc else curr::acc) (0, []) layers
-
-                    Ok (Array.ofList uniques, upcast ambiguities)
-                //Ok { Heads = heads; Optimizer = optimizer; Ambiguities = ambiguities }
+                | Ok layers -> Ok (layers, upcast ambiguities)
                 | Error errors -> Error (errors |> Seq.distinct |> Seq.map LayerSequenceError.LayerError |> Seq.toArray)
 
 
@@ -634,13 +628,20 @@ module public NetworkConverters =
 
             | Error errors -> Error (Array.map LayerSequenceError errors)
 
+        let encodeInconsistent (schema: InconsistentNetwork): Schema.Network =
+            let heads = schema.Heads |> encodeHeads
+            let layers = schema.Layers |> encodeLayers
+            let ambiguities = [| for a in schema.Ambiguities -> ambiguityConverter.Encode(a) |]
+            let optimizer = schema.Optimizer |> optimizerConverter.Encode
+            { Heads = heads; Layers = layers; Optimizer = optimizer; Ambiguities = ambiguities }
+
         { new INetworkConverter with
             member _.AmbiguityConverter: IAmbiguityConverter = ambiguityConverter
             member _.LayerConverter: ILayerPropsConverter = propsConverter
             member _.LossConverter: ILossConverter = lossConverter
+
             member _.Encode(NotNull "entity" entity) = encode entity
+            member _.EncodeInconsistent(NotNull "network schema" schema) = encodeInconsistent schema
             member _.Decode(NotNull "network schema" schema) = decode schema
             member _.DecodeInconsistent(NotNull "network schema" schema) = decodeInconsistent schema
-            member _.EncodeLayers(NotNull "layers" layers) = encodeLayers layers
-            member _.EncodeHeads(NotNull "heads" heads) = encodeHeads heads
-            member _.DecodeLayers(NotNull "layers" layers) (NotNull "ambiguites" ambiguites) = decodeLayers layers ambiguites} 
+        }

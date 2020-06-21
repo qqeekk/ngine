@@ -23,8 +23,10 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             HeadOutput = new NgineOutputViewModel<HeadLayer<Layer1D>>(PortType.Head)
             {
-                Value = Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious))
-                    .Select(o => HeadLayer<Layer1D>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev)))
+                Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
+                    Previous.ValueChanged.Select(p => UpdateId(p, DefaultPrevious)),
+                    (_, prev) => HeadLayer<Layer1D>.NewHeadLayer(Id, EvaluateOutput(prev)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>>(PortType.Layer1D)

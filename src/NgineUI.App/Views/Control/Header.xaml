@@ -9,7 +9,7 @@
     <Menu Height="25" VerticalAlignment="Top">
         <MenuItem Header="Файл">
             <MenuItem Header="Создать проект..."></MenuItem>
-            <MenuItem Header="Открыть проект..."></MenuItem>
+            <MenuItem Header="Открыть проект..." x:Name="readNodesItem"></MenuItem>
             <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
         </MenuItem>
         <!--<MenuItem Header="Проект">

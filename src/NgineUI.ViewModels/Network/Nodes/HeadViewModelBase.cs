@@ -53,11 +53,12 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             Observable
                 .CombineLatest(
+                    shouldUpdateChanged,
                     Previous.ValueChanged.Select(p => p ?? WrapEmpty(DefaultPrevious)),
                     ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(DefaultActivator, ActivationEditor.SelectedValue)),
                     LossEditor.ValueChanged.Select(v => lossConverter.DecodeLoss(v).ResultValue),
                     LossWeightEditor.ValueChanged,
-                    EvaluateValue)
+                    (_, p, a, l, w) => EvaluateValue(p, a, l, w))
                 .ToProperty(this, vm => vm.Output, out output);
             this.activatorConverter = activatorConverter;
             this.lossConverter = lossConverter;

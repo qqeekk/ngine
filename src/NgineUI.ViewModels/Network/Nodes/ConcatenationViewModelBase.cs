@@ -27,15 +27,18 @@ namespace NgineUI.ViewModels.Network.Nodes
 
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
-                Value = Previous.Values.Connect().Select(_ =>
-                {
-                    foreach (var l in Previous.Values.Items)
+                Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
+                    Previous.Values.CountChanged,
+                    (_, p) =>
                     {
-                        UpdateId(l, DefaultPrevious);
-                    }
+                        foreach (var l in Previous.Values.Items)
+                        {
+                            UpdateId(l, DefaultPrevious);
+                        }
 
-                    return HeadLayer<TLayer>.NewHeadLayer(this.Id, EvaluateOutput(Previous.Values.Items.ToArray()));
-                })
+                        return HeadLayer<TLayer>.NewHeadLayer(this.Id, EvaluateOutput(Previous.Values.Items.ToArray()));
+                    }),
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)

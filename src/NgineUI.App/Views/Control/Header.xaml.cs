@@ -33,6 +33,7 @@ namespace NgineUI.App.Views.Control
             this.WhenActivated(d =>
             {
                 this.BindCommand(ViewModel, vm => vm.SaveModelCommand, v => v.saveNodesItem).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.ReadModelCommand, v => v.readNodesItem).DisposeWith(d);
             });
         }
     }

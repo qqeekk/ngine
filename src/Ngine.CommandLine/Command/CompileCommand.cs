@@ -1,45 +1,35 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
-using Ngine.Backend;
-using Ngine.Backend.Converters;
 using Ngine.Domain.Execution;
 using Ngine.Domain.Schemas;
+using Ngine.Infrastructure.Services;
 using Python.Runtime;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using YamlDotNet.Core;
 using YamlDotNet.Serialization;
-using static Ngine.Backend.Converters.NetworkErrorPrettyPrinter;
 
 namespace Ngine.CommandLine.Command
 {
     [Command("compile")]
     internal class CompileCommand
     {
-        private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
-        private readonly INetworkConverter converter;
+        private readonly INetworkIO<Network> networkReader;
         private readonly INetworkGenerator generator;
 
-        public CompileCommand(IDeserializer deserializer,
-                              ISerializer serializer,
-                              INetworkConverter converter,
+        public CompileCommand(ISerializer serializer,
+                              INetworkIO<Network> networkReader,
                               INetworkGenerator generator)
         {
-            this.deserializer = deserializer;
             this.serializer = serializer;
-            this.converter = converter;
+            this.networkReader = networkReader;
             this.generator = generator;
         }
 
         [FileExists]
         [Argument(0)]
-        [FileExtensions(Extensions ="yaml")]
+        [FileExtensions(Extensions = "yaml")]
         private string FileName { get; }
 
         [Option("-p|--print")]
@@ -54,70 +44,36 @@ namespace Ngine.CommandLine.Command
         /// </summary>
         public async Task OnExecuteAsync()
         {
-            using var file = File.OpenText(FileName);
-            
+            if (!networkReader.Read(FileName, out var network))
+            {
+                return;
+            }
+
             try
             {
-                var obj = deserializer.Deserialize<Schema.Network>(file);
-
-                var network = converter.Decode(obj);
-                if (network.IsOk)
+                if (Print)
                 {
-                    var result = network.ResultValue;
-                    Console.WriteLine("Parsing successful!");
-
-                    if (Print)
-                    {
-                        Console.WriteLine(result);
-                    }
-
-                    if (!CompileOnly)
-                    {
-                        var (model, ambiguities) = generator.SaveModel(result);
-                        Console.WriteLine("Model saved to file {0}", model);
-                        
-                        if (ambiguities.Ambiguities.Length > 0)
-                        {
-                            var ambiguitiesYaml = serializer.Serialize(ambiguities);
-                            var ambiguitiesPath = Path.ChangeExtension(model, "ambiguities.yaml");
-                            File.WriteAllText(ambiguitiesPath, ambiguitiesYaml);
-
-                            Console.WriteLine("Ambiguities ({0}) saved to file {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
-                        }
-                    }
+                    Console.WriteLine(network);
                 }
-                else
-                {
-                    var error = prettify(network.ErrorValue);
 
-                    Console.WriteLine("Network definition is invalid - {0} errors total.", error.Length);
-                    Array.ForEach(error, r => PrintPrettyTree(r));
+                if (!CompileOnly)
+                {
+                    var (model, ambiguities) = generator.SaveModel(network);
+                    Console.WriteLine("Model saved to file {0}", model);
+
+                    if (ambiguities.Ambiguities.Length > 0)
+                    {
+                        var ambiguitiesYaml = serializer.Serialize(ambiguities);
+                        var ambiguitiesPath = Path.ChangeExtension(model, "ambiguities.yaml");
+                        File.WriteAllText(ambiguitiesPath, ambiguitiesYaml);
+
+                        Console.WriteLine("Ambiguities ({0}) saved to file {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
+                    }
                 }
             }
             catch (PythonException ex)
             {
                 Console.WriteLine($"Internal conversion error: {ex.Message}");
-            }
-            catch (YamlException ex)
-            {
-                Console.WriteLine($"Error while parsing network definition: {ex.Message}");
-            }
-        }
-
-        private void PrintPrettyTree(PrettyTree pretty, int indents = 0)
-        {
-            var indent = new string(' ', 3 * indents);
-            
-            Console.WriteLine(indent + $"-> {pretty.Item1}:");
-
-            if (!pretty.Item2.Any())
-            {
-                Console.WriteLine();
-            }
-
-            foreach (var dep in pretty.Item2)
-            {
-                PrintPrettyTree(dep, indents + 1);
             }
         }
     }

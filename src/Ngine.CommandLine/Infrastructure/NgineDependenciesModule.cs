@@ -3,12 +3,11 @@ using Microsoft.Extensions.Options;
 using Ngine.Backend;
 using Ngine.Backend.Converters;
 using Ngine.CommandLine.Options;
-using Ngine.CommandLine.Serialization;
 using Ngine.Domain.Execution;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Services.Conversion;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using Ngine.Infrastructure.Serialization;
+using Ngine.Infrastructure.Services;
 
 namespace Ngine.CommandLine.Infrastructure
 {
@@ -20,19 +19,8 @@ namespace Ngine.CommandLine.Infrastructure
         /// <param name="builder">Container builder.</param>
         protected override void Load(ContainerBuilder builder)
         {
-            var deserializer = new DeserializerBuilder()
-                .WithTypeConverter(new LayerIdPairYamlConverter())
-                .WithTypeConverter(new LayerIdYamlConverter())
-                .WithNamingConvention(HyphenatedNamingConvention.Instance)
-                .Build();
-
-            var serializer = new SerializerBuilder()
-                .WithTypeConverter(new LayerIdYamlConverter())
-                .WithNamingConvention(HyphenatedNamingConvention.Instance)
-                .Build();
-
-            builder.RegisterInstance(deserializer);
-            builder.RegisterInstance(serializer);
+            builder.RegisterInstance(SerializationProfile.Deserializer);
+            builder.RegisterInstance(SerializationProfile.Serializer);
             builder.RegisterInstance(LossConverter.instance);
             builder.RegisterInstance(ActivatorConverter.instance);
             builder.RegisterInstance(OptimizerConverter.instance);
@@ -40,6 +28,8 @@ namespace Ngine.CommandLine.Infrastructure
             builder.Register(c => KernelConverter.create(c.Resolve<IActivatorConverter>()));
             builder.Register(c => NetworkConverters.create(c.Resolve<ILayerPropsConverter>(), c.Resolve<ILossConverter>(), c.Resolve<IOptimizerConverter>(), c.Resolve<IAmbiguityConverter>()));
             builder.Register(c => new KerasNetworkGenerator(c.Resolve<IOptions<AppSettings>>().Value.ExecutionOptions)).As<INetworkGenerator>();
+            
+            builder.RegisterType<NetworkIO>().As<INetworkIO<Network>>();
         }
     }
 }

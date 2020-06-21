@@ -9,9 +9,9 @@ using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using LayerId = System.Tuple<uint, uint>;
 
-namespace Ngine.CommandLine.Serialization
+namespace Ngine.Infrastructure.Serialization
 {
-    class LayerIdYamlConverter : IYamlTypeConverter
+    internal class LayerIdYamlConverter : IYamlTypeConverter
     {
         private readonly PrimitiveEncoder<LayerId, FSharpList<Errors.ValueOutOfRangeInfo>> encoder;
         private readonly Regex regex;

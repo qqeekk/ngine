@@ -30,8 +30,9 @@ namespace NgineUI.ViewModels.Network.Nodes
             Output = new NgineOutputViewModel<NonHeadLayer<Layer2D, Sensor2D>>(PortType.Layer2D)
             {
                 Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
                     InputsEditor.ValueChanged,
-                    ChannelsEditor.ValueChanged, (i, c) => NonHeadLayer<Layer2D, Sensor2D>.NewSensor(Id, new Sensor2D(c, i))),
+                    ChannelsEditor.ValueChanged, (_, i, c) => NonHeadLayer<Layer2D, Sensor2D>.NewSensor(Id, new Sensor2D(c, i))),
             };
 
             this.Outputs.Add(Output);

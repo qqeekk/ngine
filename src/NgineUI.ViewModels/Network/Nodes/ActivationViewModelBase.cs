@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Schemas.Expressions;
@@ -44,9 +45,10 @@ namespace NgineUI.ViewModels.Network.Nodes
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             { 
                 Value = Observable.CombineLatest(
+                    shouldUpdateChanged,
                     Previous.ValueChanged.Select(prev => UpdateId(prev, DefaultPrevious)),
                     ActivationEditor.ValueChanged.Select(v => OptionModule.DefaultValue(defaultActivator, ActivationEditor.SelectedValue)),
-                    (o, activation) => HeadLayer<TLayer>.NewHeadLayer(o.Id, EvaluateOutput(o.Prev, activation)))
+                    (_, prev, activation) => HeadLayer<TLayer>.NewHeadLayer(Id, EvaluateOutput(prev, activation)))
             };
 
             Output = new NgineOutputViewModel<NonHeadLayer<TLayer, TSensor>>(port)

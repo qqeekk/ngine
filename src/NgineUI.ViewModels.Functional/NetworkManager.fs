@@ -9,12 +9,16 @@ open System
 open DynamicData
 open NodeNetwork.ViewModels
 open Ngine.Domain.Schemas
+open System.Collections.Generic
+open NgineUI.ViewModels
 
 module NetworkManager =
-    let encode (converter: INetworkConverter) (parts: NetworkPartsDto) : Schema.Network =
+    let encode (vm: MainViewModel) : InconsistentNetwork =
         let nodesSeparated =
-            parts.Nodes
-            |> Array.map (fun n -> n.GetValue())
+            vm.Network.Nodes.Items
+            |> Seq.cast<NgineNodeViewModel>
+            |> Seq.map (fun n -> n.GetValue())
+            |> Seq.toArray
 
         let layers =
             nodesSeparated
@@ -22,166 +26,169 @@ module NetworkManager =
                 | Choice2Of3 headLayer -> Some (Choice1Of2 headLayer)
                 | Choice3Of3 sensor -> Some (Choice2Of2 sensor)
                 | _ -> None)
-            |> converter.EncodeLayers
 
         let heads =
             nodesSeparated
             |> Array.choose (function
                 | Choice1Of3 head -> Some head
                 | _ -> None)
-            |> converter.EncodeHeads
 
         let ambiguities =
-            parts.Ambiguities.Items
-            |> Seq.toArray
+            vm.Ambiguities.GetValues()
+            |> Dictionary
 
-        {
-            Layers = layers
-            Heads = heads
-            Ambiguities = ambiguities
-            Optimizer = parts.Optimizer
-        }
+        { Layers = layers
+          Ambiguities = ambiguities
+          Heads = heads
+          Optimizer = vm.Optimizer }
 
-    let decode (converter: INetworkConverter) (schema: Schema.Network) =
-        let networkResult = converter.DecodeInconsistent (schema)
-        let connectionsMutable =
-            schema.Layers
-            |> Seq.choose(fun { LayerId = (lid, prevId) } -> 
-                match prevId with
-                | Some pid -> Some (lid, pid)
-                | _ -> None)
-            |> ResizeArray
+    let decode (converter: INetworkConverter) (network: InconsistentNetwork) (vm: MainViewModel) =
+        let connections =
+            network.Layers
+            |> Seq.collect(function
+                | Choice1Of2 l ->
+                    let (id, prevs) = NetworkConverters.getPreviousIds l
+                    [for p in prevs -> id, p]
+                | Choice2Of2 _ -> [])
 
-        let layerIdTracker = LayerIdTracker(seq {
-            for l in schema.Layers -> (fst l.LayerId).ToValueTuple()})
+        let layerIdTracker =
+            network.Layers
+            |> Seq.map (function
+                | Choice1Of2 (D1 (HeadLayer (id, _)))
+                | Choice1Of2 (D2 (HeadLayer (id, _)))
+                | Choice1Of2 (D3 (HeadLayer (id, _)))
+                | Choice2Of2 (Sensor1D (id, _))
+                | Choice2Of2 (Sensor2D (id, _))
+                | Choice2Of2 (Sensor3D (id, _)) -> id.ToValueTuple())
+            |> LayerIdTracker
 
-        match networkResult with
-        | Ok network ->
-            let ambiguities =
-                let vm = AmbiguitiesViewModel()
-                for item in network.Ambiguities do
-                    vm.Add(converter.AmbiguityConverter.Encode item)
-                vm
+        let ambiguities =
+            let vm = AmbiguitiesViewModel(converter.AmbiguityConverter)
+            for item in network.Ambiguities do vm.Add(item)
+            vm
 
-            let nodes: seq<NgineNodeViewModel> =
-                network.Layers
-                |> Seq.map (function
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Activation1D(a, _)))) ->
-                        let vm = Activation1DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
-                        vm.Id <- lid; vm.Setup(a); upcast vm
-                    | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Activation2D(a, _)))) ->
-                        let vm = Activation2DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
-                        vm.Id <- lid; vm.Setup(a); upcast vm
-                    | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Activation3D(a, _)))) ->
-                        let vm = Activation3DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
-                        vm.Id <- lid; vm.Setup(a); upcast vm
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Concatenation1D(prev)))) ->
-                        let vm = Concatenation1DViewModel(layerIdTracker, false)
-                        connectionsMutable.AddRange([for p in prev -> lid, NetworkConverters.getLayerId p])
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Concatenation2D(prev)))) ->
-                        let vm = Concatenation2DViewModel(layerIdTracker, false)
-                        connectionsMutable.AddRange([for p in prev -> lid, NetworkConverters.getLayerId p])
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Concatenation3D(prev)))) ->
-                        let vm = Concatenation3DViewModel(layerIdTracker, false)
-                        connectionsMutable.AddRange([for p in prev -> lid, NetworkConverters.getLayerId p])
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Conv2D(conv, _)))) ->
-                        let vm = Conv2DViewModel(layerIdTracker, ambiguities.Names, false)
-                        vm.Setup(conv)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Conv3D(conv, _)))) ->
-                        let vm = Conv3DViewModel(layerIdTracker, ambiguities.Names, false)
-                        vm.Setup(conv)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Pooling2D(p, _)))) ->
-                        let vm = Pooling2DViewModel(layerIdTracker, ambiguities.Names, false)
-                        vm.Setup(p)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Pooling3D(p, _)))) ->
-                        let vm = Pooling3DViewModel(layerIdTracker, ambiguities.Names, false)
-                        vm.Setup(p)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dense(units, _)))) ->
-                        let vm = DenseViewModel(layerIdTracker, ambiguities.Names, false)
-                        vm.Setup(units)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten2D(_)))) ->
-                        let vm = Flatten2DViewModel(layerIdTracker, false)
-                        vm.Id <- lid; upcast vm
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten3D(_)))) ->
-                        let vm = Flatten3DViewModel(layerIdTracker, false)
-                        vm.Id <- lid; upcast vm
+        let nodes =
+            network.Layers
+            |> Array.map<_, NgineNodeViewModel> (function
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Activation1D(a, _)))) ->
+                    let vm = Activation1DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(a); upcast vm
+                | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Activation2D(a, _)))) ->
+                    let vm = Activation2DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(a); upcast vm
+                | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Activation3D(a, _)))) ->
+                    let vm = Activation3DViewModel(converter.LayerConverter.ActivatorConverter, layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(a); upcast vm
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Concatenation1D _))) ->
+                    let vm = Concatenation1DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; upcast vm
+                | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Concatenation2D _))) ->
+                    let vm = Concatenation2DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; upcast vm
+                | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Concatenation3D _))) ->
+                    let vm = Concatenation3DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; upcast vm
+                | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Conv2D(conv, _)))) ->
+                    let vm = Conv2DViewModel(layerIdTracker, ambiguities.Names, false)
+                    vm.Id <- lid; vm.Setup(conv); upcast vm
+                | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Conv3D(conv, _)))) ->
+                    let vm = Conv3DViewModel(layerIdTracker, ambiguities.Names, false)
+                    vm.Id <- lid; vm.Setup(conv); upcast vm
+                | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Pooling2D(p, _)))) ->
+                    let vm = Pooling2DViewModel(layerIdTracker, ambiguities.Names, false)
+                    vm.Id <- lid; vm.Setup(p); upcast vm
+                | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Pooling3D(p, _)))) ->
+                    let vm = Pooling3DViewModel(layerIdTracker, ambiguities.Names, false)
+                    vm.Id <- lid; vm.Setup(p); upcast vm
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dense(units, _)))) ->
+                    let vm = DenseViewModel(layerIdTracker, ambiguities.Names, false)
+                    vm.Id <- lid; vm.Setup(units); upcast vm
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten2D(_)))) ->
+                    let vm = Flatten2DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; upcast vm
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten3D(_)))) ->
+                    let vm = Flatten3DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; upcast vm
 
-                    | Choice2Of2 (Sensor1D (lid, input)) ->
-                        let vm = Input1DViewModel(layerIdTracker, false)
-                        vm.Setup(input)
-                        vm.Id <- lid; upcast vm
-                    | Choice2Of2 (Sensor2D (lid, input)) ->
-                        let vm = Input2DViewModel(layerIdTracker, false)
-                        vm.Setup(input)
-                        vm.Id <- lid; upcast vm
-                    | Choice2Of2 (Sensor3D (lid, input)) ->
-                        let vm = Input3DViewModel(layerIdTracker, false)
-                        vm.Setup(input)
-                        vm.Id <- lid; upcast vm
+                | Choice2Of2 (Sensor1D (lid, input)) ->
+                    let vm = Input1DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(input); upcast vm
+                | Choice2Of2 (Sensor2D (lid, input)) ->
+                    let vm = Input2DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(input); upcast vm
+                | Choice2Of2 (Sensor3D (lid, input)) ->
+                    let vm = Input3DViewModel(layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(input); upcast vm
 
-                    | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
-                    | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
-                    | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D))) ->
-                        raise <| new InvalidOperationException()
+                | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
+                | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
+                | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D))) ->
+                    raise <| new InvalidOperationException()
 
-                    // TODO: Implement
-                    | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(d, _)))) ->
-                        raise <| new NotImplementedException())
-            
-            let headNodes: seq<LayerId * NgineNodeViewModel> =
-                network.Heads
-                |> Seq.map (fun h ->
-                    match h with
-                    | Head.Softmax (_, _, HeadLayer (lid, _))
-                    | Head.Activator(_, _, (D1 (HeadLayer (lid, _))), _) ->
-                        let vm = new Head1DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                        vm.Setup(h); lid, upcast vm
+                // TODO: Implement
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(d, _)))) ->
+                    raise <| new NotImplementedException())
 
-                    | Head.Activator(_, _, (D2 (HeadLayer (lid, _))), _) ->
-                        let vm = new Head2DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                        vm.Setup(h); lid, upcast vm
+        let headNodes =
+            network.Heads
+            |> Array.map<_, _ * NgineNodeViewModel> (fun h ->
+                match h with
+                | Head.Softmax (_, _, HeadLayer (lid, _))
+                | Head.Activator(_, _, (D1 (HeadLayer (lid, _))), _) ->
+                    let vm = new Head1DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
+                    vm.Setup(h); lid, upcast vm
 
-                    | Head.Activator(_, _, (D3 (HeadLayer (lid, _))), _) as h ->
-                        let vm = new Head3DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                        vm.Setup(h); lid, upcast vm
-                )
+                | Head.Activator(_, _, (D2 (HeadLayer (lid, _))), _) ->
+                    let vm = new Head2DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
+                    vm.Setup(h); lid, upcast vm
 
-            let nodesById = 
-                seq { for n in nodes -> n.Id, n :> NodeViewModel }
-                |> dict
+                | Head.Activator(_, _, (D3 (HeadLayer (lid, _))), _) as h ->
+                    let vm = new Head3DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
+                    vm.Setup(h); lid, upcast vm)
 
-            let nodeNetwork = new NetworkViewModel()
-            let connections =
-                [ for (pid, h) in headNodes -> 
-                    let hin = h.VisibleInputs.Items |> Seq.item 0
-                    let lout = nodesById.[pid].VisibleOutputs.Items |> Seq.item 1 // Head output
-                    nodeNetwork.ConnectionFactory.Invoke(hin, lout) ]
-                @
-                [ for (inId, outId) in connectionsMutable ->
-                    let lin = nodesById.[inId].VisibleInputs.Items |> Seq.item 0
-                    let lout = nodesById.[outId].VisibleOutputs.Items |> Seq.item 0
-                    nodeNetwork.ConnectionFactory.Invoke(lin, lout) ]
+        let nodesById =
+            seq { for n in nodes -> n.Id, n :> NodeViewModel }
+            |> dict
 
-            nodeNetwork.Nodes.AddRange(Seq.concat [nodes; Seq.map snd headNodes] |> Seq.cast<NodeViewModel>)
-            nodeNetwork.Connections.AddRange(connections)
+        let tryGetNode id =
+            match nodesById.TryGetValue(id) with
+            | true, x -> Some x
+            | false, _ -> None
 
-            // Activate Id generator
-            for n in nodes do n.EnableIdGenerator()
-            Ok struct (nodeNetwork, ambiguities)
-        | Error error -> Error error
-                
+        vm.Network <- new NetworkViewModel()
+        let tryConnect lin = Option.map (fun lout -> vm.Network.ConnectionFactory.Invoke(lin, lout))
+
+        let getNthInput n (node: NodeViewModel) =
+            node.Inputs.Items |> Seq.filter (fun i -> i.Port.IsVisible) |> Seq.item n
+        
+        let getNthOutput n (node: NodeViewModel) =
+            node.Outputs.Items |> Seq.filter (fun i -> i.Port.IsVisible) |> Seq.item n
+
+        let connections =
+            [ for (pid, h) in headNodes ->
+                let hin = getNthInput 0 h
+                let lout = tryGetNode pid |> Option.map (getNthOutput 1) // Head output
+                tryConnect hin lout ]
+            @
+            [ for (inId, outId) in connections ->
+                let lin = nodesById.[inId] |> getNthInput 0
+                let lout = tryGetNode outId |> Option.map (getNthOutput 0)
+                tryConnect lin lout ]
+            |> List.choose id
+
+        vm.Network.Nodes.AddRange(Seq.concat [nodes; Array.map snd headNodes] |> Seq.cast<NodeViewModel>)
+        for con in connections do
+            vm.Network.Connections.Edit(fun x -> x.Add(con))
+
+        // Activate Id generator
+        for n in nodes do n.EnableIdGenerator()
+
+        vm.Ambiguities <- ambiguities
+        vm.Optimizer <- network.Optimizer
+
 
     let instance converter = {
         new INetworkPartsConverter with
-            member __.Encode(parts) = encode converter parts
-            member __.Decode(schema) = decode converter schema
+            member __.Encode(vm) = encode vm
+            member __.Decode(schema, vm) = decode converter schema vm
         }
-        
