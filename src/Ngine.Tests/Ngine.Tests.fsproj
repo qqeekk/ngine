@@ -5,10 +5,10 @@
 
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
-    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="NetworkViewModelManagerTests.fs" />
     <Compile Include="NetworkSchemaConversionTests.fs" />
   </ItemGroup>
 
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
+    <ProjectReference Include="..\NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

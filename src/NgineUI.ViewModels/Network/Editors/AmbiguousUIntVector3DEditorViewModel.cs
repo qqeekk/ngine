@@ -28,6 +28,13 @@ namespace NgineUI.ViewModels.Network.Editors
                     OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, YEditorViewModel.SelectedValue),
                     OptionModule.DefaultValue(AmbiguousUIntViewModel.Default, ZEditorViewModel.SelectedValue)))
                 .BindTo(this, v => v.Value);
+
+            this.ValueChanged.Subscribe(v =>
+            {
+                XEditorViewModel.Value = Ambiguous.stringify(v.Item1);
+                YEditorViewModel.Value = Ambiguous.stringify(v.Item2);
+                ZEditorViewModel.Value = Ambiguous.stringify(v.Item3);
+            });
         }
     }
 }

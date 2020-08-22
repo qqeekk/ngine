@@ -1,12 +1,10 @@
 ﻿using DynamicData;
-using DynamicData.Binding;
 using Ngine.Domain.Schemas;
-using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.AppServices;
 using NgineUI.ViewModels.Network.Connections;
 using NodeNetwork.Toolkit.ValueNode;
-using System;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 
 namespace NgineUI.ViewModels.Network.Nodes
@@ -25,11 +23,12 @@ namespace NgineUI.ViewModels.Network.Nodes
             Previous = new NgineListInputViewModel<NonHeadLayer<TLayer, TSensor>>(port);
             this.Inputs.Add(Previous);
 
+            var previousChanged = Previous.Values.Connect().Select(_ => Unit.Default).StartWith(Unit.Default);
             HeadOutput = new NgineOutputViewModel<HeadLayer<TLayer>>(PortType.Head)
             {
                 Value = Observable.CombineLatest(
                     shouldUpdateChanged,
-                    Previous.Values.CountChanged,
+                    previousChanged,
                     (_, p) =>
                     {
                         foreach (var l in Previous.Values.Items)

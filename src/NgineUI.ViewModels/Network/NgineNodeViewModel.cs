@@ -55,7 +55,6 @@ namespace NgineUI.ViewModels.Network
         {
             setId = true;
             shouldUpdateChanged.OnNext(true);
-            //shouldUpdateChanged.OnCompleted();
         }
 
         protected NonHeadLayer<TLayer, TSensor> UpdateId<TLayer, TSensor>(

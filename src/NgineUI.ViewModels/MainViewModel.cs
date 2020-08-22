@@ -27,6 +27,7 @@ namespace NgineUI.ViewModels
 
         private readonly INetworkIO<InconsistentNetwork> networkIO;
         private readonly INetworkPartsConverter partsConverter;
+        private LayerIdTracker idTracker;
         private bool activation1DViewModelIsFirstLoaded = true;
         private bool activation2DViewModelIsFirstLoaded = true;
         private bool activation3DViewModelIsFirstLoaded = true;
@@ -85,8 +86,8 @@ namespace NgineUI.ViewModels
             // TODO: inject
             this.networkIO = networkIO;
             this.partsConverter = partsConverter;
+            this.idTracker = new LayerIdTracker();
             var networkConverter = networkIO.NetworkConverter;
-            var idTracker = new LayerIdTracker();
 
             Network = new NetworkViewModel();
             Optimizer = Optimizer.NewSGD(1e-4f, new SGD(0, 0));
@@ -163,7 +164,7 @@ namespace NgineUI.ViewModels
 
         private void SaveModel()
         {
-            var encoded = partsConverter.Encode(this);
+            var encoded = partsConverter.Encode(Network, Ambiguities, Optimizer);
             networkIO.Write(DefaultFileName, encoded);
         }
 
@@ -172,7 +173,7 @@ namespace NgineUI.ViewModels
         {
             if (networkIO.Read(DefaultFileName, out var network))
             {
-                partsConverter.Decode(network, this);
+                (Network, Ambiguities, Optimizer, idTracker) = partsConverter.Decode(network);
             }
             else
             {

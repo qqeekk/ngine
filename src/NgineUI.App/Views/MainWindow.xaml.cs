@@ -65,7 +65,7 @@ namespace NgineUI.App
                 AmbiguityConverter.instance);
 
             var networkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
-            this.ViewModel = new MainViewModel(networkIO, NetworkManager.instance(networkConverter));
+            this.ViewModel = new MainViewModel(networkIO, NetworkViewModelManager.instance(networkConverter));
         }
     }
 }

@@ -12,10 +12,10 @@ open Ngine.Domain.Schemas
 open System.Collections.Generic
 open NgineUI.ViewModels
 
-module NetworkManager =
-    let encode (vm: MainViewModel) : InconsistentNetwork =
+module NetworkViewModelManager =
+    let encode (networkVM: NetworkViewModel) (ambiguitiesVM: AmbiguitiesViewModel) (optimizer: Optimizer) : InconsistentNetwork =
         let nodesSeparated =
-            vm.Network.Nodes.Items
+            networkVM.Nodes.Items
             |> Seq.cast<NgineNodeViewModel>
             |> Seq.map (fun n -> n.GetValue())
             |> Seq.toArray
@@ -34,15 +34,15 @@ module NetworkManager =
                 | _ -> None)
 
         let ambiguities =
-            vm.Ambiguities.GetValues()
+            ambiguitiesVM.GetValues()
             |> Dictionary
 
         { Layers = layers
           Ambiguities = ambiguities
           Heads = heads
-          Optimizer = vm.Optimizer }
+          Optimizer = optimizer }
 
-    let decode (converter: INetworkConverter) (network: InconsistentNetwork) (vm: MainViewModel) =
+    let decode (converter: INetworkConverter) (network: InconsistentNetwork) =
         let connections =
             network.Layers
             |> Seq.collect(function
@@ -62,7 +62,7 @@ module NetworkManager =
                 | Choice2Of2 (Sensor3D (id, _)) -> id.ToValueTuple())
             |> LayerIdTracker
 
-        let ambiguities =
+        let ambiguitiesVM =
             let vm = AmbiguitiesViewModel(converter.AmbiguityConverter)
             for item in network.Ambiguities do vm.Add(item)
             vm
@@ -89,19 +89,19 @@ module NetworkManager =
                     let vm = Concatenation3DViewModel(layerIdTracker, false)
                     vm.Id <- lid; upcast vm
                 | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Conv2D(conv, _)))) ->
-                    let vm = Conv2DViewModel(layerIdTracker, ambiguities.Names, false)
+                    let vm = Conv2DViewModel(layerIdTracker, ambiguitiesVM.Names, false)
                     vm.Id <- lid; vm.Setup(conv); upcast vm
                 | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Conv3D(conv, _)))) ->
-                    let vm = Conv3DViewModel(layerIdTracker, ambiguities.Names, false)
+                    let vm = Conv3DViewModel(layerIdTracker, ambiguitiesVM.Names, false)
                     vm.Id <- lid; vm.Setup(conv); upcast vm
                 | Choice1Of2 (D2 (HeadLayer (lid, Layer2D.Pooling2D(p, _)))) ->
-                    let vm = Pooling2DViewModel(layerIdTracker, ambiguities.Names, false)
+                    let vm = Pooling2DViewModel(layerIdTracker, ambiguitiesVM.Names, false)
                     vm.Id <- lid; vm.Setup(p); upcast vm
                 | Choice1Of2 (D3 (HeadLayer (lid, Layer3D.Pooling3D(p, _)))) ->
-                    let vm = Pooling3DViewModel(layerIdTracker, ambiguities.Names, false)
+                    let vm = Pooling3DViewModel(layerIdTracker, ambiguitiesVM.Names, false)
                     vm.Id <- lid; vm.Setup(p); upcast vm
                 | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dense(units, _)))) ->
-                    let vm = DenseViewModel(layerIdTracker, ambiguities.Names, false)
+                    let vm = DenseViewModel(layerIdTracker, ambiguitiesVM.Names, false)
                     vm.Id <- lid; vm.Setup(units); upcast vm
                 | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Flatten2D(_)))) ->
                     let vm = Flatten2DViewModel(layerIdTracker, false)
@@ -155,8 +155,8 @@ module NetworkManager =
             | true, x -> Some x
             | false, _ -> None
 
-        vm.Network <- new NetworkViewModel()
-        let tryConnect lin = Option.map (fun lout -> vm.Network.ConnectionFactory.Invoke(lin, lout))
+        let networkVM = new NetworkViewModel()
+        let tryConnect lin = Option.map (fun lout -> networkVM.ConnectionFactory.Invoke(lin, lout))
 
         let getNthInput n (node: NodeViewModel) =
             node.Inputs.Items |> Seq.filter (fun i -> i.Port.IsVisible) |> Seq.item n
@@ -176,19 +176,18 @@ module NetworkManager =
                 tryConnect lin lout ]
             |> List.choose id
 
-        vm.Network.Nodes.AddRange(Seq.concat [nodes; Array.map snd headNodes] |> Seq.cast<NodeViewModel>)
+        networkVM.Nodes.AddRange(Seq.concat [nodes; Array.map snd headNodes] |> Seq.cast<NodeViewModel>)
         for con in connections do
-            vm.Network.Connections.Edit(fun x -> x.Add(con))
+            networkVM.Connections.Edit(fun x -> x.Add(con))
 
         // Activate Id generator
         for n in nodes do n.EnableIdGenerator()
 
-        vm.Ambiguities <- ambiguities
-        vm.Optimizer <- network.Optimizer
+        struct (networkVM, ambiguitiesVM, network.Optimizer, layerIdTracker)
 
 
     let instance converter = {
         new INetworkPartsConverter with
-            member __.Encode(vm) = encode vm
-            member __.Decode(schema, vm) = decode converter schema vm
+            member __.Encode(network, ambiguities, optimizer) = encode network ambiguities optimizer
+            member __.Decode(schema) = decode converter schema
         }

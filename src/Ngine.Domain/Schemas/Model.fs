@@ -74,14 +74,6 @@ type Sensor1D = {
     Inputs: uint32
 }
 
-/// {{ int_filters }}:[{{ int_k1 }}x{{ int_k2 }}](, strides = [{{ int_s1 }}x{{ int_s2 }}])?(, padding = [{{ int_p1 }}x{{ int_p2 }}])?
-//type Convolutional2D = {
-//    Filters: Ambiguous<uint32>
-//    Kernel: Vector2D<Ambiguous<uint32>>
-//    Strides: Vector2D<Ambiguous<uint32>>
-//    Padding: Padding
-//}
-
 /// {{ int_filters }}:[{{ int_k1 }}x{{ int_k2 }}x{{ int_k3 }}](, strides = [{{ int_s1 }}x{{ int_s2 }}x{{ int_s3 }}])?(, padding = [{{ int_p1 }}x{{ int_p2 }}]x{{ int_p3 }})?
 type Convolutional<'TVector> = {
     Filters: Ambiguous<uint32>
@@ -89,13 +81,6 @@ type Convolutional<'TVector> = {
     Strides: 'TVector
     Padding: Padding
 }
-
-/// {{ max | avg | min }}:[{{ int_k1 }}x{{ int_k2 }}]
-//type Pooling2D = {
-//    Kernel: Vector2D<Ambiguous<uint32>>
-//    Strides: Vector2D<Ambiguous<uint32>>
-//    PoolingType: PoolingType
-//}
 
 /// {{ max | avg | min }}:[{{ int_k1 }}x{{ int_k2 }}x{{ int_k3 }}]
 type Pooling<'TVector> = {
@@ -116,7 +101,6 @@ type NonHeadLayer<'TLayer, 'TSensor> =
     | Layer of HeadLayer<'TLayer>
     | Sensor of LayerId * 'TSensor
 
-[<ReferenceEquality>]
 type Layer3D =
     | Concatenation3D of NonHeadLayer<Layer3D, Sensor3D>[]
     | Conv3D of Convolutional<Vector3D<Ambiguous<uint32>>> * NonHeadLayer<Layer3D, Sensor3D>
@@ -124,7 +108,6 @@ type Layer3D =
     | Activation3D of Activator * NonHeadLayer<Layer3D, Sensor3D>
     | Empty3D
 
-[<ReferenceEquality>]
 type Layer2D =
     | Concatenation2D of NonHeadLayer<Layer2D, Sensor2D>[]
     | Conv2D of Convolutional<Vector2D<Ambiguous<uint32>>> * NonHeadLayer<Layer2D, Sensor2D>
@@ -132,7 +115,6 @@ type Layer2D =
     | Activation2D of Activator * NonHeadLayer<Layer2D, Sensor2D>
     | Empty2D
 
-[<ReferenceEquality>]
 type Layer1D =
     | Flatten3D of NonHeadLayer<Layer3D, Sensor3D>
     | Flatten2D of NonHeadLayer<Layer2D, Sensor2D>

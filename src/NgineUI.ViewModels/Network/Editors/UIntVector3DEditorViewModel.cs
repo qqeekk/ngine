@@ -22,6 +22,13 @@ namespace NgineUI.ViewModels.Network.Editors
             this.WhenAnyValue(v => v.XEditorViewModel.Value, v => v.YEditorViewModel.Value, v => v.ZEditorViewModel.Value)
                 .Select(c => new UIntVector3D(c.Item1, c.Item2, c.Item3))
                 .BindTo(this, v => v.Value);
+
+            this.ValueChanged.Subscribe(v =>
+            {
+                XEditorViewModel.Value = v.Item1;
+                YEditorViewModel.Value = v.Item2;
+                ZEditorViewModel.Value = v.Item3;
+            });
         }
     }
 }

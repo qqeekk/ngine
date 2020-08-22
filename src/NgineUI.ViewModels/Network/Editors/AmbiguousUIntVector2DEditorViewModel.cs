@@ -27,6 +27,12 @@ namespace NgineUI.ViewModels.Network.Editors
                     OptionModule.DefaultValue(fallbackValue, XEditorViewModel.SelectedValue),
                     OptionModule.DefaultValue(fallbackValue, YEditorViewModel.SelectedValue)))
                 .BindTo(this, v => v.Value);
+
+            this.ValueChanged.Subscribe(v =>
+            {
+                XEditorViewModel.Value = Ambiguous.stringify(v.Item1);
+                YEditorViewModel.Value = Ambiguous.stringify(v.Item2);
+            });
         }
     }
 }
