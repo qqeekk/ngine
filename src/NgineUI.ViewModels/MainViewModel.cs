@@ -80,6 +80,8 @@ namespace NgineUI.ViewModels
         public NodeListViewModel NodeList { get; }
         public HeaderViewModel Header { get; }
         public Subject<Unit> ConversionErrorRaised { get; }
+        public Subject<Unit> ConfigureTrainingShouldOpen { get; }
+        public Subject<Unit> ConfigureTuningShouldOpen { get; }
 
         public MainViewModel(INetworkIO<InconsistentNetwork> networkIO, INetworkPartsConverter partsConverter)
         {
@@ -121,6 +123,8 @@ namespace NgineUI.ViewModels
             {
                 SaveModelCommand = ReactiveCommand.Create(SaveModel),
                 ReadModelCommand = ReactiveCommand.Create(ReadModel),
+                ConfigureTrainingCommand = ReactiveCommand.Create(ConfigureTraining),
+                ConfigureTuningCommand = ReactiveCommand.Create(ConfigureTuning),
             };
 
             NodeList.AddNodeType(() => new Input1DViewModel(idTracker, !InvertIfTrue(ref input1DViewModelIsFirstLoaded)));
@@ -144,6 +148,8 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Head3DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
 
             ConversionErrorRaised = new Subject<Unit>();
+            ConfigureTrainingShouldOpen = new Subject<Unit>();
+            ConfigureTuningShouldOpen = new Subject<Unit>();
             //TODO: remove/uncomment. 
             //var codeObservable = eventNode.OnClickFlow.Values.Connect().Select(_ => new StatementSequence(eventNode.OnClickFlow.Values.Items));
             //codeObservable.BindTo(this, vm => vm.CodePreview.Code);
@@ -161,13 +167,21 @@ namespace NgineUI.ViewModels
             //StopAutoLayoutLive = ReactiveCommand.Create(() => { }, StartAutoLayoutLive.IsExecuting);
         }
 
+        private void ConfigureTraining()
+        {
+            ConfigureTrainingShouldOpen.OnNext(Unit.Default);
+        }
+
+        private void ConfigureTuning()
+        {
+            ConfigureTuningShouldOpen.OnNext(Unit.Default);
+        }
 
         private void SaveModel()
         {
             var encoded = partsConverter.Encode(Network, Ambiguities, Optimizer);
             networkIO.Write(DefaultFileName, encoded);
         }
-
 
         private void ReadModel()
         {

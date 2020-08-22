@@ -2,8 +2,10 @@
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.Serialization;
 using Ngine.Infrastructure.Services;
+using NgineUI.App.Views.Parameters;
 using NgineUI.ViewModels;
 using NgineUI.ViewModels.Functional;
+using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -55,7 +57,9 @@ namespace NgineUI.App
                 this.OneWayBind(ViewModel, vm => vm.Network, v => v.network.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.NodeList, v => v.nodeList.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.Ambiguities, v => v.ambiguities.ViewModel).DisposeWith(d);
-                ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы"));
+                ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы")).DisposeWith(d);
+                ViewModel.ConfigureTrainingShouldOpen.Subscribe(_ => ShowConfigureTrainingWindow()).DisposeWith(d);
+                ViewModel.ConfigureTuningShouldOpen.Subscribe(_ => ShowConfigureTuningWindow()).DisposeWith(d);
             });
 
             var kernelConverter = KernelConverter.create(ActivatorConverter.instance);
@@ -66,6 +70,38 @@ namespace NgineUI.App
 
             var networkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
             this.ViewModel = new MainViewModel(networkIO, NetworkViewModelManager.instance(networkConverter));
+        }
+
+        private void ShowConfigureTrainingWindow()
+        {
+            var trainParameters = new Window
+            {
+                Height = 700,
+                Width = 1000,
+
+                Title = "Ngine - Параметры",
+                Content = new TrainParameters
+                { 
+                    ViewModel = new TrainParametersViewModel()
+                },
+            };
+            trainParameters.ShowDialog();
+        }
+
+        private void ShowConfigureTuningWindow()
+        {
+            var trainParameters = new Window
+            {
+                Height = 700,
+                Width = 1000,
+
+                Title = "Ngine - Параметры",
+                Content = new TuneParameters
+                {
+                    ViewModel = new TuneParametersViewModel()
+                },
+            };
+            trainParameters.ShowDialog();
         }
     }
 }

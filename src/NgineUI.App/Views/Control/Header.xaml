@@ -8,16 +8,19 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Menu Height="25" VerticalAlignment="Top">
         <MenuItem Header="Файл">
-            <MenuItem Header="Создать проект..."></MenuItem>
-            <MenuItem Header="Открыть проект..." x:Name="readNodesItem"></MenuItem>
+            <MenuItem Header="Открыть..." x:Name="readNodesItem"></MenuItem>
             <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
+            <MenuItem Header="Сохранить как...">
+                <MenuItem Header="Проект Ngine (.yaml)"></MenuItem>
+                <MenuItem Header="Файл tensorflow/keras (.h5)"></MenuItem>
+            </MenuItem>
         </MenuItem>
         <!--<MenuItem Header="Проект">
             <MenuItem Header="Импортировать схему..."></MenuItem>
         </MenuItem>-->
         <MenuItem Header="Параметры">
-            <MenuItem Header="Настройка гиперпараметров модели..."></MenuItem>
-            <MenuItem Header="Обучение модели..."></MenuItem>
+            <MenuItem Header="Настройка гиперпараметров модели..." x:Name="configureTuningItem"></MenuItem>
+            <MenuItem Header="Обучение модели..." x:Name="configureTrainingItem"></MenuItem>
         </MenuItem>
         <MenuItem>
             <MenuItem.Icon>

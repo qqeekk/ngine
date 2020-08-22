@@ -30,10 +30,22 @@
                               HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
 
                 <GridSplitter Grid.RowSpan="3" Grid.Column="1" ShowsPreview="False" Width="6"
-                              BorderThickness="2 0" BorderBrush="Gray" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                              BorderThickness="2 0" BorderBrush="Gray" HorizontalAlignment="Center"
+                              VerticalAlignment="Stretch"/>
 
                 <nodeList:NodeListView Grid.RowSpan="3" x:Name="nodeList"/>
-                <views:NetworkView x:Name="network" Grid.Column="2" Background="DimGray"/>
+                
+                <Grid Grid.Column="2">
+                    <views:NetworkView x:Name="network" Background="DimGray"/>
+                    <network:Optimizer DockPanel.Dock="Bottom"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Bottom"
+                                       Foreground="White"
+                                       Background="Gray"
+                                       BorderBrush="LightGray"
+                                       BorderThickness="0 2 2 0"
+                                       Padding="5 3"></network:Optimizer>
+                </Grid>
 
                 <Grid Grid.Row="2" Grid.Column="2">
                     <TabControl>

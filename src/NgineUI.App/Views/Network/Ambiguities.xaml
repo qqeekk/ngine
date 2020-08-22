@@ -3,12 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:e="clr-namespace:NgineUI.App.Views.Network.Editors"
              xmlns:local="clr-namespace:NgineUI.App.Views.Network"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
-        <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left">
-            <Button Content="Добавить" Padding="5 0"></Button>
+        <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Orientation="Horizontal" Margin="0 3">
+            <TextBlock Margin="5 3 7 0">Имя:</TextBlock>
+            <TextBox MinWidth="100" VerticalContentAlignment="Center"></TextBox>
+
+            <TextBlock Margin="5 3 7 0">Пространство:</TextBlock>
+            <e:LookupVaueEditor Margin="0 0 7 0"></e:LookupVaueEditor>
+            
+            <Button Content="Добавить" Padding="5 2"></Button>
         </StackPanel>
         <ListView Margin="0 0 0 2" Name="lvAmbiguities">
             <ListView.ItemTemplate>

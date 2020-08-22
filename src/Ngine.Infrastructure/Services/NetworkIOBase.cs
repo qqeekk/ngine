@@ -56,7 +56,6 @@ namespace Ngine.Infrastructure.Services
             return false;
         }
 
-
         public void Write(string fileName, TNetwork network)
         {
             var schema = Encode(network);
