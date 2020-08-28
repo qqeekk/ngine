@@ -10,7 +10,7 @@
     <Grid>
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Optimizer:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0 3 10 0"/>
-            <e:LookupVaueEditor HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="100"/>
+            <e:LookupVaueEditor x:Name="eOptimizer" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="100"/>
         </StackPanel>
     </Grid>
 </UserControl>

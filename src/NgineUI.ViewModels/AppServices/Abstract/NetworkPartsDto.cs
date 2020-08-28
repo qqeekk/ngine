@@ -1,5 +1,6 @@
 ﻿using Ngine.Domain.Schemas;
 using NgineUI.ViewModels.Network;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NodeNetwork.ViewModels;
 
 namespace NgineUI.ViewModels.AppServices.Abstract

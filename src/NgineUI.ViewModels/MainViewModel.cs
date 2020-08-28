@@ -1,33 +1,42 @@
-﻿using Ngine.Backend.Converters;
+﻿using Microsoft.FSharp.Core;
+using Microsoft.Win32;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
 using Ngine.Infrastructure.Services;
 using NgineUI.ViewModels.AppServices.Abstract;
 using NgineUI.ViewModels.Control;
-using NgineUI.ViewModels.Network;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Nodes;
 using NodeNetwork.Toolkit.NodeList;
 using NodeNetwork.ViewModels;
+using Python.Runtime;
 using ReactiveUI;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using YamlDotNet.Serialization;
+using System.Windows;
 using static NodeNetwork.Toolkit.NodeList.NodeListViewModel;
+using Unit = System.Reactive.Unit;
 
 namespace NgineUI.ViewModels
 {
     public class MainViewModel : ReactiveObject
     {
-        // TODO: remove
-        private const string DefaultFileName = "file.yaml";
+        private FSharpOption<string> currentFileName;
+        public FSharpOption<string> CurrentFileName
+        {
+            get => currentFileName;
+            set => this.RaiseAndSetIfChanged(ref currentFileName, value);
+        }
 
-        private readonly INetworkIO<InconsistentNetwork> networkIO;
+        private readonly INetworkIO<InconsistentNetwork> inconsistentNetworkIO;
+        private readonly INetworkIO<Ngine.Domain.Schemas.Network> networkIO;
+        private readonly KerasNetworkIO kerasNetworkIO;
         private readonly INetworkPartsConverter partsConverter;
         private LayerIdTracker idTracker;
+        private NetworkViewModel network;
         private bool activation1DViewModelIsFirstLoaded = true;
         private bool activation2DViewModelIsFirstLoaded = true;
         private bool activation3DViewModelIsFirstLoaded = true;
@@ -44,9 +53,6 @@ namespace NgineUI.ViewModels
         private bool pooling2DViewModelIsFirstLoaded = true;
         private bool pooling3DViewModelIsFirstLoaded = true;
         private bool denseViewModelIsFirstLoaded = true;
-        private NetworkViewModel network;
-        private AmbiguitiesViewModel ambiguities;
-        private Optimizer optimizer;
 
         private static bool InvertIfTrue(ref bool flag)
         {
@@ -65,46 +71,31 @@ namespace NgineUI.ViewModels
             set => this.RaiseAndSetIfChanged(ref network, value);
         }
 
-        public AmbiguitiesViewModel Ambiguities
-        {
-            get => ambiguities;
-            set => this.RaiseAndSetIfChanged(ref ambiguities, value);
-        }
-
-        public Optimizer Optimizer
-        { 
-            get => optimizer; 
-            set => this.RaiseAndSetIfChanged(ref optimizer, value);
-        }
-
+        public AmbiguitiesViewModel Ambiguities { get; }
         public NodeListViewModel NodeList { get; }
         public HeaderViewModel Header { get; }
+        public OptimizerViewModel Optimizer { get; }
         public Subject<Unit> ConversionErrorRaised { get; }
         public Subject<Unit> ConfigureTrainingShouldOpen { get; }
         public Subject<Unit> ConfigureTuningShouldOpen { get; }
 
-        public MainViewModel(INetworkIO<InconsistentNetwork> networkIO, INetworkPartsConverter partsConverter)
+        public MainViewModel(INetworkIO<InconsistentNetwork> inconsistentNetworkIO, INetworkIO<Ngine.Domain.Schemas.Network> networkIO,
+            KerasNetworkIO kerasNetworkIO, INetworkPartsConverter partsConverter)
         {
             // TODO: inject
+            this.inconsistentNetworkIO = inconsistentNetworkIO;
             this.networkIO = networkIO;
+            this.kerasNetworkIO = kerasNetworkIO;
             this.partsConverter = partsConverter;
             this.idTracker = new LayerIdTracker();
             var networkConverter = networkIO.NetworkConverter;
 
+            CurrentFileName = FSharpOption<string>.None;
             Network = new NetworkViewModel();
-            Optimizer = Optimizer.NewSGD(1e-4f, new SGD(0, 0));
+            Optimizer = new OptimizerViewModel(networkConverter.OptimizerConverter);
 
             // Set up ambiguity values.
             Ambiguities = new AmbiguitiesViewModel(networkConverter.AmbiguityConverter);
-
-            // TODO: remove these
-            Ambiguities.Add(KeyValuePair.Create(
-                AmbiguityVariableName.NewVariable("bbb"),
-                Values<uint>.NewRange(new Range<uint>(84u, 4u, 100u))));
-
-            Ambiguities.Add(KeyValuePair.Create(
-                AmbiguityVariableName.NewVariable("aaa"),
-                Values<uint>.NewList(new[] { 3u, 5u })));
 
             NodeList = new NodeListViewModel
             {
@@ -121,8 +112,45 @@ namespace NgineUI.ViewModels
 
             Header = new HeaderViewModel
             {
-                SaveModelCommand = ReactiveCommand.Create(SaveModel),
-                ReadModelCommand = ReactiveCommand.Create(ReadModel),
+                SaveModelCommand = ReactiveCommand.Create(() => SaveModel(CurrentFileName.Value),
+                    canExecute: this.WhenAnyValue(vm => vm.CurrentFileName).Select(OptionModule.IsSome)),
+
+                SaveKerasModelCommand = ReactiveCommand.Create(() =>
+                {
+                    using var fileDialog = new System.Windows.Forms.FolderBrowserDialog();
+
+                    if (fileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        SaveKerasModel(fileDialog.SelectedPath);
+                    }
+                }),
+
+                SaveAsModelCommand = ReactiveCommand.Create(() =>
+                {
+                    var fileDialog = new SaveFileDialog
+                    {
+                        Filter = "Ngine-schema files (*.yaml)|*.yaml",
+                    };
+
+                    if (fileDialog.ShowDialog() == true)
+                    {
+                        SaveModel(fileDialog.FileName);
+                        CurrentFileName = FSharpOption<string>.Some(fileDialog.FileName);
+                    }
+                }),
+                ReadModelCommand = ReactiveCommand.Create(() =>
+                {
+                    var fileDialog = new OpenFileDialog
+                    {
+                        Filter = "Ngine-schema files (*.yaml)|*.yaml",
+                    };
+
+                    if (fileDialog.ShowDialog() == true)
+                    {
+                        ReadModel(fileDialog.FileName);
+                        CurrentFileName = FSharpOption<string>.Some(fileDialog.FileName);
+                    }
+                }),
                 ConfigureTrainingCommand = ReactiveCommand.Create(ConfigureTraining),
                 ConfigureTuningCommand = ReactiveCommand.Create(ConfigureTuning),
             };
@@ -130,11 +158,11 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Input1DViewModel(idTracker, !InvertIfTrue(ref input1DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Input2DViewModel(idTracker, !InvertIfTrue(ref input2DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Input3DViewModel(idTracker, !InvertIfTrue(ref input3DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new DenseViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref denseViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Conv2DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref conv2DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Conv3DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref conv3DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Pooling2DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref pooling2DViewModelIsFirstLoaded)));
-            NodeList.AddNodeType(() => new Pooling3DViewModel(idTracker, Ambiguities.Names, !InvertIfTrue(ref pooling3DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new DenseViewModel(idTracker, Ambiguities.AmbiguityList, !InvertIfTrue(ref denseViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Conv2DViewModel(idTracker, Ambiguities.AmbiguityList, !InvertIfTrue(ref conv2DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Conv3DViewModel(idTracker, Ambiguities.AmbiguityList, !InvertIfTrue(ref conv3DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Pooling2DViewModel(idTracker, Ambiguities.AmbiguityList, !InvertIfTrue(ref pooling2DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new Pooling3DViewModel(idTracker, Ambiguities.AmbiguityList, !InvertIfTrue(ref pooling3DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation1DViewModel(networkConverter.LayerConverter.ActivatorConverter, idTracker, !InvertIfTrue(ref activation1DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation2DViewModel(networkConverter.LayerConverter.ActivatorConverter, idTracker, !InvertIfTrue(ref activation2DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Activation3DViewModel(networkConverter.LayerConverter.ActivatorConverter, idTracker, !InvertIfTrue(ref activation3DViewModelIsFirstLoaded)));
@@ -177,17 +205,55 @@ namespace NgineUI.ViewModels
             ConfigureTuningShouldOpen.OnNext(Unit.Default);
         }
 
-        private void SaveModel()
+        private static bool ChallengeSaveInFile(string fileName)
         {
-            var encoded = partsConverter.Encode(Network, Ambiguities, Optimizer);
-            networkIO.Write(DefaultFileName, encoded);
+            if (File.Exists(fileName))
+            {
+                var result = MessageBox.Show("Файл уже существует. Перезаписать?", "Сохранить проект", MessageBoxButton.OKCancel);
+                return result switch
+                {
+                    MessageBoxResult.OK => true,
+                    _ => false
+                };
+            }
+
+            return true;
         }
 
-        private void ReadModel()
+        private void SaveKerasModel(string folderName)
         {
-            if (networkIO.Read(DefaultFileName, out var network))
+            var model = partsConverter.Encode(Network, Ambiguities.AmbiguityList.GetValues(), Optimizer.GetValue());
+            var encoded = inconsistentNetworkIO.NetworkConverter.EncodeInconsistent(model);
+
+            if (networkIO.TryParse(encoded, out var result))
             {
-                (Network, Ambiguities, Optimizer, idTracker) = partsConverter.Decode(network);
+                try
+                {
+                    kerasNetworkIO.Write(folderName, result);
+                }
+                catch (PythonException ex)
+                {
+                    Console.WriteLine($"Ошибка конвертации Keras: {ex.Message}");
+                }
+            }
+        }
+
+        private void SaveModel(string fileName)
+        {
+            var encoded = partsConverter.Encode(Network, Ambiguities.AmbiguityList.GetValues(), Optimizer.GetValue());
+
+            if (ChallengeSaveInFile(fileName))
+            {
+                inconsistentNetworkIO.Write(fileName, encoded);
+            }
+        }
+
+        private void ReadModel(string fileName)
+        {
+            if (inconsistentNetworkIO.Read(fileName, out var network))
+            {
+                (Network, Ambiguities.AmbiguityList, idTracker) = partsConverter.Decode(network);
+                Optimizer.Fill(network.Optimizer);
             }
             else
             {

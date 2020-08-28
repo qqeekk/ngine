@@ -3,9 +3,11 @@ using Microsoft.FSharp.Core;
 using Ngine.Backend.Converters;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -23,7 +25,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeOutputViewModel<NonHeadLayer<TLayer, TSensor>> Output { get; }
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
-        public ConvViewModelBase(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, NodeType type, PortType port, bool setId)
+        public ConvViewModelBase(LayerIdTracker idTracker, AmbiguityListViewModel ambiguities, NodeType type, PortType port, bool setId)
             : base(idTracker, type, CombineName(NameBase, port), setId)
         {
             FiltersEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
@@ -64,7 +66,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         }
 
         protected abstract TLayer DefaultPrevious { get; }
-        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
+        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(AmbiguityListViewModel ambiguities);
         protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, AmbiguousUIntViewModel filters, TVector kernel, TVector strides, Padding padding);
 
         public void Setup(Convolutional<TVector> config)

@@ -1,8 +1,10 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NodeNetwork.Toolkit.ValueNode;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -15,7 +17,7 @@ namespace NgineUI.ViewModels.Network.Editors
         public AmbiguousUIntEditorViewModel XEditorViewModel { get; }
         public AmbiguousUIntEditorViewModel YEditorViewModel { get; }
 
-        public AmbiguousUIntVector2DEditorViewModel(ObservableCollection<string> ambiguities)
+        public AmbiguousUIntVector2DEditorViewModel(AmbiguityListViewModel ambiguities)
         {
             var fallbackValue = new AmbiguousUIntViewModel { Value = 0 };
 

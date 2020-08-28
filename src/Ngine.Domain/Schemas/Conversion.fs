@@ -120,6 +120,7 @@ type Ambiguity = KeyValuePair<AmbiguityVariableName, Values<uint32>>
 type IAmbiguityConverter =
     abstract member Encode: Ambiguity -> Schema.Ambiguity
     abstract member Decode: Schema.Ambiguity -> Result<Ambiguity, PropsConversionError[]>
+    abstract member DecodeValues: string -> Result<Values<uint32>, PropsConversionError>
     abstract member ListPattern: Pretty with get
 
 [<Interface>]
@@ -127,6 +128,7 @@ type INetworkConverter =
     abstract member LayerConverter : ILayerPropsConverter with get
     abstract member AmbiguityConverter : IAmbiguityConverter with get
     abstract member LossConverter : ILossConverter with get
+    abstract member OptimizerConverter : IOptimizerConverter with get
 
     abstract member Encode: Network -> Schema.Network
     abstract member EncodeInconsistent: InconsistentNetwork -> Schema.Network

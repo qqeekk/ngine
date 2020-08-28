@@ -35,7 +35,8 @@ module private ListEncoder =
         seq {
             nameof m.list, (m.list).pretty
             nameof m.range, (m.range).pretty }
-        |> pretty (sprintf "%s|%s" m.list.pretty.name m.range.pretty.name) (mkRegex m) (stringify m true true >> Regex.Unescape)
+        |> pretty (sprintf "%s|%s" m.list.pretty.name m.range.pretty.name) 
+            (mkRegex m) (stringify m true true >> Regex.Unescape)
 
     let private decode mx pretty =
         tryDecodeByRegex (pretty.regex) <| fun groups ->
@@ -105,9 +106,11 @@ module private AmbiguityNameEncoder =
 module AmbiguityConverter =
     let private encoder = ListEncoder.encoder IntegerEncoder.encoder
 
+    let private decodeValues = encoder.decode
+
     let private decode (ambiguity:Schema.Ambiguity) =
         let variable = AmbiguityNameEncoder.encoder.decode ambiguity.Name
-        let values = encoder.decode ambiguity.Value
+        let values = decodeValues ambiguity.Value
 
         ResultExtensions.zip variable values
         |> Result.mapError (List.toArray)
@@ -121,6 +124,7 @@ module AmbiguityConverter =
         new IAmbiguityConverter with
             member _.Encode kvp = encode kvp
             member _.Decode amb = decode amb
+            member _.DecodeValues v = decodeValues v
             member _.ListPattern = encoder.pretty}
 
     let keras (network:Network): Schema.AmbiguityMapProduct =

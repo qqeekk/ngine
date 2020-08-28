@@ -36,8 +36,8 @@ module internal NetworkConverter =
 
         let weights, losses, layers = Array.unzip3 layers
         let optimizer = OptimizerConverter.keras (network.Optimizer)
-
         let model = new Keras.Models.Model(List.toArray inputs, layers) :> BaseModel
+
         let args = new Dictionary<string, obj>()
         args.["optimizer"] <- StringOrInstance.op_Implicit optimizer
         args.["loss"] <- losses

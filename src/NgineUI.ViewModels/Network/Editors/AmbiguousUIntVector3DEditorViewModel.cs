@@ -1,8 +1,10 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NodeNetwork.Toolkit.ValueNode;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -16,7 +18,7 @@ namespace NgineUI.ViewModels.Network.Editors
         public AmbiguousUIntEditorViewModel YEditorViewModel { get; }
         public AmbiguousUIntEditorViewModel ZEditorViewModel { get; }
 
-        public AmbiguousUIntVector3DEditorViewModel(ObservableCollection<string> ambiguities)
+        public AmbiguousUIntVector3DEditorViewModel(AmbiguityListViewModel ambiguities)
         {
             XEditorViewModel = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);
             YEditorViewModel = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);

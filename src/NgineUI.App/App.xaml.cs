@@ -5,7 +5,6 @@ using NgineUI.ViewModels.Network;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NgineUI.ViewModels.Network.Nodes;
-using NodeNetwork.Toolkit.ValueNode;
 using NodeNetwork.Views;
 using ReactiveUI;
 using System.Windows;
@@ -72,6 +71,7 @@ namespace NgineUI.App
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<Activator>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<HeadFunction>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<HeadFunction.Activator>>));
+            Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<Values<uint>>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<AmbiguousUIntEditorViewModel>));
         }
     }

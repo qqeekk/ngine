@@ -7,6 +7,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <RichTextBox Background="LightGray"></RichTextBox>
+        <TextBox Name="tbxTerminal" ScrollViewer.VerticalScrollBarVisibility="Visible" TextWrapping="Wrap" 
+                 Background="LightGray"
+                 IsReadOnly="True"
+                 Initialized="tbxTerminal_Initialized" />
     </Grid>
 </UserControl>

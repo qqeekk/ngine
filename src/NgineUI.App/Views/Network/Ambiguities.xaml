@@ -9,13 +9,9 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Orientation="Horizontal" Margin="0 3">
-            <TextBlock Margin="5 3 7 0">Имя:</TextBlock>
-            <TextBox MinWidth="100" VerticalContentAlignment="Center"></TextBox>
-
-            <TextBlock Margin="5 3 7 0">Пространство:</TextBlock>
-            <e:LookupVaueEditor Margin="0 0 7 0"></e:LookupVaueEditor>
+            <local:Ambiguity x:Name="cAmbiguity"/>
             
-            <Button Content="Добавить" Padding="5 2"></Button>
+            <Button x:Name="btnAdd" Content="Добавить" Padding="5 2"></Button>
         </StackPanel>
         <ListView Margin="0 0 0 2" Name="lvAmbiguities">
             <ListView.ItemTemplate>

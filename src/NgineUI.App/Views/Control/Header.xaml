@@ -11,8 +11,8 @@
             <MenuItem Header="Открыть..." x:Name="readNodesItem"></MenuItem>
             <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
             <MenuItem Header="Сохранить как...">
-                <MenuItem Header="Проект Ngine (.yaml)"></MenuItem>
-                <MenuItem Header="Файл tensorflow/keras (.h5)"></MenuItem>
+                <MenuItem Header="Проект Ngine (.yaml)" x:Name="saveAsNodesItem"></MenuItem>
+                <MenuItem Header="Файл tensorflow/keras (.h5)" x:Name="saveKerasModelItem"></MenuItem>
             </MenuItem>
         </MenuItem>
         <!--<MenuItem Header="Проект">

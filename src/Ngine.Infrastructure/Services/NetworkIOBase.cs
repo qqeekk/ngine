@@ -24,6 +24,26 @@ namespace Ngine.Infrastructure.Services
             this.serializer = serializer;
         }
 
+        public bool TryParse(Schema.Network network, out TNetwork result)
+        {
+            var parsed = Decode(network);
+            if (parsed.IsOk)
+            {
+                Console.WriteLine("Parsing successful!");
+                result = parsed.ResultValue;
+                return true;
+            }
+            else
+            {
+                var error = Prettify(parsed.ErrorValue);
+
+                Console.WriteLine("Network definition is invalid - {0} errors total.", error.Length);
+                Array.ForEach(error, r => PrintPrettyTree(r));
+            }
+            result = default;
+            return false;
+        }
+
         public bool Read(string fileName, out TNetwork result)
         {
             using var file = File.OpenText(fileName);
@@ -31,21 +51,7 @@ namespace Ngine.Infrastructure.Services
             try
             {
                 var obj = deserializer.Deserialize<Schema.Network>(file);
-
-                var network = Decode(obj);
-                if (network.IsOk)
-                {
-                    Console.WriteLine("Parsing successful!");
-                    result = network.ResultValue;
-                    return true;
-                }
-                else
-                {
-                    var error = Prettify(network.ErrorValue);
-
-                    Console.WriteLine("Network definition is invalid - {0} errors total.", error.Length);
-                    Array.ForEach(error, r => PrintPrettyTree(r));
-                }
+                return TryParse(obj, out result);
             }
             catch (YamlException ex)
             {
@@ -62,7 +68,7 @@ namespace Ngine.Infrastructure.Services
             var yaml = serializer.Serialize(schema);
 
             File.WriteAllText(fileName, yaml);
-            Console.WriteLine("Schema saved to file {0}", fileName);
+            Console.WriteLine("Schema saved to file {0}", Path.GetFullPath(fileName));
         }
 
         private static void PrintPrettyTree(PrettyTree pretty, int indents = 0)

@@ -14,17 +14,14 @@ namespace Ngine.CommandLine.Command
     [Command("compile")]
     internal class CompileCommand
     {
-        private readonly ISerializer serializer;
         private readonly INetworkIO<Network> networkReader;
-        private readonly INetworkGenerator generator;
+        private readonly KerasNetworkIO kerasNetworkIO;
 
-        public CompileCommand(ISerializer serializer,
-                              INetworkIO<Network> networkReader,
-                              INetworkGenerator generator)
+        public CompileCommand(INetworkIO<Network> networkReader,
+                              KerasNetworkIO kerasNetworkIO)
         {
-            this.serializer = serializer;
             this.networkReader = networkReader;
-            this.generator = generator;
+            this.kerasNetworkIO = kerasNetworkIO;
         }
 
         [FileExists]
@@ -58,22 +55,12 @@ namespace Ngine.CommandLine.Command
 
                 if (!CompileOnly)
                 {
-                    var (model, ambiguities) = generator.SaveModel(network);
-                    Console.WriteLine("Model saved to file {0}", model);
-
-                    if (ambiguities.Ambiguities.Length > 0)
-                    {
-                        var ambiguitiesYaml = serializer.Serialize(ambiguities);
-                        var ambiguitiesPath = Path.ChangeExtension(model, "ambiguities.yaml");
-                        File.WriteAllText(ambiguitiesPath, ambiguitiesYaml);
-
-                        Console.WriteLine("Ambiguities ({0}) saved to file {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
-                    }
+                    kerasNetworkIO.Write(network);
                 }
             }
             catch (PythonException ex)
             {
-                Console.WriteLine($"Internal conversion error: {ex.Message}");
+                Console.WriteLine($"Ошибка конвертации Keras: {ex.Message}");
             }
         }
     }

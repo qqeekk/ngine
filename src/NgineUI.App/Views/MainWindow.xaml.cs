@@ -1,4 +1,6 @@
-﻿using Ngine.Backend.Converters;
+﻿using Microsoft.FSharp.Core;
+using Ngine.Backend;
+using Ngine.Backend.Converters;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.Serialization;
 using Ngine.Infrastructure.Services;
@@ -8,20 +10,8 @@ using NgineUI.ViewModels.Functional;
 using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Disposables;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NgineUI.App
 {
@@ -57,6 +47,10 @@ namespace NgineUI.App
                 this.OneWayBind(ViewModel, vm => vm.Network, v => v.network.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.NodeList, v => v.nodeList.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.Ambiguities, v => v.ambiguities.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.Optimizer, v => v.optimizer.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.CurrentFileName, v => v.Title, opt =>
+                    $"Ngine{OptionModule.DefaultValue(string.Empty, OptionModule.Map(FSharpFunc<string, string>.FromConverter(f => " - " + f) , opt))}").DisposeWith(d);
+
                 ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы")).DisposeWith(d);
                 ViewModel.ConfigureTrainingShouldOpen.Subscribe(_ => ShowConfigureTrainingWindow()).DisposeWith(d);
                 ViewModel.ConfigureTuningShouldOpen.Subscribe(_ => ShowConfigureTuningWindow()).DisposeWith(d);
@@ -68,8 +62,15 @@ namespace NgineUI.App
                 OptimizerConverter.instance,
                 AmbiguityConverter.instance);
 
-            var networkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
-            this.ViewModel = new MainViewModel(networkIO, NetworkViewModelManager.instance(networkConverter));
+            var kerasNetworkGenerator = new KerasNetworkGenerator(new KerasExecutionOptions
+            {
+                PythonPath = @"D:\projects\ngine\src\Ngine.Backend.Python\env",
+            });
+
+            var inconsistentNetworkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
+            var networkIO = new NetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
+            var kerasNetworkIO = new KerasNetworkIO(SerializationProfile.Serializer, kerasNetworkGenerator);
+            this.ViewModel = new MainViewModel(inconsistentNetworkIO, networkIO, kerasNetworkIO, NetworkViewModelManager.instance(networkConverter));
         }
 
         private void ShowConfigureTrainingWindow()

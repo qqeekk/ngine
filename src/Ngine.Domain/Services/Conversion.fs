@@ -639,6 +639,7 @@ module public NetworkConverters =
             member _.AmbiguityConverter: IAmbiguityConverter = ambiguityConverter
             member _.LayerConverter: ILayerPropsConverter = propsConverter
             member _.LossConverter: ILossConverter = lossConverter
+            member _.OptimizerConverter: IOptimizerConverter = optimizerConverter
 
             member _.Encode(NotNull "entity" entity) = encode entity
             member _.EncodeInconsistent(NotNull "network schema" schema) = encodeInconsistent schema

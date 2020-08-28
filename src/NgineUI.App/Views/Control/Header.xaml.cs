@@ -33,6 +33,8 @@ namespace NgineUI.App.Views.Control
             this.WhenActivated(d =>
             {
                 this.BindCommand(ViewModel, vm => vm.SaveModelCommand, v => v.saveNodesItem).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.SaveAsModelCommand, v => v.saveAsNodesItem).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.SaveKerasModelCommand, v => v.saveKerasModelItem).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ReadModelCommand, v => v.readNodesItem).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureTrainingCommand, v => v.configureTrainingItem).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureTuningCommand, v => v.configureTuningItem).DisposeWith(d);

@@ -9,7 +9,7 @@
         xmlns:network="clr-namespace:NgineUI.App.Views.Network"
         xmlns:nodeList="clr-namespace:NodeNetwork.Toolkit.NodeList;assembly=NodeNetworkToolkit"
         mc:Ignorable="d"
-        Title="Ngine" Height="900" Width="1600">
+        Height="900" Width="1600">
     <Grid>
         <DockPanel>
             <control:Header x:Name="header"  Grid.ColumnSpan="2" DockPanel.Dock="Top"></control:Header>
@@ -37,7 +37,8 @@
                 
                 <Grid Grid.Column="2">
                     <views:NetworkView x:Name="network" Background="DimGray"/>
-                    <network:Optimizer DockPanel.Dock="Bottom"
+                    <network:Optimizer x:Name="optimizer"
+                                       DockPanel.Dock="Bottom"
                                        HorizontalAlignment="Left"
                                        VerticalAlignment="Bottom"
                                        Foreground="White"

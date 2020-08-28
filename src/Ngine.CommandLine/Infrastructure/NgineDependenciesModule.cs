@@ -30,6 +30,7 @@ namespace Ngine.CommandLine.Infrastructure
             builder.Register(c => new KerasNetworkGenerator(c.Resolve<IOptions<AppSettings>>().Value.ExecutionOptions)).As<INetworkGenerator>();
             
             builder.RegisterType<NetworkIO>().As<INetworkIO<Network>>();
+            builder.RegisterType<KerasNetworkIO>().AsSelf();
         }
     }
 }

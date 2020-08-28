@@ -2,9 +2,11 @@
 using Ngine.Backend.Converters;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -21,8 +23,8 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeOutputViewModel<HeadLayer<TLayer>> HeadOutput { get; }
 
         public PoolingViewModelBase(
-            LayerIdTracker idTracker, 
-            ObservableCollection<string> ambiguities,
+            LayerIdTracker idTracker,
+            AmbiguityListViewModel ambiguities,
             NodeType type,
             PortType port, 
             bool setId)
@@ -68,7 +70,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         }
 
         protected abstract TLayer DefaultPrevious { get; }
-        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(ObservableCollection<string> ambiguities);
+        protected abstract ValueEditorViewModel<TVector> CreateVectorEditor(AmbiguityListViewModel ambiguities);
         protected abstract TLayer EvaluateOutput(NonHeadLayer<TLayer, TSensor> prev, TVector kernel, TVector strides, PoolingType pooling);
     }
 }

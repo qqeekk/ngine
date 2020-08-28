@@ -1,10 +1,12 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace NgineUI.ViewModels.Network.Nodes
@@ -13,7 +15,7 @@ namespace NgineUI.ViewModels.Network.Nodes
 
     public class Conv3DViewModel : ConvViewModelBase<Ambiguous3DTuple, Layer3D, Sensor3D>
     {
-        public Conv3DViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
+        public Conv3DViewModel(LayerIdTracker idTracker, AmbiguityListViewModel ambiguities, bool setId)
             : base(idTracker, ambiguities, NodeType.Layer, PortType.Layer3D, setId)
         {
         }
@@ -23,7 +25,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         public override FSharpChoice<Head, HeadLayer, Sensor> GetValue()
             => HeadLayerChoice(HeadLayer.NewD3(HeadOutput.CurrentValue));
 
-        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(ObservableCollection<string> ambiguities)
+        protected override ValueEditorViewModel<Ambiguous3DTuple> CreateVectorEditor(AmbiguityListViewModel ambiguities)
             => new AmbiguousUIntVector3DEditorViewModel(ambiguities);
 
         protected override Layer3D EvaluateOutput(

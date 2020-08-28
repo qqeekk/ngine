@@ -2,9 +2,11 @@
 using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.AppServices;
+using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -17,7 +19,7 @@ namespace NgineUI.ViewModels.Network.Nodes
         public ValueNodeOutputViewModel<HeadLayer<Layer1D>> HeadOutput { get; }
         public ValueNodeOutputViewModel<NonHeadLayer<Layer1D, Sensor1D>> Output { get; }
 
-        public DenseViewModel(LayerIdTracker idTracker, ObservableCollection<string> ambiguities, bool setId)
+        public DenseViewModel(LayerIdTracker idTracker, AmbiguityListViewModel ambiguities, bool setId)
             : base(idTracker, NodeType.Layer, "Dense", setId)
         {
             UnitsEditor = new AmbiguousUIntEditorViewModel(0.ToString(), ambiguities);

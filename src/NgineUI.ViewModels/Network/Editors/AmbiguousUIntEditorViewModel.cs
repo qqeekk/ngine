@@ -1,5 +1,6 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using NgineUI.ViewModels.Network.Ambiguities;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -26,7 +27,7 @@ namespace NgineUI.ViewModels.Network.Editors
 
     public class AmbiguousUIntEditorViewModel : LookupEditorViewModel<AmbiguousUIntViewModel>
     {
-        static FSharpOption<AmbiguousUIntViewModel> Convert(string value, IEnumerable<string> ambiguities)
+        private static FSharpOption<AmbiguousUIntViewModel> Convert(string value, AmbiguityListViewModel ambiguities)
         {
             if (uint.TryParse(value, out var returnValue))
             {
@@ -34,7 +35,7 @@ namespace NgineUI.ViewModels.Network.Editors
                     new AmbiguousUIntViewModel { Value = returnValue });
             };
 
-            if (ambiguities.Contains(value))
+            if (ambiguities.Names.Contains(value))
             {
                 return FSharpOption<AmbiguousUIntViewModel>.Some(
                     new AmbiguousUIntViewModel { Ambiguity = value });
@@ -43,10 +44,10 @@ namespace NgineUI.ViewModels.Network.Editors
             return FSharpOption<AmbiguousUIntViewModel>.None;
         }
 
-        public AmbiguousUIntEditorViewModel(string initial, IEnumerable<string> ambiguities)
+        public AmbiguousUIntEditorViewModel(string initial, AmbiguityListViewModel ambiguities)
             : base(v => Convert(v, ambiguities), initial)
         {
-            LookupValues = ambiguities;
+            LookupValues = ambiguities.Names;
         }
     }
 

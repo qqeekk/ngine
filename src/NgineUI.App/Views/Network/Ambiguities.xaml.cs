@@ -1,6 +1,9 @@
-﻿using NgineUI.ViewModels.Network;
+﻿using Ngine.Domain.Schemas;
+using NgineUI.ViewModels.Network;
+using NgineUI.ViewModels.Network.Ambiguities;
 using ReactiveUI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reactive.Disposables;
 using System.Text;
@@ -44,7 +47,9 @@ namespace NgineUI.App.Views.Network
 
             this.WhenActivated(d =>
             {
-                this.OneWayBind(ViewModel, vm => vm.Items, v => v.lvAmbiguities.ItemsSource).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.CurrentAmbiguity, v => v.cAmbiguity.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.AddAmbiguityCommand, v => v.btnAdd.Command).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.AmbiguityList.Items, v => v.lvAmbiguities.ItemsSource).DisposeWith(d);
             });
         }
     }

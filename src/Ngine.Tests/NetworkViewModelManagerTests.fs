@@ -100,8 +100,8 @@ type NetworkViewModelManagerTests() =
 
     [<Xunit.Fact>]
     member _.``Should convert inconsistent network to view model``() =
-        let (struct (network, ambiguities, optimizer, _)) = vmManager.Decode model
-        let nn = vmManager.Encode(network, ambiguities, optimizer)
+        let (struct (network, _, _)) = vmManager.Decode model
+        let nn = vmManager.Encode(network, model.Ambiguities, model.Optimizer)
         
         Assert.Equal<Head>(nn.Heads, model.Heads)
 
