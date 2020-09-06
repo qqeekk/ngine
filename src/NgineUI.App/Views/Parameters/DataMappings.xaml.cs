@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Microsoft.FSharp.Core;
+using NgineUI.ViewModels.Parameters;
+using ReactiveUI;
+using System;
+using System.Reactive.Disposables;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 
@@ -7,30 +12,37 @@ namespace NgineUI.App.Views.Parameters
     /// <summary>
     /// Interaction logic for DataMappings.xaml
     /// </summary>
-    public partial class DataMappings : UserControl
+    public partial class DataMappings : IViewFor<DataMappingsViewModel>
     {
-        private const string SampleText =
-@"# Определение отображений для набора данных https://github.com/emanhamed/Houses-dataset
+        #region ViewModel
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel),
+            typeof(DataMappingsViewModel), typeof(DataMappings), new PropertyMetadata(null));
 
-files:
-    csv: D:\projects\diploma\Ngine\docs\sample_data_header.csv
-    images: D:\projects\diploma\Ngine\docs\images
+        public DataMappingsViewModel ViewModel
+        {
+            get => (DataMappingsViewModel)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
 
-inputs:
-    -
-        - cons:$csv[0:2] # количество спальных комнат, количество ванных комнат, площадь
-        - cats:$csv[3] # почтовый индекс района
-    -
-        - img:$images # коллажи из 4 фотографий жилья
-outputs:
-    -
-        - cons:$csv[4]  # цена жилья (в долларах)";
+        object IViewFor.ViewModel
+        {
+            get => ViewModel;
+            set => ViewModel = (DataMappingsViewModel)value;
+        }
+        #endregion
 
         public DataMappings()
         {
             InitializeComponent();
-            yamlEditor.Document.Blocks.Add(new Paragraph(new Run(SampleText)));
+            this.WhenActivated(d =>
+            {
+                this.OneWayBind(ViewModel, vm => vm.DataMappingsPath, v => v.txtDataMappingsPath.Text,
+                    opt => OptionModule.DefaultValue(string.Empty, opt)).DisposeWith(d);
 
+                this.Bind(ViewModel, vm => vm.DataMappingsText, v => v.yamlEditor.Text).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.SaveDataMappingsCommand, v => v.btnSaveDataMappings).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.LoadDataMappingsCommand, v => v.btnLoadDataMappings).DisposeWith(d);
+            });
         }
     }
 }

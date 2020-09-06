@@ -623,6 +623,7 @@ module public NetworkConverters =
                     |> Result.mapError (NetworkConversionError.OptimizerError >> Array.singleton)
 
                 match ResultExtensions.zip headsResult optimizerResult with
+                | Ok ([||], _) -> Error [| EmptyHeadArrayError |]
                 | Ok (heads, optimizer) -> Ok { Heads = heads; Optimizer = optimizer; Ambiguities = ambiguities }
                 | Error errors -> Error (Seq.concat errors |> Seq.distinct |> Seq.toArray)
 

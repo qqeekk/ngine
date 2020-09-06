@@ -94,7 +94,8 @@ module NetworkErrorPrettyPrinter =
             | HeadError.LossError (LossError.UnknownType) ->
                 seq { String.Format("Unknown loss type for layer {0} - {1}", LayerIdEncoder.encoder.encode h.LayerId, h.Loss), [] })
 
-        | OptimizerError p -> seq { prettifyPropsConversionError p })
+        | OptimizerError p -> seq { prettifyPropsConversionError p }
+        | EmptyHeadArrayError -> seq { "No output layers", [] })
         |> Seq.map Node
         |> Seq.toArray
 

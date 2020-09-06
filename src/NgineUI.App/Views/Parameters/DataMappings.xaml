@@ -9,25 +9,21 @@
     <Grid>
         <DockPanel Margin="15 5">
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                <Button Margin="0 0 10 0" Padding="5 2">Загрузить</Button>
-                <TextBlock VerticalAlignment="Center" Padding="5 2" Background="Gray" Foreground="White">
-                    C:\\ngine\mappings.yaml
-                </TextBlock>
+                <Button x:Name="btnLoadDataMappings"
+                        Margin="0 0 10 0" Padding="5 2">Загрузить</Button>
+                
+                <TextBlock x:Name="txtDataMappingsPath"
+                           VerticalAlignment="Stretch" Padding="5 2" Background="Gray" Foreground="White"/>
             </StackPanel>
 
-            <Button DockPanel.Dock="Bottom" HorizontalAlignment="Right" Padding="5 2">
+            <Button x:Name="btnSaveDataMappings"
+                    DockPanel.Dock="Bottom" HorizontalAlignment="Right" Padding="5 2">
                 Сохранить
             </Button>
 
-            <RichTextBox x:Name="yamlEditor"
-                         Margin="0 5" FontFamily="Lucida Console"
-                         AcceptsTab="True">
-                <RichTextBox.Resources>
-                    <Style TargetType="{x:Type Paragraph}">
-                        <Setter Property="Margin" Value="5"/>
-                    </Style>
-                </RichTextBox.Resources>
-            </RichTextBox>
+            <TextBox x:Name="yamlEditor"
+                    Margin="0 5" FontFamily="Lucida Console"
+                    AcceptsTab="True" AcceptsReturn="True"/>
         </DockPanel>
     </Grid>
 </UserControl>

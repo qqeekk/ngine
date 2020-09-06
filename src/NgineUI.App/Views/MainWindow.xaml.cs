@@ -4,6 +4,7 @@ using Ngine.Backend.Converters;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.Serialization;
 using Ngine.Infrastructure.Services;
+using NgineUI.App.Views;
 using NgineUI.App.Views.Parameters;
 using NgineUI.ViewModels;
 using NgineUI.ViewModels.Functional;
@@ -52,8 +53,8 @@ namespace NgineUI.App
                     $"Ngine{OptionModule.DefaultValue(string.Empty, OptionModule.Map(FSharpFunc<string, string>.FromConverter(f => " - " + f) , opt))}").DisposeWith(d);
 
                 ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы")).DisposeWith(d);
-                ViewModel.ConfigureTrainingShouldOpen.Subscribe(_ => ShowConfigureTrainingWindow()).DisposeWith(d);
-                ViewModel.ConfigureTuningShouldOpen.Subscribe(_ => ShowConfigureTuningWindow()).DisposeWith(d);
+                ViewModel.ConfigureTrainingShouldOpen.Subscribe(vm => ShowConfigureTrainingWindow(vm)).DisposeWith(d);
+                ViewModel.ConfigureTuningShouldOpen.Subscribe(vm => ShowConfigureTuningWindow(vm)).DisposeWith(d);
             });
 
             var kernelConverter = KernelConverter.create(ActivatorConverter.instance);
@@ -64,7 +65,7 @@ namespace NgineUI.App
 
             var kerasNetworkGenerator = new KerasNetworkGenerator(new KerasExecutionOptions
             {
-                PythonPath = @"D:\projects\ngine\src\Ngine.Backend.Python\env",
+                PythonPath = "D:\\projects\\diploma\\Ngine\\src\\Ngine.Backend.Python\\env",
             });
 
             var inconsistentNetworkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
@@ -73,36 +74,22 @@ namespace NgineUI.App
             this.ViewModel = new MainViewModel(inconsistentNetworkIO, networkIO, kerasNetworkIO, NetworkViewModelManager.instance(networkConverter));
         }
 
-        private void ShowConfigureTrainingWindow()
+        private void ShowConfigureTrainingWindow(TrainParametersViewModel viewModel)
         {
-            var trainParameters = new Window
-            {
-                Height = 700,
-                Width = 1000,
+            var view = new TrainParameters { ViewModel = viewModel };
+            var trainParameters = UIHelpers.CreateWindow(view, "Ngine - Параметры");
 
-                Title = "Ngine - Параметры",
-                Content = new TrainParameters
-                { 
-                    ViewModel = new TrainParametersViewModel()
-                },
-            };
+            using var handler = view.ViewModel.ConfigurationSaved.Subscribe(vm => trainParameters.Close());
             trainParameters.ShowDialog();
         }
 
-        private void ShowConfigureTuningWindow()
+        private void ShowConfigureTuningWindow(TuneParametersViewModel viewModel)
         {
-            var trainParameters = new Window
-            {
-                Height = 700,
-                Width = 1000,
+            var view = new TuneParameters { ViewModel = viewModel };
+            var tuneParameters = UIHelpers.CreateWindow(view, "Ngine - Параметры");
 
-                Title = "Ngine - Параметры",
-                Content = new TuneParameters
-                {
-                    ViewModel = new TuneParametersViewModel()
-                },
-            };
-            trainParameters.ShowDialog();
+            using var handler = view.ViewModel.ConfigurationSaved.Subscribe(vm => tuneParameters.Close());
+            tuneParameters.ShowDialog();
         }
     }
 }
