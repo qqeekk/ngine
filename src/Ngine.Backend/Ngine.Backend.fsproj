@@ -34,10 +34,10 @@
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.7.1" />
     <PackageReference Include="FSharp.Interop.Dynamic" Version="5.0.1.268" />
-    <PackageReference Include="Keras.NET" Version="3.6.4.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\deps\Keras.NET\Keras\Keras.csproj" />
     <ProjectReference Include="..\Ngine.Backend.Resources\Ngine.Backend.Resources.csproj" />
     <ProjectReference Include="..\Ngine.Domain\Ngine.Domain.fsproj" />
   </ItemGroup>

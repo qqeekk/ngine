@@ -588,28 +588,37 @@ module KernelConverter =
                     new Layers.Flatten()
                     |> renameLayer layerId |> append prev, inputs
 
-                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Max; Kernel = k }, prev))) ->
+                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Max; Kernel = k; Strides = s }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
+                    let poolSize = Vector2D.map (Ambiguous.value ambiguities >> int) k
+                    let strides = Vector2D.map (Ambiguous.value ambiguities >> int) s
 
-                    new Layers.MaxPooling2D(Vector2D.map (Ambiguous.value ambiguities >> int) k)
+                    new Layers.MaxPooling2D(poolSize, strides)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Avg; Kernel = k }, prev))) ->
+                | D2 (HeadLayer (layerId, Layer2D.Pooling2D ({ PoolingType = Avg; Kernel = k; Strides = s }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities
+                    let poolSize = Vector2D.map (Ambiguous.value ambiguities >> int) k
+                    let strides = Vector2D.map (Ambiguous.value ambiguities >> int) s
 
-                    new Layers.AveragePooling2D(Vector2D.map (Ambiguous.value ambiguities >> int) k)
+                    new Layers.AveragePooling2D(poolSize, strides)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Max; Kernel = k }, prev))) ->
+                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Max; Kernel = k; Strides = s }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
+                    let poolSize = Vector3D.map (Ambiguous.value ambiguities >> int) k
+                    let strides = Vector3D.map (Ambiguous.value ambiguities >> int) s
 
-                    new Layers.MaxPooling3D(Vector3D.map (Ambiguous.value ambiguities >> int) k)
+                    new Layers.MaxPooling3D(poolSize, strides)
                     |> renameLayer layerId |> append prev, inputs
 
-                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Avg; Kernel = k }, prev))) ->
+                | D3 (HeadLayer (layerId, Layer3D.Pooling3D ({ PoolingType = Avg; Kernel = k; Strides = s }, prev))) ->
                     let prev, inputs = keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities
+                    let poolSize = Vector3D.map (Ambiguous.value ambiguities >> int) k
+                    let strides = Vector3D.map (Ambiguous.value ambiguities >> int) s
 
-                    new Layers.AveragePooling3D(Vector3D.map (Ambiguous.value ambiguities >> int) k)
+
+                    new Layers.AveragePooling3D(poolSize, strides)
                     |> renameLayer layerId |> append prev, inputs
 
                 | D3 (HeadLayer (layerId, Layer3D.Concatenation3D prevs)) ->

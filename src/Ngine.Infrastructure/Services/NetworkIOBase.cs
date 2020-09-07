@@ -79,7 +79,7 @@ namespace Ngine.Infrastructure.Services
 
             if (!pretty.Item2.Any())
             {
-                Console.WriteLine();
+                Console.WriteLine(string.Empty);
             }
 
             foreach (var dep in pretty.Item2)

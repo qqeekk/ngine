@@ -1,3 +1,6 @@
 [submodule "deps/NodeNetwork"]
 	path = deps/NodeNetwork
 	url = https://github.com/qqeekk/NodeNetwork.git
+[submodule "deps/Keras.NET"]
+	path = deps/Keras.NET
+	url = git@github.com:qqeekk/Keras.NET.git
