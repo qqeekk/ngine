@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls;
+﻿using ReactiveUI;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace NgineUI.App.Views.Network

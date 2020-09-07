@@ -63,6 +63,7 @@ module Errors =
         | LayerSequenceError of LayerSequenceError<'TLayerError>
         | OptimizerError of PropsConversionError
         | HeadError of Schema.Head * HeadError<'TLayerError>[]
+        | EmptyHeadArrayError
 
 type LayerProps =
     | Dense of Dense

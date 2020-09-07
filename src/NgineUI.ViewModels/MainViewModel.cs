@@ -7,6 +7,7 @@ using NgineUI.ViewModels.AppServices.Abstract;
 using NgineUI.ViewModels.Control;
 using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Nodes;
+using NgineUI.ViewModels.Parameters;
 using NodeNetwork.Toolkit.NodeList;
 using NodeNetwork.ViewModels;
 using Python.Runtime;
@@ -35,6 +36,9 @@ namespace NgineUI.ViewModels
         private readonly INetworkIO<Ngine.Domain.Schemas.Network> networkIO;
         private readonly KerasNetworkIO kerasNetworkIO;
         private readonly INetworkPartsConverter partsConverter;
+        private readonly TrainParametersViewModel trainParametersViewModel;
+        private readonly TuneParametersViewModel tuneParametersViewModel;
+
         private LayerIdTracker idTracker;
         private NetworkViewModel network;
         private bool activation1DViewModelIsFirstLoaded = true;
@@ -76,8 +80,8 @@ namespace NgineUI.ViewModels
         public HeaderViewModel Header { get; }
         public OptimizerViewModel Optimizer { get; }
         public Subject<Unit> ConversionErrorRaised { get; }
-        public Subject<Unit> ConfigureTrainingShouldOpen { get; }
-        public Subject<Unit> ConfigureTuningShouldOpen { get; }
+        public Subject<TrainParametersViewModel> ConfigureTrainingShouldOpen { get; }
+        public Subject<TuneParametersViewModel> ConfigureTuningShouldOpen { get; }
 
         public MainViewModel(INetworkIO<InconsistentNetwork> inconsistentNetworkIO, INetworkIO<Ngine.Domain.Schemas.Network> networkIO,
             KerasNetworkIO kerasNetworkIO, INetworkPartsConverter partsConverter)
@@ -87,6 +91,10 @@ namespace NgineUI.ViewModels
             this.networkIO = networkIO;
             this.kerasNetworkIO = kerasNetworkIO;
             this.partsConverter = partsConverter;
+
+            this.trainParametersViewModel = new TrainParametersViewModel();
+            this.tuneParametersViewModel = new TuneParametersViewModel();
+
             this.idTracker = new LayerIdTracker();
             var networkConverter = networkIO.NetworkConverter;
 
@@ -135,7 +143,10 @@ namespace NgineUI.ViewModels
                     if (fileDialog.ShowDialog() == true)
                     {
                         SaveModel(fileDialog.FileName);
-                        CurrentFileName = FSharpOption<string>.Some(fileDialog.FileName);
+                        if (OptionModule.IsNone(CurrentFileName))
+                        {
+                            CurrentFileName = fileDialog.FileName;
+                        }
                     }
                 }),
                 ReadModelCommand = ReactiveCommand.Create(() =>
@@ -176,8 +187,8 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Head3DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
 
             ConversionErrorRaised = new Subject<Unit>();
-            ConfigureTrainingShouldOpen = new Subject<Unit>();
-            ConfigureTuningShouldOpen = new Subject<Unit>();
+            ConfigureTrainingShouldOpen = new Subject<TrainParametersViewModel>();
+            ConfigureTuningShouldOpen = new Subject<TuneParametersViewModel>();
             //TODO: remove/uncomment. 
             //var codeObservable = eventNode.OnClickFlow.Values.Connect().Select(_ => new StatementSequence(eventNode.OnClickFlow.Values.Items));
             //codeObservable.BindTo(this, vm => vm.CodePreview.Code);
@@ -197,12 +208,12 @@ namespace NgineUI.ViewModels
 
         private void ConfigureTraining()
         {
-            ConfigureTrainingShouldOpen.OnNext(Unit.Default);
+            ConfigureTrainingShouldOpen.OnNext(trainParametersViewModel);
         }
 
         private void ConfigureTuning()
         {
-            ConfigureTuningShouldOpen.OnNext(Unit.Default);
+            ConfigureTuningShouldOpen.OnNext(tuneParametersViewModel);
         }
 
         private static bool ChallengeSaveInFile(string fileName)

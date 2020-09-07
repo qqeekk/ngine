@@ -1,4 +1,6 @@
-﻿using NgineUI.ViewModels.Parameters;
+﻿using Microsoft.FSharp.Core;
+using NgineUI.App.Views.Network;
+using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -43,21 +45,24 @@ namespace NgineUI.App.Views.Parameters
             InitializeComponent();
             this.WhenActivated(d =>
             {
+                this.OneWayBind(ViewModel, vm => vm.DataMappingsPath, v => v.txtDataMappingsPath.Text,
+                    opt => OptionModule.DefaultValue(string.Empty, opt)).DisposeWith(d);
+
+                this.OneWayBind(ViewModel, vm => vm.BatchSizeValueEditor, v => v.eBatchSize.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.EpochsValueEditor, v => v.eEpochs.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.ValidationSplitEditorViewModel, v => v.eValidationSplit.ViewModel).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureDataMappingsCommand, v => v.btnDataMappings).DisposeWith(d);
-                ViewModel.ConfigureDataMappingsShouldOpen.Subscribe(_ => ShowDataMappingsWindow()).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.SaveConfigurationCommand, v => v.btnOk).DisposeWith(d);
+
+                ViewModel.ConfigureDataMappingsShouldOpen.Subscribe(vm => ShowDataMappingsWindow(vm)).DisposeWith(d);
             });
         }
 
-        private void ShowDataMappingsWindow()
+        private void ShowDataMappingsWindow(DataMappingsViewModel viewModel)
         {
-            var dataMappings = new Window
-            {
-                Height = 700,
-                Width = 1000,
+            var view = new DataMappings { ViewModel = viewModel };
+            var dataMappings = UIHelpers.CreateWindow(view, "Ngine - Привязки");
 
-                Title = "Ngine - Привязки",
-                Content = new DataMappings(),
-            };
             dataMappings.ShowDialog();
         }
     }

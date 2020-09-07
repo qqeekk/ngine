@@ -14,6 +14,7 @@ open FsUnit
 open Xunit
 open System.Diagnostics
 open NgineUI.ViewModels
+open Ngine.Backend
 
 type NetworkViewModelManagerTests() =
     let converter = 
@@ -23,8 +24,17 @@ type NetworkViewModelManagerTests() =
     let vmManager =
         NetworkViewModelManager.instance converter
     
+    let consistentNetworkIO =
+        NetworkIO(converter, SerializationProfile.Deserializer, SerializationProfile.Serializer)
+
     let networkIO =
         InconsistentNetworkIO(converter, SerializationProfile.Deserializer, SerializationProfile.Serializer)
+
+    let kerasNetworGenerator =
+        KerasNetworkGenerator({ OutputDirectory = "/output"; PythonPath = "D:\\projects\\diploma\\Ngine\\src\\Ngine.Backend.Python\\env" })
+
+    let kerasNetworkIO =
+        KerasNetworkIO(SerializationProfile.Serializer, kerasNetworGenerator)
 
     let model =
         // sensor2D - 1:[28x28]
@@ -104,9 +114,6 @@ type NetworkViewModelManagerTests() =
         let nn = vmManager.Encode(network, model.Ambiguities, model.Optimizer)
         
         Assert.Equal<Head>(nn.Heads, model.Heads)
-
-        //let encoded1 = converter.EncodeInconsistent model
-        //let encoded2 = converter.EncodeInconsistent nn
         
 
     [<Xunit.Fact>]
@@ -119,7 +126,7 @@ type NetworkViewModelManagerTests() =
 
     [<Xunit.Fact>]
     member _.``Verify runtimes``() =
-        let vm = MainViewModel(networkIO, vmManager)
+        let vm = MainViewModel(networkIO, consistentNetworkIO, kerasNetworkIO, vmManager)
         do vm.Header.ReadModelCommand.Execute() |> ignore
         do vm.Header.SaveModelCommand.Execute() |> ignore
 

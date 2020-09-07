@@ -17,6 +17,7 @@ namespace Ngine.Infrastructure.Serialization
                 .WithTypeConverter(new LayerIdPairYamlConverter())
                 .WithTypeConverter(new LayerIdYamlConverter())
                 .WithNamingConvention(HyphenatedNamingConvention.Instance)
+                .DisableAliases()
                 .Build();
     }
 }

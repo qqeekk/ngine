@@ -2,7 +2,6 @@
 using Ngine.Domain.Schemas;
 using Ngine.Domain.Utils;
 using NgineUI.ViewModels.Network.Editors;
-using System;
 using System.Linq;
 
 namespace NgineUI.ViewModels
@@ -37,6 +36,7 @@ namespace NgineUI.ViewModels
             ValueEditor.Value = converter.Encode(optimizer);
         }
 
-        internal Optimizer GetValue() => OptionModule.DefaultValue(defaultValue, ValueEditor.SelectedValue);
+        internal Optimizer GetValue()
+            => OptionModule.DefaultValue(defaultValue, ValueEditor.SelectedValue);
     }
 }
