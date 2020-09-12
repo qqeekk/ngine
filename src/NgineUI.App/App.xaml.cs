@@ -10,8 +10,6 @@ using NgineUI.ViewModels.Network.Editors;
 using NgineUI.ViewModels.Network.Nodes;
 using NodeNetwork.Views;
 using ReactiveUI;
-using System.Configuration;
-using System.IO;
 using System.Windows;
 
 namespace NgineUI.App
@@ -82,7 +80,7 @@ namespace NgineUI.App
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<AmbiguousUIntEditorViewModel>));
 
             var configuration = DefaultConfigurationBuilder.Create("appsettings.json").Build();
-            KerasOptions = ConfigurationBinder.GetValue<KerasExecutionOptions>(configuration, "AppSettings:ExecutionOptions");
+            KerasOptions = configuration.GetSection("AppSettings:ExecutionOptions").Get<KerasExecutionOptions>();
         }
     }
 }

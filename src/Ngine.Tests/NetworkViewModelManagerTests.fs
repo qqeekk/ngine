@@ -10,13 +10,10 @@ open Ngine.Infrastructure.Serialization
 open System.Linq
 open System
 open FsUnit
-open FsUnit
 open Xunit
-open System.Diagnostics
 open NgineUI.ViewModels
 open Ngine.Backend
 open Ngine.Infrastructure.Configuration
-open Microsoft.Extensions
 open Microsoft.Extensions.Configuration
 
 type NetworkViewModelManagerTests() =
@@ -35,7 +32,7 @@ type NetworkViewModelManagerTests() =
 
     let kerasNetworGenerator =
         let config = DefaultConfigurationBuilder.Create("appsettings.json").Build()
-        let options = ConfigurationBinder.GetValue<KerasExecutionOptions>(config, "AppSettings:ExecutionOptions")
+        let options = config.GetSection("AppSettings:ExecutionOptions").Get<KerasExecutionOptions>();
         KerasNetworkGenerator options
 
     let kerasNetworkIO =
