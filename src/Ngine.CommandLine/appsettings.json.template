@@ -9,7 +9,7 @@
   "AppSettings": {
     "ExecutionOptions": {
       "OutputDirectory": "models",
-      "PythonPath": "D:\\projects\\diploma\\Ngine\\src\\Ngine.Backend.Python\\env"
+      "PythonPath": "$(PythonPath)"
     }
   }
 }

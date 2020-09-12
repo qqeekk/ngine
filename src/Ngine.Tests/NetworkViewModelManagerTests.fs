@@ -15,6 +15,9 @@ open Xunit
 open System.Diagnostics
 open NgineUI.ViewModels
 open Ngine.Backend
+open Ngine.Infrastructure.Configuration
+open Microsoft.Extensions
+open Microsoft.Extensions.Configuration
 
 type NetworkViewModelManagerTests() =
     let converter = 
@@ -31,7 +34,9 @@ type NetworkViewModelManagerTests() =
         InconsistentNetworkIO(converter, SerializationProfile.Deserializer, SerializationProfile.Serializer)
 
     let kerasNetworGenerator =
-        KerasNetworkGenerator({ OutputDirectory = "/output"; PythonPath = "D:\\projects\\diploma\\Ngine\\src\\Ngine.Backend.Python\\env" })
+        let config = DefaultConfigurationBuilder.Create("appsettings.json").Build()
+        let options = ConfigurationBinder.GetValue<KerasExecutionOptions>(config, "AppSettings:ExecutionOptions")
+        KerasNetworkGenerator options
 
     let kerasNetworkIO =
         KerasNetworkIO(SerializationProfile.Serializer, kerasNetworGenerator)

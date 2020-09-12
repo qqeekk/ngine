@@ -22,5 +22,4 @@ type NetworkSchemaConversionTests() =
             |> ignore
 
         | data ->
-            not (isOk (activatorConverter.Decode data))
-            |> Assert.True
+            isOk (activatorConverter.Decode data) |> Assert.False

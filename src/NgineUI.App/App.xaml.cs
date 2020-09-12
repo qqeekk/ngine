@@ -1,4 +1,7 @@
-﻿using Ngine.Domain.Schemas;
+﻿using Microsoft.Extensions.Configuration;
+using Ngine.Backend;
+using Ngine.Domain.Schemas;
+using Ngine.Infrastructure.Configuration;
 using NgineUI.App.Views.Network;
 using NgineUI.App.Views.Network.Editors;
 using NgineUI.ViewModels.Network;
@@ -7,6 +10,8 @@ using NgineUI.ViewModels.Network.Editors;
 using NgineUI.ViewModels.Network.Nodes;
 using NodeNetwork.Views;
 using ReactiveUI;
+using System.Configuration;
+using System.IO;
 using System.Windows;
 
 namespace NgineUI.App
@@ -16,6 +21,8 @@ namespace NgineUI.App
     /// </summary>
     public partial class App : Application
     {
+        public static KerasExecutionOptions KerasOptions { get; }
+
         static App()
         {
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Activation1DViewModel>));
@@ -73,6 +80,9 @@ namespace NgineUI.App
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<HeadFunction.Activator>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<Values<uint>>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<AmbiguousUIntEditorViewModel>));
+
+            var configuration = DefaultConfigurationBuilder.Create("appsettings.json").Build();
+            KerasOptions = ConfigurationBinder.GetValue<KerasExecutionOptions>(configuration, "AppSettings:ExecutionOptions");
         }
     }
 }

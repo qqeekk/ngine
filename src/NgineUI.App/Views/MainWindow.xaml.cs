@@ -63,10 +63,7 @@ namespace NgineUI.App
                 OptimizerConverter.instance,
                 AmbiguityConverter.instance);
 
-            var kerasNetworkGenerator = new KerasNetworkGenerator(new KerasExecutionOptions
-            {
-                PythonPath = "D:\\projects\\diploma\\Ngine\\src\\Ngine.Backend.Python\\env",
-            });
+            var kerasNetworkGenerator = new KerasNetworkGenerator(App.KerasOptions);
 
             var inconsistentNetworkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
             var networkIO = new NetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);

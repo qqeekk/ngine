@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ngine.CommandLine.Infrastructure;
 using Ngine.CommandLine.Options;
+using Ngine.Infrastructure.Configuration;
 using System;
 using System.IO;
 using System.Linq;
@@ -19,10 +20,7 @@ namespace Ngine.CommandLine
     {
         private async static Task Main(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", false, true)
-               .Build();
+            var configuration = DefaultConfigurationBuilder.Create("appsettings.json").Build();
 
             var services = new ServiceCollection();
             services.AddLogging(options =>
