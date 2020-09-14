@@ -24,7 +24,6 @@ namespace Ngine.CommandLine.Command
 
         [FileExists]
         [Argument(1, "-m|--mappings")]
-        [FileExtensions(Extensions = "yaml")]
         private string MappingsPath { get; }
 
         [Argument(2, "-e|--epochs")]

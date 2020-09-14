@@ -4,6 +4,7 @@ using Ngine.Backend.Converters;
 using Ngine.Domain.Services.Conversion;
 using Ngine.Infrastructure.Serialization;
 using Ngine.Infrastructure.Services;
+using Ngine.Infrastructure.Services.FileFormats;
 using NgineUI.App.Views;
 using NgineUI.App.Views.Parameters;
 using NgineUI.ViewModels;
@@ -53,8 +54,6 @@ namespace NgineUI.App
                     $"Ngine{OptionModule.DefaultValue(string.Empty, OptionModule.Map(FSharpFunc<string, string>.FromConverter(f => " - " + f) , opt))}").DisposeWith(d);
 
                 ViewModel.ConversionErrorRaised.Subscribe(v => MessageBox.Show("Ошибка при загрузке схемы")).DisposeWith(d);
-                ViewModel.ConfigureTrainingShouldOpen.Subscribe(vm => ShowConfigureTrainingWindow(vm)).DisposeWith(d);
-                ViewModel.ConfigureTuningShouldOpen.Subscribe(vm => ShowConfigureTuningWindow(vm)).DisposeWith(d);
             });
 
             var kernelConverter = KernelConverter.create(ActivatorConverter.instance);
@@ -63,30 +62,19 @@ namespace NgineUI.App
                 OptimizerConverter.instance,
                 AmbiguityConverter.instance);
 
-            var kerasNetworkGenerator = new KerasNetworkGenerator(App.KerasOptions);
+            var kerasNetworkGenerator = new KerasNetworkGenerator(App.KerasOptions.PythonPath);
 
             var inconsistentNetworkIO = new InconsistentNetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
             var networkIO = new NetworkIO(networkConverter, SerializationProfile.Deserializer, SerializationProfile.Serializer);
-            var kerasNetworkIO = new KerasNetworkIO(SerializationProfile.Serializer, kerasNetworkGenerator);
-            this.ViewModel = new MainViewModel(inconsistentNetworkIO, networkIO, kerasNetworkIO, NetworkViewModelManager.instance(networkConverter));
-        }
+            var kerasNetworkCompiler = new KerasNetworkCompiler(SerializationProfile.Serializer, kerasNetworkGenerator);
 
-        private void ShowConfigureTrainingWindow(TrainParametersViewModel viewModel)
-        {
-            var view = new TrainParameters { ViewModel = viewModel };
-            var trainParameters = UIHelpers.CreateWindow(view, "Ngine - Параметры");
-
-            using var handler = view.ViewModel.ConfigurationSaved.Subscribe(vm => trainParameters.Close());
-            trainParameters.ShowDialog();
-        }
-
-        private void ShowConfigureTuningWindow(TuneParametersViewModel viewModel)
-        {
-            var view = new TuneParameters { ViewModel = viewModel };
-            var tuneParameters = UIHelpers.CreateWindow(view, "Ngine - Параметры");
-
-            using var handler = view.ViewModel.ConfigurationSaved.Subscribe(vm => tuneParameters.Close());
-            tuneParameters.ShowDialog();
+            this.ViewModel = new MainViewModel(inconsistentNetworkIO,
+                                               networkIO,
+                                               kerasNetworkCompiler,
+                                               NetworkViewModelManager.instance(networkConverter),
+                                               new UIHelpers(),
+                                               new NgineMappingsFormat(),
+                                               App.KerasOptions.OutputDirectory);
         }
     }
 }

@@ -1,11 +1,8 @@
 ﻿using Microsoft.FSharp.Core;
 using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
-using System;
 using System.Reactive.Disposables;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
 
 namespace NgineUI.App.Views.Parameters
 {

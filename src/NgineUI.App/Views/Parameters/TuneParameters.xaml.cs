@@ -1,7 +1,6 @@
 ﻿using Microsoft.FSharp.Core;
 using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
-using System;
 using System.Reactive.Disposables;
 using System.Windows;
 
@@ -41,16 +40,7 @@ namespace NgineUI.App.Views.Parameters
                 this.OneWayBind(ViewModel, vm => vm.ValidationSplitEditorViewModel, v => v.eValidationSplit.ViewModel).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.SaveConfigurationCommand, v => v.btnOk).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureDataMappingsCommand, v => v.btnDataMappings).DisposeWith(d);
-                ViewModel.ConfigureDataMappingsShouldOpen.Subscribe(vm => ShowDataMappingsWindow(vm)).DisposeWith(d);
             });
-        }
-
-        private void ShowDataMappingsWindow(DataMappingsViewModel viewModel)
-        {
-            var dataMappings = new DataMappings { ViewModel = viewModel };
-            var window = UIHelpers.CreateWindow(dataMappings, "Ngine - Привязки");
-
-            window.ShowDialog();
         }
     }
 }

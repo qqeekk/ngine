@@ -8,6 +8,7 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <TextBox Name="tbxTerminal" ScrollViewer.VerticalScrollBarVisibility="Visible" TextWrapping="Wrap" 
+                 FontFamily="Courier New"
                  Background="LightGray"
                  IsReadOnly="True"
                  Initialized="tbxTerminal_Initialized" />

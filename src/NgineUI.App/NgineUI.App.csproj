@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ngine.Infrastructure\Ngine.Infrastructure.csproj" />
     <ProjectReference Include="..\NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj" />
   </ItemGroup>
 

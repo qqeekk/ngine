@@ -6,8 +6,6 @@ using NgineUI.ViewModels.Network.Ambiguities;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NodeNetwork.Toolkit.ValueNode;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
 namespace NgineUI.ViewModels.Network.Nodes

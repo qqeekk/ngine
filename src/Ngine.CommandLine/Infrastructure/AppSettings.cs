@@ -1,11 +1,9 @@
-﻿using Ngine.Backend;
+﻿using Ngine.Infrastructure.Configuration;
 
 namespace Ngine.CommandLine.Options
 {
     internal class AppSettings
     {
-        public string PathToYamlStorage { get; set; }
-
         public KerasExecutionOptions ExecutionOptions { get; set; }
     }
 }

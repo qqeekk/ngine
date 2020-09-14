@@ -1,8 +1,10 @@
 ﻿using Microsoft.FSharp.Core;
-using Microsoft.Win32;
+using Ngine.Domain.Execution;
 using Ngine.Domain.Schemas;
+using Ngine.Domain.Utils;
+using Ngine.Infrastructure.Abstractions;
+using Ngine.Infrastructure.Abstractions.Services;
 using Ngine.Infrastructure.AppServices;
-using Ngine.Infrastructure.Services;
 using NgineUI.ViewModels.AppServices.Abstract;
 using NgineUI.ViewModels.Control;
 using NgineUI.ViewModels.Network.Ambiguities;
@@ -13,11 +15,13 @@ using NodeNetwork.ViewModels;
 using Python.Runtime;
 using ReactiveUI;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Windows;
+using System.Threading;
+using System.Threading.Tasks;
 using static NodeNetwork.Toolkit.NodeList.NodeListViewModel;
 using Unit = System.Reactive.Unit;
 
@@ -25,22 +29,17 @@ namespace NgineUI.ViewModels
 {
     public class MainViewModel : ReactiveObject
     {
-        private FSharpOption<string> currentFileName;
-        public FSharpOption<string> CurrentFileName
-        {
-            get => currentFileName;
-            set => this.RaiseAndSetIfChanged(ref currentFileName, value);
-        }
-
         private readonly INetworkIO<InconsistentNetwork> inconsistentNetworkIO;
         private readonly INetworkIO<Ngine.Domain.Schemas.Network> networkIO;
-        private readonly KerasNetworkIO kerasNetworkIO;
+        private readonly INetworkCompiler networkCompiler;
         private readonly INetworkPartsConverter partsConverter;
+        private readonly IInteractionService interactionService;
+        private readonly string kerasFolderPath;
         private readonly TrainParametersViewModel trainParametersViewModel;
         private readonly TuneParametersViewModel tuneParametersViewModel;
 
+        private volatile CancellationTokenSource executionCancellationTokenSource;
         private LayerIdTracker idTracker;
-        private NetworkViewModel network;
         private bool activation1DViewModelIsFirstLoaded = true;
         private bool activation2DViewModelIsFirstLoaded = true;
         private bool activation3DViewModelIsFirstLoaded = true;
@@ -69,31 +68,58 @@ namespace NgineUI.ViewModels
             return false;
         }
 
+        private bool ChallengeSaveInFile(string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                return interactionService.AskUserPermission("Файл уже существует. Перезаписать?", "Сохранить проект");
+            }
+
+            return true;
+        }
+
+        #region CurrentFileName
+        private FSharpOption<string> currentFileName;
+        public FSharpOption<string> CurrentFileName
+        {
+            get => currentFileName;
+            set => this.RaiseAndSetIfChanged(ref currentFileName, value);
+        }
+        #endregion
+
+        #region Network
+        private NetworkViewModel network;
         public NetworkViewModel Network
         {
             get => network;
             set => this.RaiseAndSetIfChanged(ref network, value);
         }
+        #endregion
 
         public AmbiguitiesViewModel Ambiguities { get; }
         public NodeListViewModel NodeList { get; }
         public HeaderViewModel Header { get; }
         public OptimizerViewModel Optimizer { get; }
         public Subject<Unit> ConversionErrorRaised { get; }
-        public Subject<TrainParametersViewModel> ConfigureTrainingShouldOpen { get; }
-        public Subject<TuneParametersViewModel> ConfigureTuningShouldOpen { get; }
 
-        public MainViewModel(INetworkIO<InconsistentNetwork> inconsistentNetworkIO, INetworkIO<Ngine.Domain.Schemas.Network> networkIO,
-            KerasNetworkIO kerasNetworkIO, INetworkPartsConverter partsConverter)
+        public MainViewModel(INetworkIO<InconsistentNetwork> inconsistentNetworkIO,
+                             INetworkIO<Ngine.Domain.Schemas.Network> networkIO,
+                             INetworkCompiler networkCompiler,
+                             INetworkPartsConverter partsConverter,
+                             IInteractionService interactionService,
+                             IFileFormat mappingsFileFormat,
+                             string kerasFolderPath)
         {
             // TODO: inject
             this.inconsistentNetworkIO = inconsistentNetworkIO;
             this.networkIO = networkIO;
-            this.kerasNetworkIO = kerasNetworkIO;
+            this.networkCompiler = networkCompiler;
             this.partsConverter = partsConverter;
-
-            this.trainParametersViewModel = new TrainParametersViewModel();
-            this.tuneParametersViewModel = new TuneParametersViewModel();
+            this.interactionService = interactionService;
+            this.kerasFolderPath = kerasFolderPath;
+            this.trainParametersViewModel = new TrainParametersViewModel(interactionService, mappingsFileFormat);
+            this.tuneParametersViewModel = new TuneParametersViewModel(interactionService, mappingsFileFormat);
+            this.executionCancellationTokenSource = new CancellationTokenSource();
 
             this.idTracker = new LayerIdTracker();
             var networkConverter = networkIO.NetworkConverter;
@@ -118,52 +144,23 @@ namespace NgineUI.ViewModels
                 }
             };
 
-            Header = new HeaderViewModel
+            Header = new HeaderViewModel(inconsistentNetworkIO.FileFormat)
             {
                 SaveModelCommand = ReactiveCommand.Create(() => SaveModel(CurrentFileName.Value),
                     canExecute: this.WhenAnyValue(vm => vm.CurrentFileName).Select(OptionModule.IsSome)),
 
-                SaveKerasModelCommand = ReactiveCommand.Create(() =>
+                SaveKerasModelCommand = ReactiveCommand.Create(SaveKerasModel),
+                SaveAsModelCommand = ReactiveCommand.Create(SaveModelAs),
+                ReadModelCommand = ReactiveCommand.Create(ReadModel),
+                RunTraingCommand = ReactiveCommand.Create(RunTraining),
+                ConfigureTrainingCommand = ReactiveCommand.Create(() =>
                 {
-                    using var fileDialog = new System.Windows.Forms.FolderBrowserDialog();
-
-                    if (fileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    {
-                        SaveKerasModel(fileDialog.SelectedPath);
-                    }
+                    interactionService.Navigate(trainParametersViewModel, "Ngine - Параметры");
                 }),
-
-                SaveAsModelCommand = ReactiveCommand.Create(() =>
+                ConfigureTuningCommand = ReactiveCommand.Create(() =>
                 {
-                    var fileDialog = new SaveFileDialog
-                    {
-                        Filter = "Ngine-schema files (*.yaml)|*.yaml",
-                    };
-
-                    if (fileDialog.ShowDialog() == true)
-                    {
-                        SaveModel(fileDialog.FileName);
-                        if (OptionModule.IsNone(CurrentFileName))
-                        {
-                            CurrentFileName = fileDialog.FileName;
-                        }
-                    }
+                    interactionService.Navigate(tuneParametersViewModel, "Ngine - Параметры");
                 }),
-                ReadModelCommand = ReactiveCommand.Create(() =>
-                {
-                    var fileDialog = new OpenFileDialog
-                    {
-                        Filter = "Ngine-schema files (*.yaml)|*.yaml",
-                    };
-
-                    if (fileDialog.ShowDialog() == true)
-                    {
-                        ReadModel(fileDialog.FileName);
-                        CurrentFileName = FSharpOption<string>.Some(fileDialog.FileName);
-                    }
-                }),
-                ConfigureTrainingCommand = ReactiveCommand.Create(ConfigureTraining),
-                ConfigureTuningCommand = ReactiveCommand.Create(ConfigureTuning),
             };
 
             NodeList.AddNodeType(() => new Input1DViewModel(idTracker, !InvertIfTrue(ref input1DViewModelIsFirstLoaded)));
@@ -187,51 +184,54 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Head3DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
 
             ConversionErrorRaised = new Subject<Unit>();
-            ConfigureTrainingShouldOpen = new Subject<TrainParametersViewModel>();
-            ConfigureTuningShouldOpen = new Subject<TuneParametersViewModel>();
-            //TODO: remove/uncomment. 
-            //var codeObservable = eventNode.OnClickFlow.Values.Connect().Select(_ => new StatementSequence(eventNode.OnClickFlow.Values.Items));
-            //codeObservable.BindTo(this, vm => vm.CodePreview.Code);
-            //codeObservable.BindTo(this, vm => vm.CodeSim.Code);
-
-            //ForceDirectedLayouter layouter = new ForceDirectedLayouter();
-            //var config = new Configuration
-            //{
-            //    Network = Network,
-            //};
-            //AutoLayout = ReactiveCommand.Create(() => layouter.Layout(config, 10000));
-            //StartAutoLayoutLive = ReactiveCommand.CreateFromObservable(() =>
-            //    Observable.StartAsync(ct => layouter.LayoutAsync(config, ct)).TakeUntil(StopAutoLayoutLive)
-            //);
-            //StopAutoLayoutLive = ReactiveCommand.Create(() => { }, StartAutoLayoutLive.IsExecuting);
         }
 
-        private void ConfigureTraining()
+        private void RunTraining()
         {
-            ConfigureTrainingShouldOpen.OnNext(trainParametersViewModel);
-        }
-
-        private void ConfigureTuning()
-        {
-            ConfigureTuningShouldOpen.OnNext(tuneParametersViewModel);
-        }
-
-        private static bool ChallengeSaveInFile(string fileName)
-        {
-            if (File.Exists(fileName))
+            var trainParameters = trainParametersViewModel.TryGetValue();
+            if (trainParameters.IsError)
             {
-                var result = MessageBox.Show("Файл уже существует. Перезаписать?", "Сохранить проект", MessageBoxButton.OKCancel);
-                return result switch
-                {
-                    MessageBoxResult.OK => true,
-                    _ => false
-                };
+                interactionService.ShowUserMessage(string.Join(Environment.NewLine, trainParameters.ErrorValue), "Ошибка");
+                return;
             }
 
-            return true;
+            if (trainParameters.ResultValue is var (path, batch, epochs, split)
+                && TrySaveKerasModel(kerasFolderPath, out var networkCompilerOutput))
+            {
+                var network = networkCompiler.NetworkGenerator.Instantiate(networkCompilerOutput.CompiledNetworkPath);
+
+                this.executionCancellationTokenSource = new CancellationTokenSource();
+                network.Train(path, batch, epochs, split, executionCancellationTokenSource.Token);
+            }
         }
 
-        private void SaveKerasModel(string folderName)
+        private void SaveKerasModel()
+        {
+            interactionService.OpenFolderDialog(folderName => TrySaveKerasModel(folderName, out _));
+        }
+
+        private void SaveModelAs()
+        {
+            interactionService.SaveFileDialog(inconsistentNetworkIO.FileFormat, file =>
+            {
+                SaveModel(file);
+                if (OptionModule.IsNone(CurrentFileName))
+                {
+                    CurrentFileName = file;
+                }
+            });
+        }
+
+        private void ReadModel()
+        {
+            interactionService.OpenFileDialog(inconsistentNetworkIO.FileFormat, file =>
+            {
+                ReadModel(file);
+                CurrentFileName = FSharpOption<string>.Some(file);
+            });
+        }
+
+        private bool TrySaveKerasModel(string folderName, out INetworkCompilerOutput networkCompilerOutput)
         {
             var model = partsConverter.Encode(Network, Ambiguities.AmbiguityList.GetValues(), Optimizer.GetValue());
             var encoded = inconsistentNetworkIO.NetworkConverter.EncodeInconsistent(model);
@@ -240,13 +240,17 @@ namespace NgineUI.ViewModels
             {
                 try
                 {
-                    kerasNetworkIO.Write(folderName, result);
+                    networkCompilerOutput = networkCompiler.Write(folderName, result);
+                    return true;
                 }
                 catch (PythonException ex)
                 {
                     Console.WriteLine($"Ошибка конвертации Keras: {ex.Message}");
                 }
             }
+
+            networkCompilerOutput = default;
+            return false;
         }
 
         private void SaveModel(string fileName)

@@ -625,22 +625,22 @@ module KernelConverter =
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert3D prev) tryGetLayer inputs ambiguities)
 
-                    new Layers.Concatenate(layers)
-                    |> renameLayer layerId, inputs
+                    upcast new Layers.Concatenate(LayerIdEncoder.encoder.encode layerId, layers), inputs
+                    //|> renameLayer layerId, inputs
 
                 | D2 (HeadLayer (layerId, Layer2D.Concatenation2D prevs)) ->
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert2D prev) tryGetLayer inputs ambiguities)
 
-                    new Layers.Concatenate(layers)
-                    |> renameLayer layerId, inputs
+                    upcast new Layers.Concatenate(LayerIdEncoder.encoder.encode layerId, layers), inputs
+                    //|> renameLayer layerId, inputs
 
                 | D1 (HeadLayer (layerId, Layer1D.Concatenation1D prevs)) ->
                     let layers, inputs = (inputs, prevs) ||> Array.mapFold (fun inputs prev ->
                         keras (NetworkConverters.convert1D prev) tryGetLayer inputs ambiguities)
 
-                    new Layers.Concatenate(layers)
-                    |> renameLayer layerId, inputs
+                    upcast new Layers.Concatenate(LayerIdEncoder.encoder.encode layerId, layers), inputs
+                    //|> renameLayer layerId, inputs
             
             | Choice2Of2 sensor ->
                 let s =

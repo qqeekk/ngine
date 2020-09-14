@@ -3,3 +3,4 @@ sklearn
 pandas
 opencv-python
 keras-tuner
+pyyaml

@@ -15,8 +15,8 @@ open Keras
 /// <summary>
 /// Keras network model generator.
 /// </summary>
-type KerasNetworkGenerator(settings: KerasExecutionOptions) =
-    do PythonHelper.activate (settings.PythonPath)
+type KerasNetworkGenerator(pythonPath: string) =
+    do PythonHelper.activate (pythonPath)
 
     let saveToFile path (kerasModel:BaseModel) =
         // Save keras model to file with random name.
@@ -42,9 +42,8 @@ type KerasNetworkGenerator(settings: KerasExecutionOptions) =
         saveToFile path model, ambiguities
 
     let instantiate filePath =
-        new KerasNetwork(settings, filePath) :> INetwork
+        new KerasNetwork(pythonPath, filePath) :> INetwork
 
     interface INetworkGenerator with
-        member _.SaveModel definition = save settings.OutputDirectory definition
         member _.SaveModel(path, definition) = save path definition
         member _.Instantiate file = instantiate file

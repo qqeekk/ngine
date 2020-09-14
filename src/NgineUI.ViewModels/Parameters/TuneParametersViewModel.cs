@@ -1,20 +1,29 @@
 ﻿using Microsoft.FSharp.Core;
+using Ngine.Infrastructure.Abstractions;
+using Ngine.Infrastructure.Abstractions.Services;
 using NgineUI.ViewModels.Network.Editors;
 using ReactiveUI;
-using System.Reactive.Subjects;
+using System;
 using Unit = System.Reactive.Unit;
 
 namespace NgineUI.ViewModels.Parameters
 {
-    public class TuneParametersViewModel: ReactiveObject
+    using TuneParametersResult = FSharpResult<(string path, uint epochs, float validationSplit), string[]>;
+
+    public class TuneParametersViewModel: ReactiveObject, IInteractable
     {
-        public TuneParametersViewModel()
+        public TuneParametersViewModel(IInteractionService interactionService, IFileFormat mappingsFileFormat)
         {
-            var dataMappings = new DataMappingsViewModel();
-            ConfigureDataMappingsShouldOpen = new Subject<DataMappingsViewModel>();
-            ConfigurationSaved = new Subject<Unit>();
-            ConfigureDataMappingsCommand = ReactiveCommand.Create(() => ConfigureDataMappingsShouldOpen.OnNext(dataMappings));
-            SaveConfigurationCommand = ReactiveCommand.Create(() => ConfigurationSaved.OnNext(Unit.Default));
+            var dataMappings = new DataMappingsViewModel(interactionService, mappingsFileFormat);
+            ConfigureDataMappingsCommand = ReactiveCommand.Create(() =>
+            {
+                interactionService.Navigate(dataMappings, "Ngine - Привязки");
+            });
+
+            SaveConfigurationCommand = ReactiveCommand.Create(() =>
+            {
+                (this as IInteractable).FinishInteraction();
+            });
 
             EpochsValueEditor = new UIntEditorViewModel();
             ValidationSplitEditorViewModel = new FloatEditorViewModel();
@@ -23,10 +32,6 @@ namespace NgineUI.ViewModels.Parameters
             dataMappings.WhenAnyValue(d => d.DataMappingsPath)
                 .BindTo(this, vm => vm.DataMappingsPath);
         }
-
-
-        public Subject<DataMappingsViewModel> ConfigureDataMappingsShouldOpen { get; }
-        public Subject<Unit> ConfigurationSaved { get; }
 
         public ReactiveCommand<Unit, Unit> ConfigureDataMappingsCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveConfigurationCommand { get; }
@@ -44,5 +49,19 @@ namespace NgineUI.ViewModels.Parameters
         public UIntEditorViewModel EpochsValueEditor { get; }
 
         public FloatEditorViewModel ValidationSplitEditorViewModel { get; }
+        Action IInteractable.FinishInteraction { get; set; }
+
+        public TuneParametersResult TryGetValue()
+        {
+            if (OptionModule.IsNone(DataMappingsPath))
+            {
+                return TuneParametersResult.NewError(new[] { "Не указан путь до файла отображений" });
+            }
+
+            return TuneParametersResult.NewOk((
+                DataMappingsPath.Value,
+                EpochsValueEditor.Value,
+                ValidationSplitEditorViewModel.Value));
+        }
     }
 }

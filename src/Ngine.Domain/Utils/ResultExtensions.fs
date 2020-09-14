@@ -1,8 +1,5 @@
 ﻿namespace Ngine.Domain.Utils
 
-open System
-
-
 module ResultExtensions =
     let aggregate (results : seq<Result<'a, 'b>>) : Result<'a [], 'b []> =
         (Ok [], results)
@@ -45,7 +42,6 @@ module ResultExtensions =
         match zip abZip cdZip with
         | Ok ((a, b), (c, d)) -> Ok (a,b,c,d)
         | Error errors -> Error (List.concat errors)
-
 
     let toOption = function
     | Ok a -> Some a

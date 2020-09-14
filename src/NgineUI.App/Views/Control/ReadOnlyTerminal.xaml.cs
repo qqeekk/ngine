@@ -35,7 +35,8 @@ namespace NgineUI.App.Views.Control
             // consoleRedirectWriter.OnWrite += delegate (string value) { LastConsoleString = value; };
 
             // Multithread operation - Use the dispatcher to write to WPF UIElements if there is more than 1 thread.
-            consoleRedirectWriter.OnWrite += AppendText;
+            ;
+            consoleRedirectWriter.OnWrite += text => Dispatcher.BeginInvoke(DispatcherPriority.Normal, (Action<string>)AppendText, text);
         }
 
         private void AppendText(string value)

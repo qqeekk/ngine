@@ -1,13 +1,11 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using Ngine.Domain.Execution;
+using Microsoft.Extensions.Options;
+using Ngine.CommandLine.Options;
 using Ngine.Domain.Schemas;
-using Ngine.Infrastructure.Services;
+using Ngine.Infrastructure.Abstractions.Services;
 using Python.Runtime;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 using System.Threading.Tasks;
-using YamlDotNet.Serialization;
 
 namespace Ngine.CommandLine.Command
 {
@@ -15,18 +13,20 @@ namespace Ngine.CommandLine.Command
     internal class CompileCommand
     {
         private readonly INetworkIO<Network> networkReader;
-        private readonly KerasNetworkIO kerasNetworkIO;
+        private readonly INetworkCompiler networkCompiler;
+        private readonly string kerasOutputDirectory;
 
         public CompileCommand(INetworkIO<Network> networkReader,
-                              KerasNetworkIO kerasNetworkIO)
+                              INetworkCompiler networkCompiler,
+                              IOptions<AppSettings> options)
         {
             this.networkReader = networkReader;
-            this.kerasNetworkIO = kerasNetworkIO;
+            this.networkCompiler = networkCompiler;
+            this.kerasOutputDirectory = options.Value.ExecutionOptions.OutputDirectory;
         }
 
         [FileExists]
         [Argument(0)]
-        [FileExtensions(Extensions = "yaml")]
         private string FileName { get; }
 
         [Option("-p|--print")]
@@ -55,7 +55,7 @@ namespace Ngine.CommandLine.Command
 
                 if (!CompileOnly)
                 {
-                    kerasNetworkIO.Write(network);
+                    networkCompiler.Write(kerasOutputDirectory, network);
                 }
             }
             catch (PythonException ex)

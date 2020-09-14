@@ -1,20 +1,8 @@
 ﻿using Microsoft.FSharp.Core;
-using NgineUI.App.Views.Network;
 using NgineUI.ViewModels.Parameters;
 using ReactiveUI;
-using System;
-using System.Collections.Generic;
 using System.Reactive.Disposables;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NgineUI.App.Views.Parameters
 {
@@ -53,17 +41,7 @@ namespace NgineUI.App.Views.Parameters
                 this.OneWayBind(ViewModel, vm => vm.ValidationSplitEditorViewModel, v => v.eValidationSplit.ViewModel).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureDataMappingsCommand, v => v.btnDataMappings).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.SaveConfigurationCommand, v => v.btnOk).DisposeWith(d);
-
-                ViewModel.ConfigureDataMappingsShouldOpen.Subscribe(vm => ShowDataMappingsWindow(vm)).DisposeWith(d);
             });
-        }
-
-        private void ShowDataMappingsWindow(DataMappingsViewModel viewModel)
-        {
-            var view = new DataMappings { ViewModel = viewModel };
-            var dataMappings = UIHelpers.CreateWindow(view, "Ngine - Привязки");
-
-            dataMappings.ShowDialog();
         }
     }
 }

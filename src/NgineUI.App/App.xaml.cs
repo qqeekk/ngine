@@ -4,10 +4,12 @@ using Ngine.Domain.Schemas;
 using Ngine.Infrastructure.Configuration;
 using NgineUI.App.Views.Network;
 using NgineUI.App.Views.Network.Editors;
+using NgineUI.App.Views.Parameters;
 using NgineUI.ViewModels.Network;
 using NgineUI.ViewModels.Network.Connections;
 using NgineUI.ViewModels.Network.Editors;
 using NgineUI.ViewModels.Network.Nodes;
+using NgineUI.ViewModels.Parameters;
 using NodeNetwork.Views;
 using ReactiveUI;
 using System.Windows;
@@ -72,12 +74,15 @@ namespace NgineUI.App
             Splat.Locator.CurrentMutable.Register(() => new UIntVector2DEditor(), typeof(IViewFor<UIntVector2DEditorViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new UIntVector3DEditor(), typeof(IViewFor<UIntVector3DEditorViewModel>));
             
-            //Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<Activator>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<HeadFunction>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<HeadFunction.Activator>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<LookupEditorViewModel<Values<uint>>>));
             Splat.Locator.CurrentMutable.Register(() => new LookupVaueEditor(), typeof(IViewFor<AmbiguousUIntEditorViewModel>));
+
+            Splat.Locator.CurrentMutable.Register(() => new DataMappings(), typeof(IViewFor<DataMappingsViewModel>));
+            Splat.Locator.CurrentMutable.Register(() => new TrainParameters(), typeof(IViewFor<TrainParametersViewModel>));
+            Splat.Locator.CurrentMutable.Register(() => new TuneParameters(), typeof(IViewFor<TuneParametersViewModel>));
 
             var configuration = DefaultConfigurationBuilder.Create("appsettings.json").Build();
             KerasOptions = configuration.GetSection("AppSettings:ExecutionOptions").Get<KerasExecutionOptions>();

@@ -11,7 +11,7 @@
             <MenuItem Header="Открыть..." x:Name="readNodesItem"></MenuItem>
             <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
             <MenuItem Header="Сохранить как...">
-                <MenuItem Header="Проект Ngine (.yaml)" x:Name="saveAsNodesItem"></MenuItem>
+                <MenuItem x:Name="saveAsNodesItem"></MenuItem>
                 <MenuItem Header="Файл tensorflow/keras (.h5)" x:Name="saveKerasModelItem"></MenuItem>
             </MenuItem>
         </MenuItem>
@@ -30,8 +30,8 @@
                 <TextBlock Text="Запуск..." VerticalAlignment="Center"></TextBlock>
             </MenuItem.Header>
 
-            <MenuItem Header="Обучение"></MenuItem>
-            <MenuItem Header="Настройка гиперпараметров"></MenuItem>
+            <MenuItem Header="Обучение" x:Name="runTrainingItem"></MenuItem>
+            <MenuItem Header="Настройка гиперпараметров" x:Name="runTuningItem"></MenuItem>
         </MenuItem>
         <MenuItem>
             <MenuItem.Icon>

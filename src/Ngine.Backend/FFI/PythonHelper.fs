@@ -20,13 +20,13 @@ module PythonHelper =
             use fileStream = new FileStream(target, FileMode.Create, FileAccess.ReadWrite)
             resource.CopyTo fileStream
 
-    let activate envPath =
+    let activate (envPath: string) =
         if not (PythonEngine.IsInitialized) then
             do unzipScripts "output.zip"
 
             let path' =
-                Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine)
-                |> sprintf "%s\\Scripts;%s" envPath
+                let path = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine)
+                String.Format("{0}\\Scripts;{0};{1}", envPath, path)
 
             do Environment.SetEnvironmentVariable("PATH", path', EnvironmentVariableTarget.Process)
 
@@ -37,26 +37,37 @@ module PythonHelper =
             Keras.Setup.UseTfKeras()
             PythonEngine.Initialize()
 
-    let execute (token:CancellationToken) args =
+    let execute (token:CancellationToken) path args =
+        let python = Path.Combine(path, "Scripts", "python")
+        //let pathToZip = Path.GetFullPath("output.zip")
+
         Task.Run(fun() ->
-            use p = new Process()
-            p.StartInfo <- ProcessStartInfo("python", sprintf "output.zip %s" args)
-            p.StartInfo.RedirectStandardOutput <- true
-            p.StartInfo.RedirectStandardError <- true
-            p.StartInfo.RedirectStandardInput <- true
-            p.StartInfo.UseShellExecute <- false
-            p.StartInfo.CreateNoWindow <- true
-            
+            //let runCommand = sprintf 
             let error = new StringBuilder()
-            p.OutputDataReceived.Add(fun a -> printfn "%s" a.Data)
+
+            let s = ProcessStartInfo(python, sprintf "output.zip %s" args)
+            s.RedirectStandardOutput <- true
+            s.RedirectStandardError <- true
+            s.RedirectStandardInput <- true
+            s.UseShellExecute <- false
+            s.CreateNoWindow <- true
+
+            use p = new Process()
+            p.StartInfo <- s
+            p.OutputDataReceived.Add(fun a -> if a.Data <> null then Console.WriteLine a.Data)
             p.ErrorDataReceived.Add(fun a -> error.AppendLine(a.Data) |> ignore)
         
             let _ = p.Start()
             p.BeginOutputReadLine()
             p.BeginErrorReadLine()
-
             use r = token.Register(Action(p.Kill))
+
+            //(use sw = p.StandardInput
+            //if sw.BaseStream.CanWrite then
+            //    sw.WriteLine(Path.Combine(workingDirectory, "activate.bat"))
+            //    sw.WriteLine("where python")
+            //    sw.WriteLine(runCommand))
 
             // print error
             p.WaitForExit()
-            printfn "\n%s" (string error))
+            Console.WriteLine(string error))

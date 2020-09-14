@@ -407,7 +407,7 @@ def main(args):
     # train command parser
     parser_train = subparsers.add_parser('train')
     parser_train.add_argument('model', type=argparse.FileType('r'))
-    parser_train.add_argument('mappings', type=argparse.FileType('r'))
+    parser_train.add_argument('mappings', type=argparse.FileType('r', encoding='utf-8'))
     parser_train.add_argument('epochs', type=int)
     parser_train.add_argument('batches', type=int)
     parser_train.add_argument('validation_split', type=float)
@@ -416,8 +416,8 @@ def main(args):
     # tune command parser
     parser_train = subparsers.add_parser('tune')
     parser_train.add_argument('model', type=argparse.FileType('r'))
-    parser_train.add_argument('ambiguities', type=argparse.FileType('r'))
-    parser_train.add_argument('mappings', type=argparse.FileType('r'))
+    parser_train.add_argument('ambiguities', type=argparse.FileType('r', encoding='utf-8'))
+    parser_train.add_argument('mappings', type=argparse.FileType('r', encoding='utf-8'))
     parser_train.add_argument('epochs', type=int)
     parser_train.add_argument('trials', type=int)
     parser_train.add_argument('validation_split', type=float)

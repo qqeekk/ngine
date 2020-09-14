@@ -1,5 +1,6 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using Ngine.Infrastructure.Abstractions.Services;
 using System;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace Ngine.Infrastructure.Services
         private readonly ISerializer serializer;
 
         public INetworkConverter NetworkConverter { get; }
+
+        public abstract IFileFormat FileFormat { get; }
 
         protected NetworkIOBase(INetworkConverter converter, IDeserializer deserializer, ISerializer serializer)
         {

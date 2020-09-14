@@ -24,6 +24,5 @@ type INetwork =
 
 
 type INetworkGenerator =
-    abstract member SaveModel: definition : Schemas.Network -> string * Schema.AmbiguityMapProduct
     abstract member SaveModel: folderPath: string * definition : Schemas.Network -> string * Schema.AmbiguityMapProduct
     abstract member Instantiate: fileName : string -> INetwork

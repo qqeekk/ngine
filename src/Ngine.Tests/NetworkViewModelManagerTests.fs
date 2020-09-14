@@ -15,6 +15,8 @@ open NgineUI.ViewModels
 open Ngine.Backend
 open Ngine.Infrastructure.Configuration
 open Microsoft.Extensions.Configuration
+open Ngine.Infrastructure.Services.FileFormats
+open Ngine.Infrastructure.Services
 
 type NetworkViewModelManagerTests() =
     let converter = 
@@ -30,13 +32,15 @@ type NetworkViewModelManagerTests() =
     let networkIO =
         InconsistentNetworkIO(converter, SerializationProfile.Deserializer, SerializationProfile.Serializer)
 
-    let kerasNetworGenerator =
+    let kerasExecutionOptions =
         let config = DefaultConfigurationBuilder.Create("appsettings.json").Build()
-        let options = config.GetSection("AppSettings:ExecutionOptions").Get<KerasExecutionOptions>();
-        KerasNetworkGenerator options
+        config.GetSection("AppSettings:ExecutionOptions").Get<KerasExecutionOptions>();
+
+    let kerasNetworGenerator =
+        KerasNetworkGenerator(kerasExecutionOptions.PythonPath)
 
     let kerasNetworkIO =
-        KerasNetworkIO(SerializationProfile.Serializer, kerasNetworGenerator)
+        KerasNetworkCompiler(SerializationProfile.Serializer, kerasNetworGenerator)
 
     let model =
         // sensor2D - 1:[28x28]
@@ -128,7 +132,7 @@ type NetworkViewModelManagerTests() =
 
     [<Xunit.Fact>]
     member _.``Verify runtimes``() =
-        let vm = MainViewModel(networkIO, consistentNetworkIO, kerasNetworkIO, vmManager)
+        let vm = MainViewModel(networkIO, consistentNetworkIO, kerasNetworkIO, vmManager, null, NgineMappingsFormat(), kerasExecutionOptions.OutputDirectory)
         do vm.Header.ReadModelCommand.Execute() |> ignore
         do vm.Header.SaveModelCommand.Execute() |> ignore
 

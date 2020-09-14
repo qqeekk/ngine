@@ -24,12 +24,10 @@ namespace Ngine.CommandLine.Command
 
         [FileExists]
         [Argument(1, "-a|--ambiguities")]
-        [FileExtensions(Extensions = "yaml")]
         private string AmbiguitiesPath { get; }
 
         [FileExists]
         [Argument(2, "-m|--mappings")]
-        [FileExtensions(Extensions = "yaml")]
         private string MappingsPath { get; }
 
         [Argument(3, "-e|--epochs")]

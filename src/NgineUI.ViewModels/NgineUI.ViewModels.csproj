@@ -6,7 +6,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\deps\NodeNetwork\NodeNetworkToolkit\NodeNetworkToolkit.csproj" />
-    <ProjectReference Include="..\Ngine.Infrastructure\Ngine.Infrastructure.csproj" />
+    <ProjectReference Include="..\Ngine.Infrastructure.Abstractions\Ngine.Infrastructure.Abstractions.csproj" />
+    <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

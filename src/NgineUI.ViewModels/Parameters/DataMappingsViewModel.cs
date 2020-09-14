@@ -1,13 +1,15 @@
 ﻿using Microsoft.FSharp.Core;
-using Microsoft.Win32;
+using Ngine.Infrastructure.Abstractions;
+using Ngine.Infrastructure.Abstractions.Services;
 using ReactiveUI;
+using System;
 using System.IO;
 using System.Reactive.Linq;
 using Unit = System.Reactive.Unit;
 
 namespace NgineUI.ViewModels.Parameters
 {
-    public class DataMappingsViewModel : ReactiveObject
+    public class DataMappingsViewModel : ReactiveObject, IInteractable
     {
         private const string DefaultDataMappingsText = @" ### ПРИМЕР ###
 # Определение отображений для набора данных https://github.com/emanhamed/Houses-dataset
@@ -26,7 +28,10 @@ outputs:
     -
         - cons:$csv[4]  # цена жилья (в долларах)";
 
-        public DataMappingsViewModel()
+        private readonly IInteractionService interactionService;
+        private readonly IFileFormat mappingsFileFormat;
+
+        public DataMappingsViewModel(IInteractionService interactionService, IFileFormat mappingsFileFormat)
         {
             DataMappingsPath = FSharpOption<string>.None;
             LoadDataMappingsCommand = ReactiveCommand.Create(LoadDataMappings);
@@ -37,6 +42,8 @@ outputs:
                     ? File.ReadAllText(opt.Value)
                     : DefaultDataMappingsText)
                 .BindTo(this, vm => vm.DataMappingsText);
+            this.interactionService = interactionService;
+            this.mappingsFileFormat = mappingsFileFormat;
         }
 
         #region DataMappingsPath
@@ -61,41 +68,30 @@ outputs:
 
         public ReactiveCommand<Unit, Unit> LoadDataMappingsCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveDataMappingsCommand { get; }
+        Action IInteractable.FinishInteraction { get; set; }
 
         private void SaveDataMappings()
         {
             if (OptionModule.IsNone(DataMappingsPath))
             {
-                var fileDialog = new SaveFileDialog
+                interactionService.SaveFileDialog(mappingsFileFormat, fileName =>
                 {
-                    Filter = "Ngine-mappings files (*.yaml)|*.yaml",
-                };
-
-                switch (fileDialog.ShowDialog())
-                {
-                    case true:
-                        DataMappingsPath = fileDialog.FileName;
-                        break;
-
-                    default:
-                        return;
-                }
+                    DataMappingsPath = fileName;
+                });
             }
 
-            File.WriteAllText(DataMappingsPath.Value, DataMappingsText);
+            if (OptionModule.IsSome(DataMappingsPath))
+            {
+                File.WriteAllText(DataMappingsPath.Value, DataMappingsText);
+            }
         }
 
         private void LoadDataMappings()
         {
-            var fileDialog = new OpenFileDialog
+            interactionService.OpenFileDialog(mappingsFileFormat, fileName =>
             {
-                Filter = "Ngine-mappings files (*.yaml)|*.yaml",
-            };
-
-            if (fileDialog.ShowDialog() == true)
-            {
-                DataMappingsPath = fileDialog.FileName;
-            }
+                DataMappingsPath = fileName;
+            });
         }
     }
 }

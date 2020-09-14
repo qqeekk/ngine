@@ -1,5 +1,7 @@
 ﻿using Microsoft.FSharp.Core;
 using Ngine.Domain.Schemas;
+using Ngine.Infrastructure.Abstractions.Services;
+using Ngine.Infrastructure.Services.FileFormats;
 using YamlDotNet.Serialization;
 using static Ngine.Backend.Converters.NetworkErrorPrettyPrinter;
 using static Ngine.Domain.Schemas.Errors;
@@ -12,6 +14,8 @@ namespace Ngine.Infrastructure.Services
             : base(converter, deserializer, serializer)
         {
         }
+
+        public override IFileFormat FileFormat { get; } = new NgineSchemaFormat();
 
         protected override FSharpResult<InconsistentNetwork, NetworkConversionError<InconsistentLayerConversionError>[]> Decode(Schema.Network schema)
         {
