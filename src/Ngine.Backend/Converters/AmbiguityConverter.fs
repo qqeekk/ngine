@@ -254,7 +254,9 @@ module AmbiguityConverter =
 
         { Ambiguities =
             network.Ambiguities
-            |> Seq.map<_, Schema.AmbiguityMapValue> (fun a ->
-                let a = encode a
-                { Mappings = mappings a.Name; Value = a.Value })
+            |> Seq.map<_, Schema.AmbiguityMapValue> (fun kvp ->
+                let (Variable name) = kvp.Key
+                let a = encode kvp
+
+                { Name = name; Mappings = mappings a.Name; Value = a.Value })
             |> Seq.toArray }

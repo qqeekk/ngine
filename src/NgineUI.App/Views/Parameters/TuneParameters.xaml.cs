@@ -37,6 +37,7 @@ namespace NgineUI.App.Views.Parameters
                     opt => OptionModule.DefaultValue(string.Empty, opt)).DisposeWith(d);
 
                 this.OneWayBind(ViewModel, vm => vm.EpochsValueEditor, v => v.eEpochs.ViewModel).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.TrialsValueEditor, v => v.eTrials.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.ValidationSplitEditorViewModel, v => v.eValidationSplit.ViewModel).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.SaveConfigurationCommand, v => v.btnOk).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.ConfigureDataMappingsCommand, v => v.btnDataMappings).DisposeWith(d);

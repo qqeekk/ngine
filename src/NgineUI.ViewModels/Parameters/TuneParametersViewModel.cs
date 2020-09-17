@@ -8,7 +8,7 @@ using Unit = System.Reactive.Unit;
 
 namespace NgineUI.ViewModels.Parameters
 {
-    using TuneParametersResult = FSharpResult<(string path, uint epochs, float validationSplit), string[]>;
+    using TuneParametersResult = FSharpResult<(string path, uint epochs, uint trials, float validationSplit), string[]>;
 
     public class TuneParametersViewModel: ReactiveObject, IInteractable
     {
@@ -26,6 +26,7 @@ namespace NgineUI.ViewModels.Parameters
             });
 
             EpochsValueEditor = new UIntEditorViewModel();
+            TrialsValueEditor = new UIntEditorViewModel();
             ValidationSplitEditorViewModel = new FloatEditorViewModel();
 
             // Trick to propagate event from VM w/o exposing it to public API.
@@ -47,7 +48,7 @@ namespace NgineUI.ViewModels.Parameters
         #endregion
 
         public UIntEditorViewModel EpochsValueEditor { get; }
-
+        public UIntEditorViewModel TrialsValueEditor { get; }
         public FloatEditorViewModel ValidationSplitEditorViewModel { get; }
         Action IInteractable.FinishInteraction { get; set; }
 
@@ -61,6 +62,7 @@ namespace NgineUI.ViewModels.Parameters
             return TuneParametersResult.NewOk((
                 DataMappingsPath.Value,
                 EpochsValueEditor.Value,
+                TrialsValueEditor.Value,
                 ValidationSplitEditorViewModel.Value));
         }
     }

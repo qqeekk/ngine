@@ -40,6 +40,7 @@ namespace NgineUI.App.Views.Control
                 this.BindCommand(ViewModel, vm => vm.ConfigureTuningCommand, v => v.configureTuningItem).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.RunTuningCommand, v => v.runTuningItem).DisposeWith(d);
                 this.BindCommand(ViewModel, vm => vm.RunTraingCommand, v => v.runTrainingItem).DisposeWith(d);
+                this.BindCommand(ViewModel, vm => vm.StopRunningCommand, v => v.stopRunningItem).DisposeWith(d);
 
                 this.OneWayBind(ViewModel, vm => vm.SchemaFileFormat, v => v.saveAsNodesItem.Header, format => $"Проект Ngine (.{format})");
             });

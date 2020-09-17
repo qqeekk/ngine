@@ -39,6 +39,7 @@ module Schema =
         
     [<CLIMutable>]
     type AmbiguityMapValue = {
+        Name: string
         Value: string
         Mappings: AmbiguityMapRecord[]
     }

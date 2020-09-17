@@ -38,7 +38,7 @@
                 <Image Source="{StaticResource imgStop}"></Image>
             </MenuItem.Icon>
             <MenuItem.Header>
-                <TextBlock Text="Стоп" VerticalAlignment="Center"></TextBlock>
+                <TextBlock x:Name="stopRunningItem" Text="Стоп" VerticalAlignment="Center"></TextBlock>
             </MenuItem.Header>
         </MenuItem>
     </Menu>

@@ -19,6 +19,7 @@ namespace NgineUI.ViewModels.Control
         public ReactiveCommand<Unit, Unit> ConfigureTuningCommand { get; internal set; }
         public ReactiveCommand<Unit, Unit> RunTraingCommand { get; internal set; }
         public ReactiveCommand<Unit, Unit> RunTuningCommand { get; internal set; }
+        public ReactiveCommand<Unit, Unit> StopRunningCommand { get; internal set; }
 
         public string SchemaFileFormat { get; }
     }

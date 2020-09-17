@@ -8,7 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel Margin="15 5">
-        <Button DockPanel.Dock="Bottom" HorizontalAlignment="Right" Padding="15 2" Content="ОК"/>
+        <Button DockPanel.Dock="Bottom" x:Name="btnOk" HorizontalAlignment="Right" Padding="15 2" Content="ОК"/>
 
         <Grid>
             <Grid.Resources>
@@ -22,7 +22,6 @@
                 <RowDefinition Height="25"/>
                 <RowDefinition Height="25"/>
                 <RowDefinition Height="25"/>
-                <RowDefinition Height="10"/>
                 <RowDefinition Height="25"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -43,16 +42,11 @@
             <TextBlock Text="Количество эпох (epochs):" Grid.Row="2"/>
             <e:UIntEditor x:Name="eEpochs" Grid.Row="2" Grid.Column="1"/>
 
-            <TextBlock Text="Коэффициент разбиения выборки (validation split):" Grid.Row="3"/>
-            <e:FloatEditor x:Name="eValidationSplit" Grid.Row="3" Grid.Column="1"/>
+            <TextBlock Text="Максимальное число попыток (trials):" Grid.Row="3"/>
+            <e:UIntEditor x:Name="eTrials" Grid.Row="3" Grid.Column="1"/>
 
-            <TextBlock Text="? Использовать внешний файл (h5):" Grid.Row="5" Foreground="DarkRed"/>
-            <DockPanel Grid.Row="5" Grid.Column="1">
-                <Button x:Name="btnOk" Content="Добавить" Padding="5 2"/>
-                <TextBlock VerticalAlignment="Stretch" Padding="5 2"
-                           Background="Gray" Foreground="White">
-                </TextBlock>
-            </DockPanel>
+            <TextBlock Text="Коэффициент разбиения выборки (validation split):" Grid.Row="4"/>
+            <e:FloatEditor x:Name="eValidationSplit" Grid.Row="4" Grid.Column="1"/>
         </Grid>
     </DockPanel>
 </UserControl>

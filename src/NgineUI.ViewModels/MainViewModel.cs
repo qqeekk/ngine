@@ -38,7 +38,6 @@ namespace NgineUI.ViewModels
         private readonly TrainParametersViewModel trainParametersViewModel;
         private readonly TuneParametersViewModel tuneParametersViewModel;
 
-        private volatile CancellationTokenSource executionCancellationTokenSource;
         private LayerIdTracker idTracker;
         private bool activation1DViewModelIsFirstLoaded = true;
         private bool activation2DViewModelIsFirstLoaded = true;
@@ -77,6 +76,15 @@ namespace NgineUI.ViewModels
 
             return true;
         }
+
+        #region ExecutionCancellationTokenSource
+        private CancellationTokenSource executionCancellationTokenSource;
+        private CancellationTokenSource ExecutionCancellationTokenSource
+        {
+            get => executionCancellationTokenSource;
+            set => this.RaiseAndSetIfChanged(ref executionCancellationTokenSource, value);
+        }
+        #endregion
 
         #region CurrentFileName
         private FSharpOption<string> currentFileName;
@@ -119,7 +127,6 @@ namespace NgineUI.ViewModels
             this.kerasFolderPath = kerasFolderPath;
             this.trainParametersViewModel = new TrainParametersViewModel(interactionService, mappingsFileFormat);
             this.tuneParametersViewModel = new TuneParametersViewModel(interactionService, mappingsFileFormat);
-            this.executionCancellationTokenSource = new CancellationTokenSource();
 
             this.idTracker = new LayerIdTracker();
             var networkConverter = networkIO.NetworkConverter;
@@ -144,6 +151,7 @@ namespace NgineUI.ViewModels
                 }
             };
 
+            var isAnyJobRunning = this.WhenAnyValue(vm => vm.ExecutionCancellationTokenSource).Select(s => s != null);
             Header = new HeaderViewModel(inconsistentNetworkIO.FileFormat)
             {
                 SaveModelCommand = ReactiveCommand.Create(() => SaveModel(CurrentFileName.Value),
@@ -152,7 +160,9 @@ namespace NgineUI.ViewModels
                 SaveKerasModelCommand = ReactiveCommand.Create(SaveKerasModel),
                 SaveAsModelCommand = ReactiveCommand.Create(SaveModelAs),
                 ReadModelCommand = ReactiveCommand.Create(ReadModel),
-                RunTraingCommand = ReactiveCommand.Create(RunTraining),
+                RunTraingCommand = ReactiveCommand.CreateFromTask(RunTraining, isAnyJobRunning.Select(r => !r)),
+                RunTuningCommand = ReactiveCommand.CreateFromTask(RunTuning, isAnyJobRunning.Select(r => !r)),
+                StopRunningCommand = ReactiveCommand.Create(() => ExecutionCancellationTokenSource.Cancel(), isAnyJobRunning),
                 ConfigureTrainingCommand = ReactiveCommand.Create(() =>
                 {
                     interactionService.Navigate(trainParametersViewModel, "Ngine - Параметры");
@@ -186,7 +196,37 @@ namespace NgineUI.ViewModels
             ConversionErrorRaised = new Subject<Unit>();
         }
 
-        private void RunTraining()
+        private async Task RunTuning()
+        {
+            var tuneParameters = tuneParametersViewModel.TryGetValue();
+            if (tuneParameters.IsError)
+            {
+                interactionService.ShowUserMessage(string.Join(Environment.NewLine, tuneParameters.ErrorValue), "Ошибка");
+                return;
+            }
+
+            if (tuneParameters.ResultValue is var (path, epochs, trials, split)
+                && TrySaveKerasModel(kerasFolderPath, out var networkCompilerOutput))
+            {
+                if (OptionModule.IsNone(networkCompilerOutput.AmbiguitiesPath))
+                {
+                    interactionService.ShowUserMessage("Не указано пространство поиска для гиперпараметров", "Ошибка");
+                    return;
+                }
+
+                var network = networkCompiler.NetworkGenerator.Instantiate(networkCompilerOutput.CompiledNetworkPath);
+
+                using (ExecutionCancellationTokenSource = new CancellationTokenSource())
+                {
+                    await network.Tune(networkCompilerOutput.AmbiguitiesPath.Value, path, trials, epochs, split, ExecutionCancellationTokenSource.Token);
+                    interactionService.ShowUserMessage("Результаты обучения отображены в терминале", "Обучение закончено");
+                }
+
+                ExecutionCancellationTokenSource = null;
+            }
+        }
+
+        private async Task RunTraining()
         {
             var trainParameters = trainParametersViewModel.TryGetValue();
             if (trainParameters.IsError)
@@ -200,8 +240,13 @@ namespace NgineUI.ViewModels
             {
                 var network = networkCompiler.NetworkGenerator.Instantiate(networkCompilerOutput.CompiledNetworkPath);
 
-                this.executionCancellationTokenSource = new CancellationTokenSource();
-                network.Train(path, batch, epochs, split, executionCancellationTokenSource.Token);
+                using (ExecutionCancellationTokenSource = new CancellationTokenSource())
+                { 
+                    await network.Train(path, batch, epochs, split, ExecutionCancellationTokenSource.Token);
+                    interactionService.ShowUserMessage("Результаты обучения отображены в терминале", "Обучение закончено");
+                }
+                
+                ExecutionCancellationTokenSource = null;
             }
         }
 
