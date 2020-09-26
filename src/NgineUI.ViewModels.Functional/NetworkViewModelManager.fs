@@ -12,6 +12,7 @@ open Ngine.Domain.Schemas
 open System.Collections.Generic
 open NgineUI.ViewModels
 open NgineUI.ViewModels.Network.Ambiguities
+open System.Windows
 
 module NetworkViewModelManager =
     let encode (networkVM: NetworkViewModel) (ambiguities: IEnumerable<Ambiguity>) (optimizer: Optimizer) : InconsistentNetwork =
@@ -63,8 +64,6 @@ module NetworkViewModelManager =
 
         let ambiguitiesVM = AmbiguityListViewModel(converter.AmbiguityConverter)
         do ambiguitiesVM.Fill (network.Ambiguities)
-        //let ambiguitiyNames =
-        //    [for KeyValue(Variable n, _) in network.Ambiguities -> n]
 
         let nodes =
             network.Layers
@@ -128,22 +127,31 @@ module NetworkViewModelManager =
                 | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(d, _)))) ->
                     raise <| new NotImplementedException())
 
+        let getPosition ((depth, order): LayerId) =
+            Point((float depth - 1.) * 300., (float order - 1.) * 500.)
+
+        for n in nodes do
+            n.Position <- getPosition n.Id
+
         let headNodes =
             network.Heads
             |> Array.map<_, _ * NgineNodeViewModel> (fun h ->
                 match h with
-                | Head.Softmax (_, _, HeadLayer (lid, _))
-                | Head.Activator(_, _, (D1 (HeadLayer (lid, _))), _) ->
+                | Head.Softmax (_, _, HeadLayer ((depth, order), _))
+                | Head.Activator(_, _, (D1 (HeadLayer ((depth, order), _))), _) ->
                     let vm = new Head1DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                    vm.Setup(h); lid, upcast vm
+                    vm.Position <- getPosition (depth + 1u, order)
+                    vm.Setup(h); (depth, order), upcast vm
 
-                | Head.Activator(_, _, (D2 (HeadLayer (lid, _))), _) ->
+                | Head.Activator(_, _, (D2 (HeadLayer ((depth, order), _))), _) ->
                     let vm = new Head2DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                    vm.Setup(h); lid, upcast vm
+                    vm.Position <- getPosition (depth + 1u, order)
+                    vm.Setup(h); (depth, order), upcast vm
 
-                | Head.Activator(_, _, (D3 (HeadLayer (lid, _))), _) as h ->
+                | Head.Activator(_, _, (D3 (HeadLayer ((depth, order), _))), _) as h ->
                     let vm = new Head3DViewModel(converter.LayerConverter.ActivatorConverter, converter.LossConverter)
-                    vm.Setup(h); lid, upcast vm)
+                    vm.Position <- getPosition (depth + 1u, order)
+                    vm.Setup(h); (depth, order), upcast vm)
 
         let nodesById =
             seq { for n in nodes -> n.Id, n :> NodeViewModel }
@@ -155,7 +163,8 @@ module NetworkViewModelManager =
             | false, _ -> None
 
         let networkVM = new NetworkViewModel()
-        let tryConnect lin = Option.map (fun lout -> networkVM.ConnectionFactory.Invoke(lin, lout))
+        let tryConnect lin =
+            Option.map (fun lout -> networkVM.ConnectionFactory.Invoke(lin, lout))
 
         let getNthInput n (node: NodeViewModel) =
             node.Inputs.Items |> Seq.filter (fun i -> i.Port.IsVisible) |> Seq.item n
@@ -164,15 +173,15 @@ module NetworkViewModelManager =
             node.Outputs.Items |> Seq.filter (fun i -> i.Port.IsVisible) |> Seq.item n
 
         let connections =
-            [ for (pid, h) in headNodes ->
+            [for (pid, h) in headNodes ->
                 let hin = getNthInput 0 h
                 let lout = tryGetNode pid |> Option.map (getNthOutput 1) // Head output
-                tryConnect hin lout ]
+                tryConnect hin lout]
             @
-            [ for (inId, outId) in connections ->
+            [for (inId, outId) in connections ->
                 let lin = nodesById.[inId] |> getNthInput 0
                 let lout = tryGetNode outId |> Option.map (getNthOutput 0)
-                tryConnect lin lout ]
+                tryConnect lin lout]
             |> List.choose id
 
         networkVM.Nodes.AddRange(Seq.concat [nodes; Array.map snd headNodes] |> Seq.cast<NodeViewModel>)
