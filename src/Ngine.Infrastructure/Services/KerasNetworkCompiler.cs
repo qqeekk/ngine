@@ -24,7 +24,7 @@ namespace Ngine.Infrastructure.Services
 
         private FSharpOption<string> WriteAmbiguities(string modelFileName, Schema.AmbiguityMapProduct ambiguities)
         {
-            Console.WriteLine("Model saved to file {0}", modelFileName);
+            Console.WriteLine("Модель сохранена в файл {0}", modelFileName);
 
             if (ambiguities.Ambiguities.Length > 0)
             {
@@ -32,7 +32,7 @@ namespace Ngine.Infrastructure.Services
                 var ambiguitiesPath = Path.ChangeExtension(modelFileName, $"ambiguities.{new NgineSchemaAmbiguitiesFormat().FileExtension}");
                 File.WriteAllText(ambiguitiesPath, ambiguitiesYaml);
 
-                Console.WriteLine("Ambiguities ({0}) saved to file {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
+                Console.WriteLine("Неопределеннсости модели ({0}) сохранены в файл {1}", ambiguities.Ambiguities.Length, ambiguitiesPath);
                 return ambiguitiesPath;
             }
 

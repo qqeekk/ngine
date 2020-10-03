@@ -39,7 +39,6 @@ module PythonHelper =
 
     let execute (token:CancellationToken) path args =
         let python = Path.Combine(path, "Scripts", "python")
-        //let pathToZip = Path.GetFullPath("output.zip")
 
         Task.Run(fun() ->
             //let runCommand = sprintf 
@@ -61,12 +60,6 @@ module PythonHelper =
             p.BeginOutputReadLine()
             p.BeginErrorReadLine()
             use r = token.Register(Action(p.Kill))
-
-            //(use sw = p.StandardInput
-            //if sw.BaseStream.CanWrite then
-            //    sw.WriteLine(Path.Combine(workingDirectory, "activate.bat"))
-            //    sw.WriteLine("where python")
-            //    sw.WriteLine(runCommand))
 
             // print error
             p.WaitForExit()

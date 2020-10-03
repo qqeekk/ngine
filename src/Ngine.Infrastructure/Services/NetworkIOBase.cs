@@ -32,7 +32,7 @@ namespace Ngine.Infrastructure.Services
             var parsed = Decode(network);
             if (parsed.IsOk)
             {
-                Console.WriteLine("Parsing successful!");
+                Console.WriteLine("Чтение схемы модели произведено успешно!");
                 result = parsed.ResultValue;
                 return true;
             }
@@ -40,7 +40,7 @@ namespace Ngine.Infrastructure.Services
             {
                 var error = Prettify(parsed.ErrorValue);
 
-                Console.WriteLine("Network definition is invalid - {0} errors total.", error.Length);
+                Console.WriteLine("Схема модели содержит ошибки - {0}.", error.Length);
                 Array.ForEach(error, r => PrintPrettyTree(r));
             }
             result = default;
@@ -58,7 +58,7 @@ namespace Ngine.Infrastructure.Services
             }
             catch (YamlException ex)
             {
-                Console.WriteLine($"Error while parsing network definition: {ex.Message}");
+                Console.WriteLine($"Ошибка при чтении схемы: {ex.Message}");
             }
 
             result = default;
@@ -71,7 +71,7 @@ namespace Ngine.Infrastructure.Services
             var yaml = serializer.Serialize(schema);
 
             File.WriteAllText(fileName, yaml);
-            Console.WriteLine("Schema saved to file {0}", Path.GetFullPath(fileName));
+            Console.WriteLine("Схема сохранена в файл {0}", Path.GetFullPath(fileName));
         }
 
         private static void PrintPrettyTree(PrettyTree pretty, int indents = 0)

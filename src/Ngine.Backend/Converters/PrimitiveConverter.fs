@@ -108,7 +108,7 @@ module private IntegerEncoder =
         pretty = {
             name = "uint";
             regex = regInt
-            defn = Some "positive integer"
+            defn = Some "неотрицательное целое число"
             deps = [] }}
 
 
@@ -136,7 +136,7 @@ module private FloatEncoder =
         pretty = {
             name = "ufloat"
             regex = regFloat
-            defn = Some "floating point number: (0; 1)"
+            defn = Some "вещественное число: (0; 1)"
             deps = [] }}
 
 
@@ -155,7 +155,7 @@ module private VariableNameEncoder =
         pretty = {
             name = "word";
             regex = regVariable
-            defn = Some "word without whitespace"
+            defn = Some "слово без пробелов"
             deps = [] }}
 
 

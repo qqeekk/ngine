@@ -6,6 +6,6 @@ namespace Ngine.Infrastructure.Services.FileFormats
     {
         public string FileExtension => "ngm";
 
-        public string FileFormatDescription => "Ngine mappings file";
+        public string FileFormatDescription => "Файл отображений Ngine";
     }
 }

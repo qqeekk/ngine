@@ -57,7 +57,7 @@ namespace Ngine.CommandLine
                 if (ex is UnrecognizedCommandParsingException uex && uex.NearestMatches.Any())
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Did you mean this?");
+                    Console.WriteLine("Возможно вы имели в виду:");
                     Console.WriteLine("    " + uex.NearestMatches.First());
                 }
             }

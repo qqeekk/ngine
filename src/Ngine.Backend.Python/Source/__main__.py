@@ -35,7 +35,7 @@ def convert_df_col_to_categorical(df, train, test, label_index):
     trainCategorical = zipBinarizer.transform(train[label_index])
     testCategorical = zipBinarizer.transform(test[label_index])
 
-    print("[DEBUG] column {} of {} categories: {}".format(label_index, len(zipBinarizer.classes_), zipBinarizer.classes_))
+    print("[DEBUG] столбец {} категорий: {}".format(label_index, zipBinarizer.classes_))
     return trainCategorical, testCategorical
 
 
@@ -44,7 +44,7 @@ def convert_df_cols_to_continuous(train, test, label_indices):
     trainContinuous = cs.fit_transform(train[label_indices])
     testContinuous = cs.transform(test[label_indices])
 
-    print("[DEBUG] column {} of values from {} to {}".format(label_indices, len(cs.data_min_), cs.data_max_))
+    print("[DEBUG] столбец {} значений от {} до {}".format(label_indices, len(cs.data_min_), cs.data_max_))
     return trainContinuous, testContinuous
 
 
