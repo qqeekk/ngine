@@ -35,6 +35,7 @@ namespace NgineUI.App
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Conv3DViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Flatten2DViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Flatten3DViewModel>));
+            Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<DropoutViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Input1DViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Input2DViewModel>));
             Splat.Locator.CurrentMutable.Register(() => new NgineNode(), typeof(IViewFor<Input3DViewModel>));

@@ -67,7 +67,7 @@ namespace NgineUI.App.Views.Network
                 case PortType.Head:
                     return (ControlTemplate)Resources[HeadPortTemplateKey];
                 default:
-                    throw new Exception("Unsupported port type");
+                    throw new Exception($"Недопустимый тип порта слоя - {type}");
             };
         }
     }

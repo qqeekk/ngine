@@ -35,7 +35,7 @@ type KerasNetworkGenerator(pythonPath: string) =
         filePath
 
     let save (NotNull "path" path) (NotNull "schema" definition) =
-        do Console.WriteLine "Start conversion using keras.NET..."
+        do Console.WriteLine "Запуск сценариев keras.NET..."
         
         // Generate model than save immediately
         let model, ambiguities = NetworkConverter.keras definition

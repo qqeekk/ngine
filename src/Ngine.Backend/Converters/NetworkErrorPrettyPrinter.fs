@@ -9,24 +9,24 @@ module NetworkErrorPrettyPrinter =
 
     let rec prettifyPropsConversionError = function
         | PropsConversionError.PropsPatternMissmatch { Pattern = p } ->
-            String.Format("Error converting raw props for {0}. Expected pattern: {1}", p.name, Option.defaultValue "(-)" p.defn), []
+            String.Format("Ошибка форматирования свойства {0}. Строка не удовлетворяет шаблону: {1}", p.name, Option.defaultValue "(-)" p.defn), []
 
         | PropsConversionError.ValuesOutOfRange ps ->
-            "Some values indicated in pattern are out of range",
+            "Некоторые из значений шаблона находятся за границами допустимых значений",
             (ps |> Seq.map (fun p -> Node (sprintf "%s - %s" p.Property p.IndicatedValue, [])) |> Seq.toList)
 
     let prettifyInconsistentLayerConversionError id = function
         | InconsistentLayerConversionError.UnknownType ty ->
-            String.Format("Unknown type for layer {0} - {1}", LayerIdEncoder.encoder.encode id, ty), []
+            String.Format("Недопустимый тип слоя {0} - {1}", LayerIdEncoder.encoder.encode id, ty), []
         
         | InconsistentLayerConversionError.InvalidAmbiguity (Variable var) ->
-            String.Format("Invalid variable reference: {0}", var), []
+            String.Format("Переменная не определена: {0}", var), []
 
         | InconsistentLayerConversionError.MissingLayerId lid ->
-            String.Format("Layer {0} not found", LayerIdEncoder.encoder.encode lid), []
+            String.Format("Слой {0} не найден", LayerIdEncoder.encoder.encode lid), []
         
         | InconsistentLayerConversionError.PropsConversionError pe ->
-            String.Format("Error while converting props for layer {0}", LayerIdEncoder.encoder.encode id),
+            String.Format("Ошибка форматирования свойств слоя {0}", LayerIdEncoder.encoder.encode id),
             [Node (prettifyPropsConversionError pe)]
 
 
@@ -34,10 +34,10 @@ module NetworkErrorPrettyPrinter =
         | LayerConversionError.Inconsistent (e) -> prettifyInconsistentLayerConversionError id e
 
         | ExpectedLayerId ->
-            String.Format("Layer {0} not connected with any layer", LayerIdEncoder.encoder.encode id), []
+            String.Format("Недопустимая связь: слой {0} не имеет связей ни с одним из слоев", LayerIdEncoder.encoder.encode id), []
     
         | LayerConversionError.PrevLayerPropsEmpty ->
-            String.Format("Layer {0} props not filled with concatenated layer ids not found", LayerIdEncoder.encoder.encode id), []
+            String.Format("Недопустимая связь: слой {0} должен объединять не менее двух слоев", LayerIdEncoder.encoder.encode id), []
 
 
     let private prettifyInternal prettifyConversionError (errors: NetworkConversionError<'a>[]) =
@@ -57,11 +57,11 @@ module NetworkErrorPrettyPrinter =
             | LayerError.LayerCompatibilityError { Layer2 = {LayerId = (id2, _) } as l2; Error = e } ->
                 match e with
                 | LayerCompatibilityError.DimensionMissmatch ->
-                    String.Format("Layer {0} of type {1} does not match {2} of type {3} by dimensions",
+                    String.Format("Слой {0} типа {1} и слой {2} типа {3} имеют несочитаемые размерности",
                         LayerIdEncoder.encoder.encode id, l1.Type, LayerIdEncoder.encoder.encode id2, l2.Type), []
 
                 | LayerCompatibilityError.DuplicateLayerId ->
-                    String.Format("Layer id {0} is ambiguous", LayerIdEncoder.encoder.encode id), []
+                    String.Format("Слой {0} имеет неуникальный номер", LayerIdEncoder.encoder.encode id), []
 
                 |> Seq.singleton
                 
@@ -77,7 +77,8 @@ module NetworkErrorPrettyPrinter =
         errors
         |> Seq.collect (function
         | LayerSequenceError (AmbiguityError (amb, es)) ->
-            seq { String.Format("Error converting ambiguity {0} - {1}", amb.Name, amb.Value), es |> Seq.map (prettifyPropsConversionError >> Node) |> Seq.toList }
+            seq { String.Format("Ошибка форматированния 'неопределенности' {0} - {1}", amb.Name, amb.Value),
+                es |> Seq.map (prettifyPropsConversionError >> Node) |> Seq.toList }
             
         | LayerSequenceError (LayerError (l, e)) -> prettifyLayerError (l,e)
         | HeadError (h, es) ->
@@ -92,10 +93,10 @@ module NetworkErrorPrettyPrinter =
 
             | HeadError.HeadFunctionError p -> seq { prettifyPropsConversionError p }
             | HeadError.LossError (LossError.UnknownType) ->
-                seq { String.Format("Unknown loss type for layer {0} - {1}", LayerIdEncoder.encoder.encode h.LayerId, h.Loss), [] })
+                seq { String.Format("Неизвестный тип функции потерь {0} - {1}", LayerIdEncoder.encoder.encode h.LayerId, h.Loss), [] })
 
         | OptimizerError p -> seq { prettifyPropsConversionError p }
-        | EmptyHeadArrayError -> seq { "No output layers", [] })
+        | EmptyHeadArrayError -> seq { "Отстутствуют выходные слои", [] })
         |> Seq.map Node
         |> Seq.toArray
 

@@ -202,7 +202,7 @@ module AmbiguityConverter =
                     |> Seq.collect (mappingsNonHead1D)
                     |> Seq.toList
 
-                | Empty1D -> failwith "Cannot convert network to keras: network not consistent."
+                | Empty1D -> failwithf "Ошибка трансляции Keras %A: отсутствуют необходимые связи." lid
 
             | D2 (HeadLayer (lid, l)) ->
                 match l with
@@ -222,7 +222,7 @@ module AmbiguityConverter =
                     |> Seq.collect (mappingsNonHead2D)
                     |> Seq.toList
 
-                | Empty2D -> failwith "Cannot convert network to keras: network not consistent."
+                | Empty2D -> failwithf "Ошибка трансляции Keras %A: отсутствуют необходимые связи." lid
 
             | D3 (HeadLayer (lid, l)) ->
                 match l with
@@ -242,7 +242,7 @@ module AmbiguityConverter =
                     |> Seq.collect (mappingsNonHead3D)
                     |> Seq.toList
 
-                | Empty3D -> failwith "Cannot convert network to keras: network not consistent."
+                | Empty3D ->  failwithf "Ошибка трансляции Keras %A: отсутствуют необходимые связи." lid
 
         let mappings name : Schema.AmbiguityMapRecord[] =
             network.Heads

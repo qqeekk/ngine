@@ -118,14 +118,14 @@ module NetworkViewModelManager =
                     let vm = Input3DViewModel(layerIdTracker, false)
                     vm.Id <- lid; vm.Setup(input); upcast vm
 
+                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(d, _)))) ->
+                    let vm = DropoutViewModel(layerIdTracker, false)
+                    vm.Id <- lid; vm.Setup(d); upcast vm
+
                 | Choice1Of2 (D1 (HeadLayer (_, Layer1D.Empty1D)))
                 | Choice1Of2 (D2 (HeadLayer (_, Layer2D.Empty2D)))
                 | Choice1Of2 (D3 (HeadLayer (_, Layer3D.Empty3D))) ->
-                    raise <| new InvalidOperationException()
-
-                // TODO: Implement
-                | Choice1Of2 (D1 (HeadLayer (lid, Layer1D.Dropout(d, _)))) ->
-                    raise <| new NotImplementedException())
+                    raise <| new InvalidOperationException())
 
         let getPosition ((depth, order): LayerId) =
             Point((float depth - 1.) * 300., (float order - 1.) * 500.)
