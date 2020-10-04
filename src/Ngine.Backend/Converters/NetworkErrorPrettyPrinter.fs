@@ -34,7 +34,7 @@ module NetworkErrorPrettyPrinter =
         | LayerConversionError.Inconsistent (e) -> prettifyInconsistentLayerConversionError id e
 
         | ExpectedLayerId ->
-            String.Format("Недопустимая связь: слой {0} не имеет связий ни с одним из слоев", LayerIdEncoder.encoder.encode id), []
+            String.Format("Недопустимая связь: слой {0} не имеет связей ни с одним из слоев", LayerIdEncoder.encoder.encode id), []
     
         | LayerConversionError.PrevLayerPropsEmpty ->
             String.Format("Недопустимая связь: слой {0} должен объединять не менее двух слоев", LayerIdEncoder.encoder.encode id), []

@@ -49,6 +49,7 @@ namespace NgineUI.ViewModels
         private bool conv3DViewModelIsFirstLoaded = true;
         private bool flatten2DViewModelIsFirstLoaded = true;
         private bool flatten3DViewModelIsFirstLoaded = true;
+        private bool dropoutViewModelIsFirstLoaded = true;
         private bool input1DViewModelIsFirstLoaded = true;
         private bool input2DViewModelIsFirstLoaded = true;
         private bool input3DViewModelIsFirstLoaded = true;
@@ -189,6 +190,7 @@ namespace NgineUI.ViewModels
             NodeList.AddNodeType(() => new Concatenation3DViewModel(idTracker, !InvertIfTrue(ref concatenation3DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Flatten2DViewModel(idTracker, !InvertIfTrue(ref flatten2DViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Flatten3DViewModel(idTracker, !InvertIfTrue(ref flatten3DViewModelIsFirstLoaded)));
+            NodeList.AddNodeType(() => new DropoutViewModel(idTracker, !InvertIfTrue(ref dropoutViewModelIsFirstLoaded)));
             NodeList.AddNodeType(() => new Head1DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
             NodeList.AddNodeType(() => new Head2DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
             NodeList.AddNodeType(() => new Head3DViewModel(networkConverter.LayerConverter.ActivatorConverter, networkConverter.LossConverter));
