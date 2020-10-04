@@ -28,7 +28,7 @@ def replace_tuple_value(tp, index, value):
 prop_regex = r"^(?P<type>(lin|cats|cons|img)):(\$(?P<ref>\w+)(\[(?P<start>\d+)?(?P<range>:(?P<last>\d+)?)?\])?)$"
 
 mappings_by_file_name = dict() # string -> bool -> id -> [shape, df, train, test -> train_x, test_x]
-mappings_by_dir_name = dict() # string -> bool -> id -> [shape, train, test -> train_x, test_x]
+#mappings_by_dir_name = dict() # string -> bool -> id -> [shape, train, test -> train_x, test_x]
 
 def convert_df_col_to_categorical(df, train, test, label_index):
     zipBinarizer = LabelBinarizer().fit(df[label_index])
@@ -58,7 +58,7 @@ def process_single_df_col(type, index):
     elif type == 'cons':
         return lambda _, df, train, test: convert_df_cols_to_continuous(train, test, index)
     elif type == 'img':
-        raise Exception("Could not convert one csv column data ({}) to image", index)
+        raise Exception("Could not convert one csv field ({}) to image", index)
 
 
 def process_multi_df_cols(type, start, end):
@@ -89,25 +89,23 @@ def process_multi_df_cols(type, start, end):
         return lambda shape, df, train, test: unsqueeze_images(shape, df, train, test)
 
 
-def process_image(shape, image):
-    return cv2.resize(image, shape)
-
-
 def process_single_col(mappings, is_file, type, index):
     if is_file:
         mappings.append(process_single_df_col(type, index))
     else:
         # directory (images only)
-        raise Exception("Unable to index a dataset of type: directory")
+        raise Exception("Unable to index a dataset of type directory. Use range option [:]")
 
 
 def process_multi_col(mappings, is_file, type, start, end):
     if is_file:
         mappings.append(process_multi_df_cols(type, start, end))
-    else:
-        # directory (images only)
-        mappings.append(process_image)
+    elif type == 'img':
+        # TODO: directory (images only)
+        def func(shape, df, train, test):
+            
 
+        pass
 
 
 def parse_prop(input_or_head, id, prop, aliases):
@@ -117,25 +115,15 @@ def parse_prop(input_or_head, id, prop, aliases):
         obj = m.groupdict()
         file, is_file = aliases[obj["ref"]]
 
-        if is_file:
-            if file not in mappings_by_file_name:
-                mappings_by_file_name[file] = { input_or_head: { id: [] }, not input_or_head: dict() }
-            else:
-                mappings_by_file_name[file][input_or_head][id] = []
-            
-        elif file not in mappings_by_dir_name:
-            mappings_by_dir_name[file] = { input_or_head: { id: [] }, not input_or_head: dict() }
+        mappings = []
+        if file not in mappings_by_file_name:
+            mappings_by_file_name[file] = { input_or_head: { id: mappings }, not input_or_head: dict() }
         else:
-            mappings_by_dir_name[file][input_or_head][id] = []
-
-        mappings = mappings_by_file_name[file][input_or_head][id] if is_file \
-            else mappings_by_dir_name[file][input_or_head][id]
-
+            mappings_by_file_name[file][input_or_head][id] = mappings
+            
         if obj["range"] is None:
             if obj["start"] is not None:
                 process_single_col(mappings, is_file, obj["type"], obj["start"])
-            elif not is_file:
-                mappings.append(process_image)
             else:
                 raise Exception("Unexpected empty brackets for file mappings: {}. If you want to get all properties of csv data frame, use [:] instead".format(prop))
         else:
@@ -196,26 +184,46 @@ def prepare_data(m, mappings, validation_split):
         for prop in output:
             parse_prop(False, output_id, prop, aliases)
 
+    # add directory
+    def enumerate_files_by_regex(dir_name):
+        for file_name in get_files_by_dir(dir_name):
+            m = re.match(r'(?P<number>\d+)\.jpg', file_name)
+            if m: yield (file_name, int(m.group('number')))
+
+    def read_image(name):
+        # TODO: read_image using opencv
+        pass
+
     # create file-dataset mappings
     datasets_by_file_name = dict()
     for file_name in mappings_by_file_name:
-        datasets_by_file_name[file_name] = pd.read_csv(file_name, sep=",", header=None, skiprows=1, dtype=object)
+        if os.path.isfile(file_name):
+            datasets_by_file_name[file_name] = \
+                pd.read_csv(file_name, sep=",", header=None, skiprows=1, dtype=object)
+        else:
+            file_names_with_order = list(enumerate_files_by_regex(dir_name))
+
+            datasets_by_file_name[dir_name] = \
+                [read_image(name) for name, _ in sorted(file_names_with_order, key = lambda t: t[1])]
 
     # split all datasets to train and test ones
-    splits = train_test_split(*datasets_by_file_name.values(), test_size = validation_split)
+    datasets = datasets_by_file_name.values()
+    splits = train_test_split(*datasets, test_size = validation_split)
 
     # traverse splits and file-mappings to collect input-wise and output-wise datasets
     train_test_splits_by_input_id = dict()
     train_test_splits_by_output_id = dict()
 
     for file_name, (trainX, testX) in zip(datasets_by_file_name.keys(), pairwise(splits)):
+        dataset = datasets_by_file_name[file_name]
+        is_type = os.path.isfile(file_name)
 
         mappings_by_input_id = mappings_by_file_name[file_name][True]
         for input_id in mappings_by_input_id:
             input_shape = m.inputs[input_id].shape[1:]
             
             for mapping in mappings_by_input_id[input_id]:
-                (trainXi, testXi) = mapping(input_shape, datasets_by_file_name[file_name], trainX, testX)
+                (trainXi, testXi) = mapping(input_shape, dataset, trainX, testX)
 
                 (train_aggr, test_aggr) = train_test_splits_by_input_id[input_id] \
                     if input_id in train_test_splits_by_input_id else (None, None)
@@ -229,7 +237,7 @@ def prepare_data(m, mappings, validation_split):
             output_shape = m.outputs[output_id].shape[1:]
             
             for mapping in mappings_by_output_id[output_id]:
-                (trainXo, testXo) = mapping(output_shape, datasets_by_file_name[file_name], trainX, testX)
+                (trainXo, testXo) = mapping(output_shape, dataset, trainX, testX)
 
                 (train_aggr, test_aggr) = train_test_splits_by_output_id[output] \
                     if output_id in train_test_splits_by_output_id else (None, None)
@@ -337,9 +345,8 @@ def tune(args):
                     configured_layers[layer.name] = layer.output
                     return configured_layers[layer.name]
 
-                # TODO: handle multiinput problem
-                prev = [process_output(prev) for prev in get_layer_predecessors(layer)][0]
-                configured_layers[layer.name] = layer_map[layer.name](prev)
+                prevs = [process_output(prev) for prev in get_layer_predecessors(layer)]
+                configured_layers[layer.name] = layer_map[layer.name](prevs)
 
                 return configured_layers[layer.name]
 
