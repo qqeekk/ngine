@@ -74,6 +74,7 @@ namespace NgineUI.App
                                                NetworkViewModelManager.instance(networkConverter),
                                                new UIHelpers(),
                                                new NgineMappingsFormat(),
+                                               new AmbiguitiesIO(SerializationProfile.Deserializer),
                                                App.KerasOptions.OutputDirectory);
         }
     }

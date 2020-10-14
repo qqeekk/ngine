@@ -1,7 +1,5 @@
 ﻿using Microsoft.FSharp.Core;
-using Ngine.Domain.Execution;
 using Ngine.Domain.Schemas;
-using Ngine.Domain.Utils;
 using Ngine.Infrastructure.Abstractions;
 using Ngine.Infrastructure.Abstractions.Services;
 using Ngine.Infrastructure.AppServices;
@@ -15,7 +13,6 @@ using NodeNetwork.ViewModels;
 using Python.Runtime;
 using ReactiveUI;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
@@ -34,6 +31,7 @@ namespace NgineUI.ViewModels
         private readonly INetworkCompiler networkCompiler;
         private readonly INetworkPartsConverter partsConverter;
         private readonly IInteractionService interactionService;
+        private readonly IAmbiguitiesIO ambiguitiesIO;
         private readonly string kerasFolderPath;
         private readonly TrainParametersViewModel trainParametersViewModel;
         private readonly TuneParametersViewModel tuneParametersViewModel;
@@ -117,6 +115,7 @@ namespace NgineUI.ViewModels
                              INetworkPartsConverter partsConverter,
                              IInteractionService interactionService,
                              IFileFormat mappingsFileFormat,
+                             IAmbiguitiesIO ambiguitiesIO,
                              string kerasFolderPath)
         {
             // TODO: inject
@@ -125,6 +124,7 @@ namespace NgineUI.ViewModels
             this.networkCompiler = networkCompiler;
             this.partsConverter = partsConverter;
             this.interactionService = interactionService;
+            this.ambiguitiesIO = ambiguitiesIO;
             this.kerasFolderPath = kerasFolderPath;
             this.trainParametersViewModel = new TrainParametersViewModel(interactionService, mappingsFileFormat);
             this.tuneParametersViewModel = new TuneParametersViewModel(interactionService, mappingsFileFormat);
@@ -203,16 +203,16 @@ namespace NgineUI.ViewModels
             var tuneParameters = tuneParametersViewModel.TryGetValue();
             if (tuneParameters.IsError)
             {
-                interactionService.ShowUserMessage(string.Join(Environment.NewLine, tuneParameters.ErrorValue), "Ошибка");
+                interactionService.ShowUserMessage("Ошибка", string.Join(Environment.NewLine, tuneParameters.ErrorValue));
                 return;
             }
 
             if (tuneParameters.ResultValue is var (path, epochs, trials, split)
-                && TrySaveKerasModel(kerasFolderPath, out var networkCompilerOutput))
+                && TrySaveKerasModel(kerasFolderPath, out var intermediate, out var networkCompilerOutput))
             {
                 if (OptionModule.IsNone(networkCompilerOutput.AmbiguitiesPath))
                 {
-                    interactionService.ShowUserMessage("Не указано пространство поиска для гиперпараметров", "Ошибка");
+                    interactionService.ShowUserMessage("Ошибка", "Не указано пространство поиска для гиперпараметров");
                     return;
                 }
 
@@ -220,8 +220,19 @@ namespace NgineUI.ViewModels
 
                 using (ExecutionCancellationTokenSource = new CancellationTokenSource())
                 {
-                    await network.Tune(networkCompilerOutput.AmbiguitiesPath.Value, path, trials, epochs, split, ExecutionCancellationTokenSource.Token);
-                    interactionService.ShowUserMessage("Результаты обучения отображены в терминале", "Обучение закончено");
+                    var ambiguitiesFile = await network.Tune(networkCompilerOutput.AmbiguitiesPath.Value, path, trials, epochs, split, ExecutionCancellationTokenSource.Token);
+                    interactionService.ShowUserMessage("Обучение закончено", "Результаты обучения отображены в терминале");
+
+                    if (File.Exists(ambiguitiesFile))
+                    {
+                        var ambiguities = ambiguitiesIO.ReadResolvedAmbiguities(ambiguitiesFile);
+
+                        var modifiedNetworkSchema = networkIO.NetworkConverter.ApplyAmbiguities(ambiguities, intermediate);
+                        inconsistentNetworkIO.TryParse(modifiedNetworkSchema, out var modifiedNetwork);
+
+                        (Network, Ambiguities.AmbiguityList, idTracker) = partsConverter.Decode(modifiedNetwork);
+                        Optimizer.Fill(modifiedNetwork.Optimizer);
+                    }
                 }
 
                 ExecutionCancellationTokenSource = null;
@@ -233,19 +244,19 @@ namespace NgineUI.ViewModels
             var trainParameters = trainParametersViewModel.TryGetValue();
             if (trainParameters.IsError)
             {
-                interactionService.ShowUserMessage(string.Join(Environment.NewLine, trainParameters.ErrorValue), "Ошибка");
+                interactionService.ShowUserMessage("Ошибка", string.Join(Environment.NewLine, trainParameters.ErrorValue));
                 return;
             }
 
             if (trainParameters.ResultValue is var (path, batch, epochs, split)
-                && TrySaveKerasModel(kerasFolderPath, out var networkCompilerOutput))
+                && TrySaveKerasModel(kerasFolderPath, out _, out var networkCompilerOutput))
             {
                 var network = networkCompiler.NetworkGenerator.Instantiate(networkCompilerOutput.CompiledNetworkPath);
 
                 using (ExecutionCancellationTokenSource = new CancellationTokenSource())
                 { 
                     await network.Train(path, batch, epochs, split, ExecutionCancellationTokenSource.Token);
-                    interactionService.ShowUserMessage("Результаты обучения отображены в терминале", "Обучение закончено");
+                    interactionService.ShowUserMessage("Обучение закончено", "Результаты обучения отображены в терминале");
                 }
                 
                 ExecutionCancellationTokenSource = null;
@@ -254,7 +265,7 @@ namespace NgineUI.ViewModels
 
         private void SaveKerasModel()
         {
-            interactionService.OpenFolderDialog(folderName => TrySaveKerasModel(folderName, out _));
+            interactionService.OpenFolderDialog(folderName => TrySaveKerasModel(folderName, out _, out _));
         }
 
         private void SaveModelAs()
@@ -278,12 +289,12 @@ namespace NgineUI.ViewModels
             });
         }
 
-        private bool TrySaveKerasModel(string folderName, out INetworkCompilerOutput networkCompilerOutput)
+        private bool TrySaveKerasModel(string folderName, out Schema.Network intermediate, out INetworkCompilerOutput networkCompilerOutput)
         {
             var model = partsConverter.Encode(Network, Ambiguities.AmbiguityList.GetValues(), Optimizer.GetValue());
-            var encoded = inconsistentNetworkIO.NetworkConverter.EncodeInconsistent(model);
+            intermediate = inconsistentNetworkIO.NetworkConverter.EncodeInconsistent(model);
 
-            if (networkIO.TryParse(encoded, out var result))
+            if (networkIO.TryParse(intermediate, out var result))
             {
                 try
                 {

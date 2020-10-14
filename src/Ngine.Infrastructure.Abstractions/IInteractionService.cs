@@ -9,7 +9,7 @@ namespace Ngine.Infrastructure.Abstractions
         void OpenFolderDialog(Action<string> onNext);
         void SaveFileDialog(IFileFormat format, Action<string> onNext);
         bool AskUserPermission(string message, string title);
-        void ShowUserMessage(string message, string title);
+        void ShowUserMessage(string title, string message);
         void Navigate<T>(T viewModel, string title) where T : class, IInteractable;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Ngine.Domain.Execution;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading;
@@ -46,7 +47,8 @@ namespace Ngine.CommandLine.Command
         public async Task OnExecuteAsync(CancellationToken cancellationToken)
         {
             var network = generator.Instantiate(Path.GetFullPath(ModelPath));
-            await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Epochs, Trials, ValidationSplit, cancellationToken);
+            var resultAmbiguitiesFile = await network.Tune(Path.GetFullPath(AmbiguitiesPath), Path.GetFullPath(MappingsPath), Epochs, Trials, ValidationSplit, cancellationToken);
+            Console.WriteLine($"Значения неопределенностей сохранены в файл: {resultAmbiguitiesFile}");
         }
     }
 }

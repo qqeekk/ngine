@@ -3,6 +3,7 @@ open Ngine.Domain
 open System.Threading
 open System.Threading.Tasks
 open Ngine.Domain.Schemas
+open System.Collections.Generic
 
 type INetwork =
     abstract member Train:
@@ -20,7 +21,7 @@ type INetwork =
         -> epochs:uint32
         -> validationSplit:float
         -> cancellationToken:CancellationToken
-        -> Task
+        -> Task<string>
 
 
 type INetworkGenerator =

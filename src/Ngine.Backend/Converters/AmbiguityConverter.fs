@@ -120,12 +120,17 @@ module AmbiguityConverter =
         { Name = AmbiguityNameEncoder.encode kvp.Key
           Value = (ListEncoder.encode IntegerEncoder.encoder) kvp.Value }
 
+    let private findAndReplace (source: string) replacement =
+        let regex = sprintf "\$\(%s\)" (VariableNameEncoder.encoder.regex "variable_name")
+        Regex.Replace(source, regex, fun (m : Match) -> replacement(Variable m.Name) |> string)
+
     let instance = {
         new IAmbiguityConverter with
             member _.Encode kvp = encode kvp
             member _.Decode amb = decode amb
             member _.DecodeValues v = decodeValues v
-            member _.ListPattern = encoder.pretty}
+            member _.ListPattern = encoder.pretty
+            member _.FindAndReplace(s, r) = findAndReplace s r }
 
     let keras (network:Network): Schema.AmbiguityMapProduct =
         let mappingProps name =

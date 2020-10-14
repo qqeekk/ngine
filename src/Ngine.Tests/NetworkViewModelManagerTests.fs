@@ -132,7 +132,9 @@ type NetworkViewModelManagerTests() =
 
     [<Xunit.Fact>]
     member _.``Verify runtimes``() =
-        let vm = MainViewModel(networkIO, consistentNetworkIO, kerasNetworkIO, vmManager, null, NgineMappingsFormat(), kerasExecutionOptions.OutputDirectory)
+        let vm = MainViewModel(networkIO, consistentNetworkIO, kerasNetworkIO, vmManager, null, NgineMappingsFormat(), 
+                               AmbiguitiesIO(SerializationProfile.Deserializer), kerasExecutionOptions.OutputDirectory)
+
         do vm.Header.ReadModelCommand.Execute() |> ignore
         do vm.Header.SaveModelCommand.Execute() |> ignore
 

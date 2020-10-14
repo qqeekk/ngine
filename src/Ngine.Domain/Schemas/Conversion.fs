@@ -122,6 +122,7 @@ type IAmbiguityConverter =
     abstract member Encode: Ambiguity -> Schema.Ambiguity
     abstract member Decode: Schema.Ambiguity -> Result<Ambiguity, PropsConversionError[]>
     abstract member DecodeValues: string -> Result<Values<uint32>, PropsConversionError>
+    abstract member FindAndReplace: string * (AmbiguityVariableName -> uint32) -> string
     abstract member ListPattern: Pretty with get
 
 [<Interface>]
@@ -135,3 +136,4 @@ type INetworkConverter =
     abstract member EncodeInconsistent: InconsistentNetwork -> Schema.Network
     abstract member Decode: Schema.Network -> Result<Network, NetworkConversionError<LayerConversionError>[]>
     abstract member DecodeInconsistent: Schema.Network -> Result<InconsistentNetwork, NetworkConversionError<InconsistentLayerConversionError>[]>
+    abstract member ApplyAmbiguities: IDictionary<AmbiguityVariableName, uint32> * Schema.Network -> Schema.Network

@@ -103,7 +103,7 @@ def process_multi_col(mappings, is_file, type, start, end):
     elif type == 'img':
         # TODO: directory (images only)
         def func(shape, df, train, test):
-            
+            pass
 
         pass
 

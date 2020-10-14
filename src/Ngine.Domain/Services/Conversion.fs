@@ -636,6 +636,15 @@ module public NetworkConverters =
             let optimizer = schema.Optimizer |> optimizerConverter.Encode
             { Heads = heads; Layers = layers; Optimizer = optimizer; Ambiguities = ambiguities }
 
+        let applyAmbiguities (ambiguities: IDictionary<AmbiguityVariableName, uint32>) (network: Schema.Network) =
+            let newLayers = [|
+                for l in network.Layers ->
+                    { l with Props = ambiguityConverter.FindAndReplace(l.Props, fun v -> ambiguities.[v]) }
+            |]
+
+            { network with Layers = newLayers }
+
+
         { new INetworkConverter with
             member _.AmbiguityConverter: IAmbiguityConverter = ambiguityConverter
             member _.LayerConverter: ILayerPropsConverter = propsConverter
@@ -646,4 +655,5 @@ module public NetworkConverters =
             member _.EncodeInconsistent(NotNull "network schema" schema) = encodeInconsistent schema
             member _.Decode(NotNull "network schema" schema) = decode schema
             member _.DecodeInconsistent(NotNull "network schema" schema) = decodeInconsistent schema
+            member _.ApplyAmbiguities(ambiguties, network) = applyAmbiguities ambiguties network
         }

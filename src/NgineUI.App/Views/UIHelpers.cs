@@ -81,7 +81,7 @@ namespace NgineUI.App.Views
             };
         }
 
-        public void ShowUserMessage(string message, string title)
+        public void ShowUserMessage(string title, string message)
         {
             MessageBox.Show(message, title);
         }

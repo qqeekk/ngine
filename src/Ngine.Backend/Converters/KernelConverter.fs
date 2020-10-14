@@ -642,9 +642,9 @@ module KernelConverter =
                     upcast new Layers.Concatenate(LayerIdEncoder.encoder.encode layerId, layers), inputs
                     //|> renameLayer layerId, inputs
             
-                | D1 (HeadLayer (_, Empty1D))
-                | D2 (HeadLayer (_, Empty2D))
-                | D3 (HeadLayer (_, Empty3D)) -> failwithf "Ошибка трансляции Keras %A: отсутствуют необходимые связи." lid
+                | D1 (HeadLayer (lid, Empty1D))
+                | D2 (HeadLayer (lid, Empty2D))
+                | D3 (HeadLayer (lid, Empty3D)) -> failwithf "Ошибка трансляции Keras %A: отсутствуют необходимые связи." lid
 
             | Choice2Of2 sensor ->
                 let s =
