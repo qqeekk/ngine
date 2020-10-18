@@ -1,0 +1,53 @@
+layers:
+- layer-id: 1-1
+  type: sensor2D
+  props: 1:[28x28]
+- layer-id: 2-1:1-1
+  type: conv2D
+  props: 6:[5x5], strides=[1x1], padding=same
+- layer-id: 3-1:2-1
+  type: activation2D
+  props: tanh
+- layer-id: 4-1:3-1
+  type: pooling2D
+  props: avg:[2x2], strides=[1x1]
+- layer-id: 5-1:4-1
+  type: conv2D
+  props: 16:[?(5-1-kernel_size)x?(5-1-kernel_size)], strides=[1x1], padding=zero
+- layer-id: 6-1:5-1
+  type: activation2D
+  props: tanh
+- layer-id: 7-1:6-1
+  type: pooling2D
+  props: avg:[2x2], strides=[2x2]
+- layer-id: 8-1:7-1
+  type: conv2D
+  props: ?(8-1-filters_amount):[5x5], strides=[1x1], padding=zero
+- layer-id: 9-1:8-1
+  type: activation2D
+  props: tanh
+- layer-id: 10-1:9-1
+  type: flatten2D
+  props: ''
+- layer-id: 11-1:10-1
+  type: dense
+  props: ?(11-1-units)
+- layer-id: 12-1:11-1
+  type: activation1D
+  props: tanh
+- layer-id: 13-1:12-1
+  type: dense
+  props: 10
+heads:
+- layer-id: 13-1
+  activation: softmax
+  loss: ce
+  loss-weight: 1
+optimizer: sgd(0.01000), momentum=0.50000, decay=0.00000
+ambiguities:
+- name: 8-1-filters_amount
+  value: '[120:200:20]'
+- name: 5-1-kernel_size
+  value: '[3,5]'
+- name: 11-1-units
+  value: '[84:100:2]'

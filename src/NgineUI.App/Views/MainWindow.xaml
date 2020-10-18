@@ -9,7 +9,7 @@
         xmlns:network="clr-namespace:NgineUI.App.Views.Network"
         xmlns:nodeList="clr-namespace:NodeNetwork.Toolkit.NodeList;assembly=NodeNetworkToolkit"
         mc:Ignorable="d"
-        Height="900" Width="1600">
+        WindowState="Maximized">
     <Grid>
         <DockPanel>
             <control:Header x:Name="header"  Grid.ColumnSpan="2" DockPanel.Dock="Top"></control:Header>

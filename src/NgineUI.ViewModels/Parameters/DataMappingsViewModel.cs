@@ -83,6 +83,7 @@ outputs:
             if (OptionModule.IsSome(DataMappingsPath))
             {
                 File.WriteAllText(DataMappingsPath.Value, DataMappingsText);
+                (this as IInteractable).FinishInteraction();
             }
         }
 

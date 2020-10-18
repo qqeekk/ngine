@@ -4,7 +4,7 @@ namespace Ngine.Infrastructure.Services.FileFormats
 {
     public class NgineSchemaAmbiguitiesFormat : IFileFormat
     {
-        public string FileExtension => "ngsca";
+        public string FileExtension => "ngsa";
 
         public string FileFormatDescription => "Файл неопределенностей Ngine-schema";
     }

@@ -44,18 +44,22 @@ module PythonHelper =
             //let runCommand = sprintf 
             let error = new StringBuilder()
 
+            Environment.SetEnvironmentVariable("PYTHONIOENCODING", "utf-8")
             let s = ProcessStartInfo(python, sprintf "output.zip %s" args)
             s.RedirectStandardOutput <- true
             s.RedirectStandardError <- true
             s.RedirectStandardInput <- true
             s.UseShellExecute <- false
             s.CreateNoWindow <- true
+            s.StandardErrorEncoding <- Encoding.UTF8
+            s.StandardOutputEncoding <- Encoding.UTF8
 
             use p = new Process()
             p.StartInfo <- s
             p.OutputDataReceived.Add(fun a -> if a.Data <> null then Console.WriteLine a.Data)
             p.ErrorDataReceived.Add(fun a -> error.AppendLine(a.Data) |> ignore)
-        
+            
+            Console.WriteLine(String.Empty)
             let _ = p.Start()
             p.BeginOutputReadLine()
             p.BeginErrorReadLine()

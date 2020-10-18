@@ -9,6 +9,7 @@ import sys, os
 from itertools import *
 from tensorflow import keras
 from tensorflow.keras import layers, models
+from os.path import isfile, join
 # from keras import layers, models
 
 
@@ -32,10 +33,11 @@ mappings_by_file_name = dict() # string -> bool -> id -> [shape, df, train, test
 
 def convert_df_col_to_categorical(df, train, test, label_index):
     zipBinarizer = LabelBinarizer().fit(df[label_index])
+
     trainCategorical = zipBinarizer.transform(train[label_index])
     testCategorical = zipBinarizer.transform(test[label_index])
 
-    print("[DEBUG] столбец {} категорий: {}".format(label_index, zipBinarizer.classes_))
+    print("(столбец {}) категории [{}]".format(label_index, zipBinarizer.classes_))
     return trainCategorical, testCategorical
 
 
@@ -44,7 +46,7 @@ def convert_df_cols_to_continuous(train, test, label_indices):
     trainContinuous = cs.fit_transform(train[label_indices])
     testContinuous = cs.transform(test[label_indices])
 
-    print("[DEBUG] столбец {} значений от {} до {}".format(label_indices, len(cs.data_min_), cs.data_max_))
+    print("(столбцы {}) значения от {} до {}".format(label_indices, len(cs.data_min_), cs.data_max_))
     return trainContinuous, testContinuous
 
 
@@ -58,7 +60,7 @@ def process_single_df_col(type, index):
     elif type == 'cons':
         return lambda _, df, train, test: convert_df_cols_to_continuous(train, test, index)
     elif type == 'img':
-        raise Exception("Could not convert one csv field ({}) to image", index)
+        raise Exception("Невозможно преобразовать единственное поле CSV-документа в изображение")
 
 
 def process_multi_df_cols(type, start, end):
@@ -75,13 +77,14 @@ def process_multi_df_cols(type, start, end):
             np.hstack([convert_df_col_to_categorical(df, train, test, i) for i in get_index_range(df)])
 
     elif type == 'cons':
-        return lambda _, df, train, test: convert_df_cols_to_continuous(train, test, get_index_range(df))
+        return lambda _, df, train, test: \
+           convert_df_cols_to_continuous(train, test, get_index_range(df))
     
     elif type == 'img':
         def unsqueeze_images(shape, df, train, test):
             indices = get_index_range(df)
 
-            print("[DEBUG] columns {} of {} images".format(indices, shape))
+            print("(столбцы {}) изображения [{}]".format(indices, shape))
             return (
                 np.array([v.astype(int).reshape(*shape) for v in train[indices].values]),
                 np.array([v.astype(int).reshape(*shape) for v in test[indices].values]))
@@ -94,18 +97,22 @@ def process_single_col(mappings, is_file, type, index):
         mappings.append(process_single_df_col(type, index))
     else:
         # directory (images only)
-        raise Exception("Unable to index a dataset of type directory. Use range option [:]")
+        raise Exception("Не предусмотрена возможность индексировать каталог. Используйте полный промежуток [:]")
 
 
 def process_multi_col(mappings, is_file, type, start, end):
     if is_file:
         mappings.append(process_multi_df_cols(type, start, end))
-    elif type == 'img':
-        # TODO: directory (images only)
-        def func(shape, df, train, test):
-            pass
 
-        pass
+    elif type == 'img':
+        def func(shape, _, train, test):
+            width, height, _ = tuple(shape)
+
+            return (
+                np.array([cv2.resize(image, (width, height))[..., np.newaxis] for image in train]),
+                np.array([cv2.resize(image, (width, height))[..., np.newaxis] for image in test]))
+
+        mappings.append(func)
 
 
 def parse_prop(input_or_head, id, prop, aliases):
@@ -125,12 +132,12 @@ def parse_prop(input_or_head, id, prop, aliases):
             if obj["start"] is not None:
                 process_single_col(mappings, is_file, obj["type"], obj["start"])
             else:
-                raise Exception("Unexpected empty brackets for file mappings: {}. If you want to get all properties of csv data frame, use [:] instead".format(prop))
+                raise Exception("Неожиданный формат файла привязок: {}. Если вы хотите использовать все поля CSV-документа, используйте промежуток[:]".format(prop))
         else:
             process_multi_col(mappings, is_file, obj["type"], obj["start"], obj["last"])
 
     else:
-        raise Exception("Input {} does not match the pattern {}".format(prop, prop_regex))
+        raise Exception("Входное значение {} не соответствует шаблону {}".format(prop, prop_regex))
 
 
 def parse_ambiguity(value, hp, name):
@@ -149,7 +156,7 @@ def parse_ambiguity(value, hp, name):
         hp.Int(name, int(obj['start']), int(obj['end']), step = int(obj['step']))
         return
 
-    raise Exception('No rules were matched. Invalid ambiguity value: {}'.format(value))
+    raise Exception('Неверное значение неопределенности: {}'.format(value))
 
 
 def parse_ambiguity_mapping(prop):
@@ -168,7 +175,7 @@ def traverse_file_aliases(files):
         if os.path.exists(file_or_dir):
             file_aliases[a] = (file_or_dir, os.path.isfile(file_or_dir))
         else:
-            raise Exception('File {} does not exist'.format(file_or_dir))
+            raise Exception('Файл не найден {}'.format(file_or_dir))
 
     return file_aliases
 
@@ -184,15 +191,21 @@ def prepare_data(m, mappings, validation_split):
         for prop in output:
             parse_prop(False, output_id, prop, aliases)
 
+    def get_files_by_dir(dir_name):
+        from os import listdir
+
+        for f in listdir(dir_name):
+           if isfile(join(dir_name, f)): yield f
+
     # add directory
     def enumerate_files_by_regex(dir_name):
         for file_name in get_files_by_dir(dir_name):
             m = re.match(r'(?P<number>\d+)\.jpg', file_name)
-            if m: yield (file_name, int(m.group('number')))
+            if m: yield (join(dir_name, file_name), int(m.group('number')))
 
     def read_image(name):
-        # TODO: read_image using opencv
-        pass
+        img = cv2.imread(name, 0)
+        return img
 
     # create file-dataset mappings
     datasets_by_file_name = dict()
@@ -201,9 +214,9 @@ def prepare_data(m, mappings, validation_split):
             datasets_by_file_name[file_name] = \
                 pd.read_csv(file_name, sep=",", header=None, skiprows=1, dtype=object)
         else:
-            file_names_with_order = list(enumerate_files_by_regex(dir_name))
+            file_names_with_order = list(enumerate_files_by_regex(file_name))
 
-            datasets_by_file_name[dir_name] = \
+            datasets_by_file_name[file_name] = \
                 [read_image(name) for name, _ in sorted(file_names_with_order, key = lambda t: t[1])]
 
     # split all datasets to train and test ones
@@ -214,9 +227,10 @@ def prepare_data(m, mappings, validation_split):
     train_test_splits_by_input_id = dict()
     train_test_splits_by_output_id = dict()
 
-    for file_name, (trainX, testX) in zip(datasets_by_file_name.keys(), pairwise(splits)):
+    for file_name, offset in zip(datasets_by_file_name.keys(), range(0, len(splits) // 2)):
+        (trainX, testX) = splits[2 * offset], splits[2 * offset + 1]
+
         dataset = datasets_by_file_name[file_name]
-        is_type = os.path.isfile(file_name)
 
         mappings_by_input_id = mappings_by_file_name[file_name][True]
         for input_id in mappings_by_input_id:
@@ -250,13 +264,12 @@ def prepare_data(m, mappings, validation_split):
 
 
 def get_layer_predecessors(layer):
-    #print("[DEBUG] predecessors", [prev.inbound_layers for prev in layer._inbound_nodes])
     return [prev.inbound_layers for prev in layer._inbound_nodes]
 
 def train(args):
     m = models.load_model(args.model.name)
     
-    print("==== summary ====")
+    print("==== описание ====")
     m.summary()
 
     try:
@@ -264,7 +277,7 @@ def train(args):
         train_test_splits_by_input_id, train_test_splits_by_output_id = prepare_data(m, mappings, args.validation_split)
 
         # train model on defined inputs/outputs
-        print("[INFO] training model...")
+        print("[ИНФО] обучение модели...")
         m.fit(
             [trainXi for (trainXi, _) in train_test_splits_by_input_id.values()],
             [trainXo for (trainXo, _) in train_test_splits_by_output_id.values()],
@@ -280,13 +293,13 @@ def train(args):
         weight_file = model_file_name + "-weights" + model_file_ext
         
         m.save_weights(weight_file)
-        print("[INFO] model weights saved", weight_file)
+        print("[ИНФО] веса модели сохранены в файл:", weight_file)
 
     except yaml.YAMLError as ex:
-        print("Error in mappings file:", ex)
+        print("[Ошибка] файл привязок:", ex)
 
     except Exception as ex:
-        print("[Error]", ex.__class__.__name__, ex)
+        print("[Ошибка]", ex.__class__.__name__, ex)
         raise ex
 
 
@@ -346,6 +359,8 @@ def tune(args):
                     return configured_layers[layer.name]
 
                 prevs = [process_output(prev) for prev in get_layer_predecessors(layer)]
+                prevs = prevs if len(prevs) > 1 else prevs[0]
+
                 configured_layers[layer.name] = layer_map[layer.name](prevs)
 
                 return configured_layers[layer.name]
@@ -355,7 +370,7 @@ def tune(args):
             new_model = models.Model(m.inputs, new_outputs)
             new_model.compile(optimizer=m.optimizer, loss=m.loss, loss_weights=m.loss_weights, metrics=m.metrics)
             
-            print("==== summary ====")
+            print("==== описание ====")
             new_model.summary()
 
             return new_model
@@ -369,7 +384,7 @@ def tune(args):
             overwrite=True)
 
         print() # empty line
-        print("==== search space ====")
+        print("==== пространство поиска ====")
         t.search_space_summary()
         t.search(
             x = [trainXi for (trainXi, _) in train_test_splits_by_input_id.values()],
@@ -380,7 +395,7 @@ def tune(args):
             epochs = args.epochs)
         
         print() # empty line
-        print("==== trial results ====")
+        print("==== результаты испытаний ====")
         t.results_summary()
 
         # replace ambiguities
@@ -390,24 +405,26 @@ def tune(args):
             ambiguity['value'] = best_values.values[str(i)]
 
         print() # empty line
-        print("==== best model ====")
+        print("==== лучшая модель ====")
         best_model.summary()
 
         print() # empty line
-        print("==== best parameters ====")
+        print("==== лучшие параметры ====")
         print(yaml.dump(ambiguities))
+        
+        with open(args.resolved_ambiguities, 'w') as f:
+            yaml.dump(ambiguities, f, default_flow_style=False)
 
     except yaml.YAMLError as ex:
-        print("Error in mappings file:", ex)
+        print("[Ошибка] файл привязок:", ex)
 
     except Exception as ex:
-        print("[Error]", ex.__class__.__name__, ex)
+        print("[Ошибка]", ex.__class__.__name__, ex)
         raise ex
 
 
 
 def main(args):
-    print("[DEBUG] Using python", sys.version)
     top_level = argparse.ArgumentParser(add_help=True)
     subparsers = top_level.add_subparsers()
 
@@ -415,8 +432,8 @@ def main(args):
     parser_train = subparsers.add_parser('train')
     parser_train.add_argument('model', type=argparse.FileType('r'))
     parser_train.add_argument('mappings', type=argparse.FileType('r', encoding='utf-8'))
-    parser_train.add_argument('epochs', type=int)
     parser_train.add_argument('batches', type=int)
+    parser_train.add_argument('epochs', type=int)
     parser_train.add_argument('validation_split', type=float)
     parser_train.set_defaults(func=train)
     
@@ -428,6 +445,7 @@ def main(args):
     parser_train.add_argument('epochs', type=int)
     parser_train.add_argument('trials', type=int)
     parser_train.add_argument('validation_split', type=float)
+    parser_train.add_argument('resolved_ambiguities', type=str)
     parser_train.set_defaults(func=tune)
 
     args = top_level.parse_args(args[1:])

@@ -2,6 +2,7 @@
 using Ngine.Infrastructure.Abstractions.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using YamlDotNet.Serialization;
@@ -20,7 +21,8 @@ namespace Ngine.Infrastructure.Services
         
         public IDictionary<AmbiguityVariableName, uint> ReadResolvedAmbiguities(string ambiguitiesFile)
         {
-            var records = deserializer.Deserialize<AmbiguityMapProduct>(ambiguitiesFile);
+            var content = File.ReadAllText(ambiguitiesFile);
+            var records = deserializer.Deserialize<AmbiguityMapProduct>(content);
             return records.Ambiguities.ToDictionary(a => AmbiguityVariableName.NewVariable(a.Name), a => uint.Parse(a.Value));
         }
     }

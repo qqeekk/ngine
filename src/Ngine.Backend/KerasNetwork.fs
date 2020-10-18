@@ -16,9 +16,9 @@ type KerasNetwork(pythonPath: string, modelPath: string) =
                 let dateString = DateTime.Now.ToString("yyyy-MM-dd-hhmmss")
 
                 let ambiguitiesFileExtension = Path.GetExtension ambiguitiesFile
-                let resolveAmbiguitiesPath = Path.ChangeExtension(ambiguitiesFile, sprintf "resolved-%s.%s.%s" randomSuffix dateString ambiguitiesFileExtension)
+                let resolveAmbiguitiesPath = Path.ChangeExtension(ambiguitiesFile, sprintf "resolved-%s.%s%s" randomSuffix dateString ambiguitiesFileExtension)
                 
-                do! (PythonHelper.execute token pythonPath <| sprintf "tune \"%s\" \"%s\" \"%s\" %d %d %f %s" 
+                do! (PythonHelper.execute token pythonPath <| sprintf "tune \"%s\" \"%s\" \"%s\" %d %d %f \"%s\""
                     modelPath ambiguitiesFile mappings (int trials) (int epochs) validationSplit resolveAmbiguitiesPath)
                 
                 return resolveAmbiguitiesPath

@@ -642,7 +642,12 @@ module public NetworkConverters =
                     { l with Props = ambiguityConverter.FindAndReplace(l.Props, fun v -> ambiguities.[v]) }
             |]
 
-            { network with Layers = newLayers }
+            let excludedAmbiguities =
+                ambiguities |> Seq.map (fun (KeyValue (Variable name, _)) -> name) |> Set.ofSeq
+
+            { network with 
+                Layers = newLayers 
+                Ambiguities = Array.where (fun a -> Set.contains (a.Name) excludedAmbiguities |> not) network.Ambiguities }
 
 
         { new INetworkConverter with

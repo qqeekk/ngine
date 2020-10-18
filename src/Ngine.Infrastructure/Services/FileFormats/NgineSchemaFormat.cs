@@ -4,7 +4,7 @@ namespace Ngine.Infrastructure.Services.FileFormats
 {
     public class NgineSchemaFormat : IFileFormat
     {
-        public string FileExtension => "ngsc";
+        public string FileExtension => "ngs";
 
         public string FileFormatDescription => "Файл Ngine-schema";
     }

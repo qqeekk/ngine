@@ -121,8 +121,9 @@ module AmbiguityConverter =
           Value = (ListEncoder.encode IntegerEncoder.encoder) kvp.Value }
 
     let private findAndReplace (source: string) replacement =
-        let regex = sprintf "\$\(%s\)" (VariableNameEncoder.encoder.regex "variable_name")
-        Regex.Replace(source, regex, fun (m : Match) -> replacement(Variable m.Name) |> string)
+        let regex = sprintf "\?\(%s\)" (VariableNameEncoder.encoder.regex "variable_name")
+        Regex.Replace(source, regex, fun (m : Match) ->
+            replacement(Variable m.Groups.["variable_name"].Value) |> string)
 
     let instance = {
         new IAmbiguityConverter with

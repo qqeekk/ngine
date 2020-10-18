@@ -109,3 +109,6 @@ venv.bak/
 [Ll]ib64
 [Ll]ocal
 pip-selfcheck.json
+
+# custom
+env1/
