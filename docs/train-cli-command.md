@@ -5,18 +5,18 @@
 
 ___
 ### Выполняется после:
-- `.\Ngine.CommandLine.exe compile`
+- `.\ngine.exe compile`
 
 ### Используется вместе с:
-- `.\Ngine.CommandLine.exe tune`
+- `.\ngine.exe tune`
 
 
 ## Справка
 ___
-> `.\Ngine.CommandLine.exe train -?`
+> `.\ngine.exe train -?`
 
 ```bash
-Usage: Ngine.CommandLine train [options] <ModelPath> <-m|--mappings> <-e|--epochs> <-b|--batch> <-vs|--validation-split>
+Usage: ngine train [options] <ModelPath> <-m|--mappings> <-e|--epochs> <-b|--batch> <-vs|--validation-split>
 
 Arguments:
   ModelPath
@@ -29,7 +29,7 @@ Options:
   -?|-h|--help            Show help information
 ```
 
-- Позиционный аргумент `model-path` определяет путь к `h5` файлу модели, полученного в результате выполнения [команды](compile-cli-command.cmd) `.\Ngine.CommandLine.exe compile`
+- Позиционный аргумент `model-path` определяет путь к `h5` файлу модели, полученного в результате выполнения [команды](compile-cli-command.cmd) `.\ngine.exe compile`
 - Позиционный аргумент `mappings` задает путь к [файлу проекций](#проекции).
 - Позиционный целочисленный аргумент `epochs` задает количество эпох обучения
 - Позиционный целочисленный аргумент `batch-size` задает размер группы (серии) обучения (не должен превышать число эпох) 

@@ -11,11 +11,20 @@ open System
 open Ngine.Backend.Converters
 open Ngine.Backend.FFI
 open Keras
+open System.Reflection
 
 /// <summary>
 /// Keras network model generator.
 /// </summary>
-type KerasNetworkGenerator(pythonPath: string) =
+type KerasNetworkGenerator(pyPath: string) =
+    let pythonPath =
+        if Path.IsPathFullyQualified pyPath then
+            pyPath
+        else
+            let dir = Directory.GetCurrentDirectory()
+            Path.GetFullPath(Path.Combine(dir, pyPath))
+
+    do Console.WriteLine(pythonPath)
     do PythonHelper.activate (pythonPath)
 
     let saveToFile path (kerasModel:BaseModel) =

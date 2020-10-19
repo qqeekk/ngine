@@ -5,10 +5,10 @@
 
 ## Справка
 ___
-> `.\Ngine.CommandLine.exe list -?`
+> `.\ngine.exe list -?`
 
 ```bash
-Usage: Ngine.CommandLine list [options] <Name>
+Usage: ngine list [options] <Name>
 
 Arguments:
   Name
@@ -35,7 +35,7 @@ ____
 
 Оптимизаторы (шаблоны): 
 
-> `.\Ngine.CommandLine.exe list optimizers`
+> `.\ngine.exe list optimizers`
 ```bash
 -> sgd: 'sgd({{ learningRate: ufloat }})(, momentum={{ momentum: ufloat }})?(, decay={{ decay: ufloat }})?'
    -> ufloat: 'floating point number: (0; 1)'
@@ -50,7 +50,7 @@ ____
 
 Оптимизаторы (регулярные выражения):
 
-> `.\Ngine.CommandLine.exe list optimizers -r`
+> `.\ngine.exe list optimizers -r`
 ```bash
 ~~ sgd: '^sgd\((?<learningRate>\d+(\.\d+)?)\)(, momentum=(?<momentum>\d+(\.\d+)?))?(, decay=(?<decay>\d+(\.\d+)?))?$'
 ~~ rmsProp: '^rmsProp\((?<learningRate>\d+(\.\d+)?)\), rho=(?<rho>\d+(\.\d+)?)(, decay=(?<decay>\d+(\.\d+)?))?$'
@@ -60,7 +60,7 @@ ____
 ____
 Переменные (шаблоны):
 
->  `.\Ngine.CommandLine.exe list ambiguities`
+>  `.\ngine.exe list ambiguities`
 ```bash
 -> uint array|uint range: '[({{ list: uint array }}|{{ range: uint range }})]'
    -> uint array: '{{ first: uint }}(,{{ others: uint }})*'
