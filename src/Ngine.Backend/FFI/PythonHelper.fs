@@ -38,7 +38,11 @@ module PythonHelper =
             PythonEngine.Initialize()
 
     let execute (token:CancellationToken) path args =
+        #if DEBUG
         let python = Path.Combine(path, "Scripts", "python")
+        #else
+        let python = Path.Combine(path, "python")
+        #endif
 
         Task.Run(fun() ->
             //let runCommand = sprintf 
