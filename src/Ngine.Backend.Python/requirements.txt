@@ -1,0 +1,6 @@
+tensorflow==2.0.0
+sklearn
+pandas
+opencv-python
+keras-tuner
+pyyaml

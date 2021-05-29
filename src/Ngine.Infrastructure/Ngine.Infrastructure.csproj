@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="8.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.8" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
+    <ProjectReference Include="..\Ngine.Infrastructure.Abstractions\Ngine.Infrastructure.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="NgineUI.App.Views.Control.Header"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:NgineUI.App.Views.Control"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Menu Height="25" VerticalAlignment="Top">
+        <MenuItem Header="Файл">
+            <MenuItem Header="Открыть..." x:Name="readNodesItem"></MenuItem>
+            <MenuItem Header="Сохранить" x:Name="saveNodesItem"></MenuItem>
+            <MenuItem Header="Сохранить как...">
+                <MenuItem x:Name="saveAsNodesItem"></MenuItem>
+                <MenuItem Header="Файл tensorflow/keras (.h5)" x:Name="saveKerasModelItem"></MenuItem>
+            </MenuItem>
+        </MenuItem>
+        <!--<MenuItem Header="Проект">
+            <MenuItem Header="Импортировать схему..."></MenuItem>
+        </MenuItem>-->
+        <MenuItem Header="Параметры">
+            <MenuItem Header="Настройка гиперпараметров модели..." x:Name="configureTuningItem"></MenuItem>
+            <MenuItem Header="Обучение модели..." x:Name="configureTrainingItem"></MenuItem>
+        </MenuItem>
+        <MenuItem>
+            <MenuItem.Icon>
+                <Image Source="{StaticResource imgRun}"></Image>
+            </MenuItem.Icon>
+            <MenuItem.Header>
+                <TextBlock Text="Запуск..." VerticalAlignment="Center"></TextBlock>
+            </MenuItem.Header>
+
+            <MenuItem Header="Обучение" x:Name="runTrainingItem"></MenuItem>
+            <MenuItem Header="Настройка гиперпараметров" x:Name="runTuningItem"></MenuItem>
+        </MenuItem>
+        <MenuItem>
+            <MenuItem.Icon>
+                <Image Source="{StaticResource imgStop}"></Image>
+            </MenuItem.Icon>
+            <MenuItem.Header>
+                <TextBlock x:Name="stopRunningItem" Text="Стоп" VerticalAlignment="Center"></TextBlock>
+            </MenuItem.Header>
+        </MenuItem>
+    </Menu>
+</UserControl>

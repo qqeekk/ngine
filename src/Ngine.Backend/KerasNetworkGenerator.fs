@@ -1,53 +1,58 @@
 ﻿namespace Ngine.Backend
 open Ngine.Domain.Execution
 open Ngine.Domain.Schemas
-open Ngine.Domain.Schemas.Kernels
+open Ngine.Domain.Utils
 open Ngine.Domain.Schemas.Expressions
 open Keras.Models
 open Keras.Layers
 open Numpy
+open System.IO
+open System
+open Ngine.Backend.Converters
+open Ngine.Backend.FFI
+open Keras
+open System.Reflection
 
-[<RequireQualifiedAccess>]
-module private Projections =
-    let mapActivator = function
-        | QuotedFunction(Sigmoid) -> "sigmoid"
-        | QuotedFunction(ReLu) -> "relu"
+/// <summary>
+/// Keras network model generator.
+/// </summary>
+type KerasNetworkGenerator(pyPath: string) =
+    let pythonPath =
+        if Path.IsPathFullyQualified pyPath then
+            pyPath
+        else
+            let dir = Directory.GetCurrentDirectory()
+            Path.GetFullPath(Path.Combine(dir, pyPath))
 
-    let mapLayer (layerSchema : Layer) =
-        let activator = mapActivator (layerSchema.Activator)
+    do Console.WriteLine(pythonPath)
+    do PythonHelper.activate (pythonPath)
 
-        match layerSchema.Kernel with
-        | Conv2D conv2d -> 
-            new Keras.Layers.Conv2D(
-                int layerSchema.NeuronsTotal,
-                (int conv2d.Width, int conv2d.Height),
-                activation = activator) :> BaseLayer
+    let saveToFile path (kerasModel:BaseModel) =
+        // Save keras model to file with random name.
+        let randomSuffix = Guid.NewGuid().ToString().[..3]
+        let dateString = DateTime.Now.ToString("yyyy-MM-dd-hhmmss")
 
-        | Conv3D conv3d ->
-            new Keras.Layers.Conv3D(
-                int layerSchema.NeuronsTotal,
-                (int conv3d.Width, int conv3d.Height, int conv3d.Depth),
-                activation = activator) :> BaseLayer
+        let fileName = sprintf "model-%s.%s.h5" dateString randomSuffix
+        let filePath = Path.Combine(path, fileName)
+        let json = kerasModel.ToJson()
+        
+        // TODO: add exception handling
+        if not (Directory.Exists path) then Directory.CreateDirectory path |> ignore
 
-        | Dense ->
-            new Keras.Layers.Dense(
-                int layerSchema.NeuronsTotal,
-                activation = activator) :> BaseLayer
+        do kerasModel.Save(filePath, overwrite=true, include_optimizer=true)
+        do File.WriteAllText(Path.ChangeExtension(filePath, "json"), json)
+        filePath
 
+    let save (NotNull "path" path) (NotNull "schema" definition) =
+        do Console.WriteLine "Запуск сценариев keras.NET..."
+        
+        // Generate model than save immediately
+        let model, ambiguities = NetworkConverter.keras definition
+        saveToFile path model, ambiguities
 
-type KerasNetworkGenerator() =
+    let instantiate filePath =
+        new KerasNetwork(pythonPath, filePath) :> INetwork
+
     interface INetworkGenerator with
-        member _.GenerateFromSchema definition =
-            let kerasLayers = Array.map (Projections.mapLayer) definition.Layers;
-            let kerasModel = new Sequential(kerasLayers) :> BaseModel;
-            
-            { new INetwork with
-                  member _.Ask inputs =
-                      kerasModel.Predict(np.array inputs).GetData<_>()
-
-                  member _.Train (inputs, expected) =
-                      do kerasModel.TrainOnBatch(np.array inputs, np.array expected) |> ignore
-            }
-
-    member this.GenerateFromSchema definition =
-        (this :> INetworkGenerator).GenerateFromSchema definition
+        member _.SaveModel(path, definition) = save path definition
+        member _.Instantiate file = instantiate file

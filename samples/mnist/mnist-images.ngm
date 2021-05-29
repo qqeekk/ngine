@@ -1,0 +1,12 @@
+# Определение отображений для набора данных https://www.kaggle.com/oddrationale/mnist-in-csv
+
+files:
+    csv: D:\projects\ngine\samples\mnist\mnist-images.csv
+    dir: D:\projects\ngine\samples\mnist\mnist-images
+
+inputs:
+    -
+        - img:$dir[:] # изображение 28x28
+outputs:
+    -
+        - cats:$csv[0] # класс изображения (0-9)

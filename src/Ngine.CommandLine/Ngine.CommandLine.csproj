@@ -5,15 +5,27 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="InstallPyDeps">
-    <PropertyGroup>
-      <PythonPath Condition=" '$(PythonPath)' == '' ">C:\Python36\python.exe</PythonPath>
-      <PipCommand>pip install keras tensorflow</PipCommand>
-    </PropertyGroup>
-    <Exec Command="pip install virtualenv &amp;&amp; virtualenv venv -p $(PythonPath) &amp;&amp; venv\Scripts\activate &amp;&amp; $(PipCommand) &amp;&amp; deactivate" WorkingDirectory="$(OutDir)" />
-  </Target>
+  <ItemGroup>
+    <None Remove="appsettings.json.template" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="5.0.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ngine.Backend\Ngine.Backend.fsproj" />
+    <ProjectReference Include="..\Ngine.Infrastructure\Ngine.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

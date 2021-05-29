@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appsettings.json.template" />
+    <None Remove="Assets\Icons\InformationSymbol_16x.png" />
+    <None Remove="Assets\Icons\Run_16x.png" />
+    <None Remove="Assets\Icons\Stop_16x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ngine.Infrastructure\Ngine.Infrastructure.csproj" />
+    <ProjectReference Include="..\NgineUI.ViewModels.Functional\NgineUI.ViewModels.Functional.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Icons\InformationSymbol_16x.png" />
+    <Resource Include="Assets\Icons\Run_16x.png" />
+    <Resource Include="Assets\Icons\Stop_16x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

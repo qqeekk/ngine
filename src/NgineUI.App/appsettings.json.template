@@ -1,0 +1,8 @@
+{
+  "AppSettings": {
+    "ExecutionOptions": {
+      "OutputDirectory": "models",
+      "PythonPath": "$(PythonPath)"
+    }
+  }
+}

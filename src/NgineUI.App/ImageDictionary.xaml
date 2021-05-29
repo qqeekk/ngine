@@ -1,0 +1,7 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:NgineUI.App">
+    <BitmapImage x:Key="imgRun" UriSource="Assets\Icons\Run_16x.png"></BitmapImage>
+    <BitmapImage x:Key="imgStop" UriSource="Assets\Icons\Stop_16x.png"></BitmapImage>
+    <BitmapImage x:Key="imgInfo" UriSource="Assets\Icons\InformationSymbol_16x.png"></BitmapImage>
+</ResourceDictionary>
